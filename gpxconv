@@ -28,26 +28,26 @@ use Time::ParseDate;
 #use Time::PrintDate;
 use Time::gmtime;
 
-$m_per_degree_lat      = 10000*1000/90; # on planet earth, by definition
-$degree_precision      = "%.5f";        # output resolution <= 1.11 meters
-$ele_precision         = "%.0f";        # output resolution = 0.1 meters
-$spd_precision         = "%.1f";        # speed/acceleration resolution = 0.1 km/h
-$hiking                = 1;             # set this to 0 for driving etc.
+$hiking    = 0;             # set this to 0 for driving etc.
+$smoothing = 1;             # set this to 0 to prevent smoothing
 $min_timediff          = $hiking ?    4 :    2;  # in seconds
-$max_sensible_angle_diff = 135;         # maximal turning angle
 $max_sensible_ele_diff = $hiking ? 3600 : 10800; # maximal climb rate in     meters per hour
 $max_sensible_acc      = $hiking ?  0.5 :    2; # maximal rate of descent in meters per second per second
 $max_sensible_speed    = $hiking ?   20 :  200; # maximal speed in kilometers per hour
-$min_sensible_ele = -450;
+$max_sensible_angle_diff = 9135;         # maximal turning angle
+$min_sensible_ele = -450;   # actual values may go down to -450 m (at Dead Sea)
+$EE = -9999;                # pseudo elevation if no entry is available; note that 
 $max_timediff = 3600;       # in seconds, for both exiftool and TrailGuru
 $max_dis     =  1000;       # threshold for distance warning in meters
 $max_spd_dev =     1;       # threshold for speed measuring deviation warning in kilometers per hour
 $min_spd_mov =   0.2;       # moving threshold in meters per second
-$geoid_corr=1; $ele_corr=47;#correct geoid height; default correction
-$geoid_corr=0; $ele_corr=0; #do not do correct wrt. geoid height
-$smoothing = 1;             # set this to 0 to prevent simple smoothing
-$ele_threshold = 20;        #for computing gain and loss
-$EE = -9999; # pseudo elevation if no entry is available; note that actual values may go down to -450 m
+$geoid_corr=1; $ele_corr=47;# correct geoid height; default correction
+$geoid_corr=0; $ele_corr=0; # do not do correct wrt. geoid height
+$ele_threshold = 20;        # for computing gain and loss
+$m_per_degree_lat      = 10000*1000/90; # on planet earth, by definition
+$degree_precision      = "%.5f";        # output resolution <= 1.11 meters
+$ele_precision         = "%.0f";        # output resolution = 0.1 meters
+$spd_precision         = "%.1f";        # speed/acceleration resolution = 0.1 km/h
 
 # str_to_epoch("1970-01-01T00:00:00Z") = 0
 sub str_to_epoch { 
@@ -84,15 +84,15 @@ sub timediff_string {
 }
 
 sub error_trkpt {
-  print STDERR "$_[0] ".($sec ? "time=$tim, " : "").
-                        "lat/lon=".(sprintf $degree_precision, $lat).
-                               ",".(sprintf $degree_precision, $lon).
-                        ($ele != $EE ? ", ele=".sprintf $ele_precision, $ele : "").
-                        "$_[1]\n";
+  print STDERR "$_[0] <trkpt lat=\"".(sprintf $degree_precision, $lat).
+                         "\" lon=\"".(sprintf $degree_precision, $lon).
+                        "\">".($ele != $EE ? "<ele>".(sprintf $ele_precision, $ele)."</ele>" : "").
+                              ($sec ? "<time>$tim</time>" : "").
+                    "</trkpt>$_[1]\n";
 }
 
 sub ignoring_trkpt {
-  error_trkpt("WARNING: ignoring trkpt at"," because $_[0]");
+  error_trkpt("WARNING: ignoring"," because $_[0]");
 }
 
 sub geoid_height {
@@ -214,7 +214,9 @@ while(<>) {
     }
   }
   if($state == 0) {
-    s#\nGPXConv statistics .*?GPXConv statistics end\n##s; #remove any earlier statistics section
+    if(s#\nGPXConv statistics .*?GPXConv statistics end\n##s) { #remove any earlier statistics section
+			$smoothing = 0; #already done before
+		}
     if(m#$/#s) {
       s#$/##s; #removing trailing "<trkpt "
     }
@@ -334,8 +336,11 @@ for($i=0; $i <= $#TIM; $i++) {
     $Gain = ($timediff ? round(3600*$diff_ele/$timediff) : 0);
     $Spd =  round(3.6*$spd);
     $ignore = 1;
-    if($max_sensible_angle_diff < $theta_diff && $theta_diff < 360-$max_sensible_angle_diff) {
-      ignoring_trkpt("direction change = $theta_diff degrees (more than $max_sensible_angle_diff)");
+    $theta_diff -= 360 if $theta_diff >= 180;
+    if($max_sensible_angle_diff < abs($theta_diff)) {
+      ignoring_trkpt("direction change = $theta_diff degrees (".($theta_diff >= 0 
+                                         ? "more than  $max_sensible_angle_diff"
+                                         : "less than -$max_sensible_angle_diff").")");
     }
     elsif(abs($acc) > $max_sensible_acc) {
       ignoring_trkpt("acceleration = $acc m/s/s (more than $max_sensible_acc) at speed = $Spd km/h");
@@ -466,7 +471,7 @@ for($i=0; $i <= $#TIM; $i++) {
     calc_diffs();
     $SPD[$i] = $spd;
     $Spd =  round(3.6*$spd);
-    $Dis  = sprintf "%.3f", $dis/1000;
+    $Dis  = sprintf "%.2f", $dis/1000;
     if($spd >= $min_spd_mov) {
       $sum_timediff_mov += $timediff;
       $sum_dis += $dis;
@@ -542,7 +547,7 @@ At time=$TIM[$max_loss_index], lat/lon=$LAT[$max_loss_index],$LON[$max_loss_inde
 GPXConv statistics end
 ";
 $HEAD =~ s#(<trk>\s*(<name>.*?</name>)?)#$1\n<cmt></cmt>#s # add empty comment in track
-           unless $HEAD =~ m#<trk>.*?<cmt>#s;              # if not alreay existing
+           unless $HEAD =~ m#<trk>.*?<cmt>#s;              # if not already existing
 $HEAD =~ s#(<trk>.*?<cmt>)#$1$stats#s; # prepend stats to track comment
 
 print STDOUT $HEAD;
