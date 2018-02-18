@@ -1,0 +1,319 @@
+#!/usr/bin/perl
+################################################################################
+# GPX track converter: post-process tracks as typically produced by GPS loggers
+#         concatenates multiple tracks and track segments, collecting waypoints
+#         performs trakpoint sanitization, elevation correction, and statistics
+#           where orthometric height = GPS ellipsoidal height - geoid height
+#             see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html
+# usage: gpxconv infile(s) >outfile
+# reads from file(s) given as argument (or STDIN) and writes to STDOUT
+#                             prints any warnings and errors to STDERR
+# Version 1.2 (c) 2011 David von Oheimb
+# License: Attribution-NonCommercial-ShareAlike, see
+# http://creativecommons.org/licenses/by-nc-sa/3.0/
+################################################################################
+
+use File::Temp qw/ tempfile /;
+#use DateTime::Format::ISO8601;
+use Time::ParseDate;
+#use Time::PrintDate;
+use Math::Trig; #use Math::Trig 'great_circle_distance';
+
+$m_per_degree_lat      = 10000*1000/90; # on planet earth, by definition
+$degree_precision      = "%.5f";        # output resolution = 1.11 meters
+$hiking                = 0*1;             # set this to 0 for driving etc.
+$min_timediff          = $hiking ?    4 :    2;  # in seconds
+$max_sensible_ele_diff = $hiking ? 3600 : 7200; # in     meters per hour
+$max_sensible_acc      = $hiking ?  0.2 :    1; # in meters per second per second
+$max_sensible_speed    = $hiking ?   10 :  200; # in kilometers per hour
+$min_sensible_ele = - 450;
+$max_timediff = 3600;                   # in seconds, for both exiftool and TrailGuru
+$max_spd_diff = $hiking ?   1 :  1;     # in kilometers per hour
+$geoid_corr=1; $ele_corr=47; #correct geoid height; default correction
+$geoid_corr=0; $ele_corr=0;  #do not do correct wrt. geoid height
+$EE = -9999; # pseudo elevation if no entry is available
+
+# str_to_epoch("1970-01-01T00:00:00Z") = 0
+sub str_to_epoch { 
+  my $s=$_[0];
+# return DateTime::Format::ISO8601->parse_datetime($s)->epoch(); # not used due to Perl library bug on Mac OS X: "dyld: lazy symbol binding failed: Symbol not found: _Perl_newSVpvn_flags"
+##http://www.en8848.com.cn/Reilly%20Books/perl3/cookbook/ch03_08.htm
+##use Time::Local;
+### $date is "1998-06-03" (YYYY-MM-DD form).
+##($yyyy, $mm, $dd) = ($date =~ /(\d+)-(\d+)-(\d+)/;
+### calculate epoch seconds at midnight on that day in this timezone
+##$epoch_seconds = timegm(0, 0, 0, $dd, $mm, $yyyy);
+  $s =~ s/-/\//g;
+  $s =~ s/T/ /;
+  $s =~ s/Z/+0000/;
+  return Time::ParseDate::parsedate($s);
+}
+
+sub epoch_to_str { 
+#use DateTime; # not used due to Perl library bug on Mac OS X: "dyld: lazy symbol binding failed: Symbol not found: _Perl_newSVpvn_flags"
+#  my $dt = DateTime->from_epoch( epoch => $_[0] );
+#  return $dt->ymd."T".$dt->hms."Z";
+#use Date::Manip qw(ParseDate UnixDate);
+#$date = ParseDate("18 Jan 1973, 3:45:50");
+#  return UnixDate($_[0], "%Y-%m-%dT%H:%M:%SZ"); 
+  use Time::gmtime;
+  my $tm = gmtime($_[0]);
+  return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", $tm->year+1900, $tm->mon+1, $tm->mday, $tm->hour, $tm->min, $tm->sec);
+}
+
+sub error_trkpt {
+  print STDERR "$_[0] ".($sec ? "time=$tim, " : "")."lat/lon=$lat,$lon".
+              ($ele != $EE ? ", ele=$ele$_[1]" : "")."\n";
+}
+
+sub ignoring_trkpt {
+  error_trkpt("WARNING: ignoring trkpt at"," because $_[0]");
+}
+
+sub geoid_height {
+  return $ele_corr if !$geoid_corr;
+  my $lat=$_[0];
+  my $lon=$_[1];
+  (my $fh, my $tmp_GeoidEval) = tempfile();
+  system "wget --quiet -O $tmp_GeoidEval ".
+    "http://geographiclib.sourceforge.net/cgi-bin/GeoidEval?input=$lat+$lon";
+  open G, $tmp_GeoidEval;
+  my $found_corr = 0;
+  while(<G>) {
+    if(m#EGM84</a>\s*=\s*<font.*?>(-?\d+\.?\d*)</font>#i) {
+      $found_corr = 1;
+      $ele_corr  = int(0.5+$1);
+    }
+  }
+  close G;
+  error_trkpt(       ($found_corr ? "" : "WARNING: ")."geoid height at",
+              " is ".($found_corr ? "" : "assumed " )."$ele_corr");
+  return $ele_corr;
+}
+
+sub ele_correction {
+  return $ele_corr; # linear correction not wanted
+##print "$ele @ $sec\n" if $ele==4720 || $ele==1925;
+  my $sec1=1296543617; #start time
+  my $sec2=1296569335; #end   time
+  return $ele_corr if !($sec1 <= $sec && $sec <= $sec2); # linear correction not wanted
+  my $ele1=4720-4677; #actual and wanted start value
+  my $ele2=1925-1635; #actual and wanted end   value
+  return $ele_corr + int(($sec-$sec1)/($sec2-$sec1)*($ele2-$ele1) + $ele1);
+}
+
+sub read_trkpt {
+  #  m#lat="(-?\d+\.?\d*)"\s*lon="(-?\d+\.?\d*)">\s*
+  #  <ele>(-?\d+\.?\d*)</ele>\s*<time>(.*?T(\d\d):(\d\d):(\d\d)Z?)</time>#s
+  if(m#lat="(.+?)"\s*lon="(.+?)">\s*(<ele>(.+?)</ele>)?\s*(<time>(.+?)</time>)?#s ||
+     m#lon="(.+?)"\s*lat="(.+?)">\s*(<ele>(.+?)</ele>)?\s*(<time>(.+?)</time>)?#s) {
+    $lat = $1;
+    $lon = $2;
+    $ele = $4; # may be empty
+    $ele = $EE if !$ele;
+    $tim = $6; # may be empty
+    if(m#lon=".+?" lat="#s) {
+      ($lat, $lon) = ($lon, $lat);
+    }
+    $sec = str_to_epoch($tim); #or within a day: $7+60*($6+60*$5); #may be 0
+    $spd_orig = -1;
+    if(m#<speed>(.+?)</speed>#s) {
+      $spd_orig = $1;
+    }
+  }
+  else {
+    print STDERR "Cannot parse trackpoint: $/$_\n";
+    exit 0;
+  }
+}
+
+#$min_lat =  90;
+#$max_lat = -min_lat;
+#$min_lon = 180;
+#$max_lon = -min_lon;
+$/ = "<trkpt ";
+$state = 0;
+while(<>) {
+  if($state == 0) {
+    if(m#$/#s) {
+      s#$/##s; #removing trailing "<trkpt "
+    }
+    else {
+      s#(^.*</type>).*#$1\n<trkseg>\n#s; #ignore rest of (header-only) file having no trkpt
+    }
+    s#[\t ]+$##s; #remove trailing spaces
+    $HEAD = $_;
+    $state = 1; #expecting the very first trkpt
+  }
+  elsif(m#<gpx #s) { #processing further headers
+    error_trkpt("New file starting after","");
+    $SEG[$#SEG]=1 if $#SEG>=0;
+    $state = 2 if $state > 2; #starting new trkseg in new file
+    while(s#(<wpt .+?</wpt>\n?)##s) {
+      $wpt = $1;
+      $wpt =~ s#\n##sg;
+      $WPTS.= "$wpt\n" if !$wpt =~ m/\[(max speed|(max|min) height|max (gain|loss)) = \d+ k?m(\/h)?\]/;
+    }
+  }
+  else {
+    # $state == 1 || $state == 2: processing first trkpt in new trkseg
+    # $state == 3: processing next trkpt in trkseg
+    read_trkpt();
+    error_trkpt("WARNING: no time found for","; assuming route point") if !$sec;
+    error_trkpt("WARNING: no elevation found for","; assuming no elevation change")     if  $sec && $ele == $EE;
+    error_trkpt("WARNING: no time and no elevation found for","; assuming route point") if !$sec && $ele == $EE;
+    $ele_corr = geoid_height($lat,$lon) if ($state == 1 || $state == 2);
+    if($ele != $EE) {
+      $ele -= ele_correction();
+      $ele = int(($ele >= 0 ? 0.5 : -0.5)+$ele);
+    }
+    if($state == 1) {
+      $Gain = 0;
+      $spd = 0; $Spd = 0; $acc = 0;
+      $sum_dis = 0;
+      $ignore = 0;
+    }
+    else {
+      $timediff = ($sec && $last_sec ? int(0.5+$sec-$last_sec) : 0);
+      #http://forums.howwhatwhy.com/showflat.php?Cat=&Board=scigen&Number=-208125
+      $diff_lat = ($lat-$last_lat)*$m_per_degree_lat;
+      $diff_lon = ($lon-$last_lon)*$m_per_degree_lat*cos(deg2rad(($lat+$last_lat)/2));
+      #$diff_lon = ($lon*cos(deg2rad($lat))-$last_lon*cos(deg2rad($last_lat)))*$m_per_degree_lat;
+      $diff_ele = ($ele != $EE && $last_ele != $EE ? $ele-$last_ele : 0);
+      # assuming no elevation change if no elevation available
+      $Gain = ($timediff ? int(($diff_ele >= 0 ? 0.5 : -0.5)+3600*$diff_ele/$timediff) : 0);
+      $dis  = sqrt($diff_lat*$diff_lat+$diff_lon*$diff_lon+$diff_ele*$diff_ele);
+      $Dis  = int(0.5+$dis/100)/10;
+      #$distance = Math::Trig::great_circle_distance( #does not account for $diff_ele!
+      #						  deg2rad($lon)     , deg2rad(90 - $lat     ),
+      #						  deg2rad($last_lon), deg2rad(90 - $last_lat),
+      #						  40*1000*1000/pi/2); #http://perldoc.perl.org/Math/Trig.html
+      #print "diff_lat=$diff_lat, diff_lon=$diff_lon, dis=$dis, distance=$distance\n";
+      $spd = ($timediff ? int(0.5+ 10*$dis/$timediff)/10 : $last_spd);
+      $Spd = ($timediff ? int(0.5+3.6*$dis/$timediff)    : $last_spd);
+      # assuming no speed change if no time difference available
+      $acc = ($timediff ? int(0.5+ 10*($spd-$last_spd)/$timediff)/10 : 0);
+      # assuming no acceleration if no time difference available
+      $ignore = 1;
+      if(abs($acc) > $max_sensible_acc) {
+	ignoring_trkpt("acceleration = $acc m/s/s higher than $max_sensible_acc at speed = $Spd km/h");
+      }
+      elsif($ele != $EE && $ele < $min_sensible_ele) {
+	ignoring_trkpt("elevation less than $min_sensible_ele");
+      }
+      elsif($Spd > $max_sensible_speed) {
+	ignoring_trkpt("speed = $Spd km/h higher than $max_sensible_speed");
+      }
+      elsif(abs($Gain) > $max_sensible_ele_diff) {
+	ignoring_trkpt("elevation change = $Gain m/h higher than $max_sensible_ele_diff");
+      }
+      elsif($sec && $timediff < $min_timediff) {
+	      ignoring_trkpt("time difference = $timediff sec");
+      }
+      else {
+	$ignore = 0;
+	$sum_dis += $dis;
+	error_trkpt("WARNING: distance between trackpoints = $Dis km at","") if $dis > 1000;
+        $Spd_diff = ($timediff && $spd_orig >= 0 ? int(0.5+3.6*($spd-$spd_orig)) : 0);
+	error_trkpt("WARNING: speed deviation from recorded value = $Spd_diff km/h at","") if abs($Spd_diff) > $max_spd_diff;
+	if($timediff > $max_timediff) { # this implies $sec && $last_sec
+	  $Timediff=int(0.5+$timediff/60); # in minutes
+	  error_trkpt("WARNING: time difference = $Timediff min at","; interpolating");
+	  $seg = $SEG[$#SEG];
+	  for($t=$max_timediff; $t <= $timediff; $t+=$max_timediff) {
+	    push @LAT,sprintf($degree_precision,$last_lat+($lat-$last_lat)*$t/$timediff);
+	    push @LON,sprintf($degree_precision,$last_lon+($lon-$last_lon)*$t/$timediff);
+	    push @ELE,($ele != $EE && $last_ele != $EE ? int(0.5+$last_ele+($ele-$last_ele)*$t/$timediff) : $EE);
+	    push @TIM,epoch_to_str($last_sec+$t);
+	    push @SPD,$spd;
+	    push @SEG,0;
+	  }
+	  $SEG[$#SEG] = $seg;
+	}
+      }
+    }
+    if($ignore == 0) {
+      $lat = sprintf($degree_precision,$lat);
+      $lon = sprintf($degree_precision,$lon);
+      push @LAT,$lat;
+      push @LON,$lon;
+      push @ELE,$ele;
+      push @TIM,$tim;
+      push @SPD,$spd;
+      push @SEG,0;
+      $min_lat = $lat if $min_lat>$lat || $state == 1;
+      $max_lat = $lat if $max_lat<$lat || $state == 1;
+      $min_lon = $lon if $min_lon>$lon || $state == 1;
+      $max_lon = $lon if $max_lon<$lon || $state == 1;
+      $min_sec = $sec if $min_sec>$sec || $state == 1;
+      $max_sec = $sec if $max_sec<$sec || $state == 1;
+      ($min_ele , $min_ele_index ) = ( $ele , $#TIM) if $ele != $EE && $min_ele>$ele || $state == 1;
+      ($max_ele , $max_ele_index ) = ( $ele , $#TIM) if $ele != $EE && $max_ele<$ele || $state == 1;
+      ($max_gain, $max_gain_index) = ( $Gain, $#TIM) if $ele != $EE && $max_gain< $Gain || $state == 1;
+      ($max_loss, $max_loss_index) = (-$Gain, $#TIM) if $ele != $EE && $max_loss<-$Gain || $state == 1;
+      ($max_spd , $max_spd_index ) = ( $Spd , $#TIM) if $max_spd<$Spd || $state == 1;
+      ($last_lat, $last_lon, $last_ele, $last_sec, $last_spd) = ($lat, $lon, $ele, $sec, $spd);
+    }
+    $state = 3; #ready to process further trkpt(s) in trkseg
+    if(m#</trkseg>.*<trkseg>#s) {
+      error_trkpt("New segment starting after","");
+      $SEG[$#SEG]=1;
+      $state = 2; #starting new trkseg
+    }
+  }
+}
+
+$bounds = "<bounds minlat=\"$min_lat\" minlon=\"$min_lon\" maxlat=\"$max_lat\" maxlon=\"$max_lon\"/>\n";
+#http://docstore.mik.ua/orelly/perl/cookbook/ch06_07.htm match multiple lines with 's' option
+$HEAD =~ s#<bounds .*?/>\n?##s; # remove any pre-existing bounds entry
+$HEAD =~ s#(</metadata>)#$bounds$1#s; # add new bounds
+
+$HEAD =~ s#(<trk>)#$WPTS.$1#se; # prepend collected waypoints to track
+
+$Sum_dis=int(0.5+$sum_dis)/1000;
+$sec_diff = $max_sec-$min_sec;
+$Avg_spd=int(0.5+3.6*$sum_dis/$sec_diff*10)/10 if $sec_diff;
+
+$wpts = "
+<wpt lat=\"$LAT[$max_spd_index]\" "."lon=\"$LON[$max_spd_index]\">".
+     "<ele>$ELE[$max_spd_index]</ele><time>$TIM[$max_spd_index]</time>".
+     "<name>[max speed = $max_spd km/h]</name></wpt>
+<wpt lat=\"$LAT[$min_ele_index]\" "."lon=\"$LON[$min_ele_index]\">".
+     "<ele>$ELE[$min_ele_index]</ele><time>$TIM[$min_ele_index]</time>".
+     "<name>[min height = $min_ele m]</name></wpt>
+<wpt lat=\"$LAT[$max_ele_index]\" "."lon=\"$LON[$max_ele_index]\">".
+     "<ele>$ELE[$max_ele_index]</ele><time>$TIM[$max_ele_index]</time>".
+     "<name>[max height = $max_ele m]</name></wpt>
+<wpt lat=\"$LAT[$max_gain_index]\" "."lon=\"$LON[$max_gain_index]\">".
+     "<ele>$ELE[$max_gain_index]</ele><time>$TIM[$max_gain_index]</time>".
+     "<name>[max gain = $max_gain m/h]</name></wpt>
+<wpt lat=\"$LAT[$max_loss_index]\" "."lon=\"$LON[$max_loss_index]\">".
+     "<ele>$ELE[$max_loss_index]</ele><time>$TIM[$max_loss_index]</time>".
+     "<name>[max loss = $max_loss m/h]</name></wpt>
+";
+$HEAD =~ s#(<trk>)#substr($wpts,1).$1#se; # append computed waypoints just before track
+
+$stats="
+Total distance = $Sum_dis km, average speed = $Avg_spd km/h
+Elevation ".($geoid_corr ? "corrected by geoid height = $ele_corr m" : "not corrected")."
+At time=$TIM[$max_spd_index],\ lat/lon=$LAT[$max_spd_index]\,$LON[$max_spd_index]:\ max speed  = $max_spd km/h
+At time=$TIM[$min_ele_index],\ lat/lon=$LAT[$min_ele_index]\,$LON[$min_ele_index]:\ min height = $min_ele m
+At time=$TIM[$max_ele_index],\ lat/lon=$LAT[$max_ele_index]\,$LON[$max_ele_index]:\ max height = $max_ele m
+At time=$TIM[$max_gain_index], lat/lon=$LAT[$max_gain_index],$LON[$max_gain_index]: max gain   = $max_gain m/h
+At time=$TIM[$max_loss_index], lat/lon=$LAT[$max_loss_index],$LON[$max_loss_index]: max loss   = $max_loss m/h
+";
+$HEAD =~ s#(<trk>\s*(<name>.*?</name>)?)#$1\n<cmt></cmt>#s # add empty comment in track
+           unless $HEAD =~ m#<trk>.*?<cmt>#s;              # if not alreay existing
+$HEAD =~ s#(<trk>.*?<cmt>)#$1$stats#s; # prepend stats to track comment
+
+print STDOUT $HEAD;
+for($i=0; $i <= $#TIM; $i++) {
+  print STDOUT "  <trkpt lat=\"$LAT[$i]\" lon=\"$LON[$i]\">";
+  print STDOUT "<ele>$ELE[$i]</ele>" if $ELE[$i] != $EE;
+  print STDOUT "<time>$TIM[$i]</time><extensions><speed>$SPD[$i]</speed></extensions>" if $TIM[$i];
+  print STDOUT "</trkpt>\n";
+  print STDOUT "</trkseg>\n<trkseg>\n" if $SEG[$i];
+}
+print STDOUT "</trkseg>\n</trk>\n</gpx>\n";
+
+
