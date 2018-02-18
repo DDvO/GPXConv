@@ -10,9 +10,7 @@
 # Options can be set by changing values of the configuration variables below.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT
 #                             prints any warnings and errors to STDERR
-# Version 2.2 (c) 2012-2017 David von Oheimb
-# License: Attribution-NonCommercial-ShareAlike, see
-# http://creativecommons.org/licenses/by-nc-sa/3.0/
+# (c) 2012-2018 David von Oheimb - License: MIT - Version 2.3
 ################################################################################
 
 ### configuration variables
@@ -26,7 +24,7 @@ $include_speed = 0;
 
 # analysis control
 $min_spd_mov = 1;             # threshold for detecting movement (in kilometers per hour)
-$climb_phases = 0;            # analysis of ascent/descent phases
+$phases = 1;                  # analysis of ascent/descent phases
 
 # smoothing control
 $smoothing = 0;               # set this to 0 to disable smoothing
@@ -50,6 +48,8 @@ $max_sensible_speed    = $hiking ?   20 : ($driving ?   150 :  1100); # maximal 
 $max_sensible_angle_diff = 170;         # maximal turning angle
 $min_sensible_ele = -10; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
 
+# time correction control
+$trkpt_time_corr = 0;    # number of secconds to add to each trackpoint time stamp
 # elevation correction control
 $geoid_corr = 0;         # whether to correct elevation wrt. geoid height retrieved online
 $ele_corr = 0; #47;      # default elevation correction, if used should be -(average geoid height)
@@ -120,7 +120,7 @@ sub timediff_string {
   return sprintf("%2d:%02d:%02d h", $t, $m, $s);
 }
 
-$max_speed = 0;
+$max_speed = 0; # used only for spd_precision
 sub spd_string {
   my $s = sprintf $spd_precision, 3.6*$_[0];
   return " " x max(0,length(sprintf $spd_precision, 3.6*$max_speed)-length($s)).$s;
@@ -177,11 +177,10 @@ sub calc_diffs() {
   my $diff_ele = ($ele ne "" && $prev_ele ne "" ? $ele-$prev_ele : "");
   #http://forums.howwhatwhy.com/showflat.php?Cat=&Board=scigen&Number=-208125
   my $timediff = ($sec && $prev_sec ? $sec-$prev_sec : "");
-  my $gain = $diff_ele ne "" && $timediff ne "" ? ($timediff > 0 ? 3600*$diff_ele/($timediff) : $prev_gain) : "";
+  my $rate = $diff_ele ne "" && $timediff ne "" ? ($timediff > 0 ? 3600*$diff_ele/$timediff : $prev_gain) : "";
   my $speed = ($timediff ne "" ? ($timediff > 0 ? $dis/$timediff : $prev_spd) : $spd);
-  $max_speed = $speed if $max_speed < $speed;
   my $acc = ($speed ne "" && $prev_spd ne "" && $timediff ne "" ? ($timediff > 0 ? ($speed-$prev_spd)/$timediff : $prev_acc) : "");
-  return ($diff_ele, $timediff, $gain, $dis, $speed, $acc);
+  return ($diff_ele, $timediff, $rate, $dis, $speed, $acc);
 }
 
 
@@ -190,6 +189,8 @@ sub calc_diffs() {
 #read all trackpoints from all track segments
 $/ = "<trkpt ";
 $state = 0; # processing first header (of first input file)
+push @DIST, 0;
+push @RATE, 0;
 while(<>) {
   s#<desc>.+?</desc>\n?##sg if $prune_desc;
   s#<link.+?</link>\n?##sg if $prune_extensions;
@@ -248,8 +249,12 @@ while(<>) {
     push @LAT, $lat;
     push @LON, $lon;
     push @ELE, $ele;
-    push @TIM, $tim;
+    if ($trkpt_time_corr) {
+	$sec += $trkpt_time_corr;
+	$tim = epoch_to_str($sec);
+    }
     push @SEC, $sec;
+    push @TIM, $tim;
     push @SPD, $spd; # recorded, or else ""
     $ele_solution = "cannot calculate ascent/descent";
     $ele_solution = "will try assuming no elevation change" if !$SEG[$#ELE] && $ELE[$#ELE-1] ne "";
@@ -336,16 +341,17 @@ for($i=0; $i <= $#TIM; $i++) {
       $sec_ = $prev_sec + distance($prev_lat, $prev_lon, $prev_ele)/$spd;  # substitute time using distance/speed from previous point, unless it was ignored
       $SEC[$i] = $sec = $sec_ if $i == $#SEC || $sec_ < $SEC[$i+1];
     }
-    ($diff_ele, $timediff, $gain, $dis, $spd, $acc) = calc_diffs();
+    ($diff_ele, $timediff, $rate, $dis, $spd, $acc) = calc_diffs();
     $Spd = spd_string($spd);
     $Spd_txt = $spd ne "" ? " at speed = $Spd km/h" : "";
     $Dis  = sprintf "%4".$dis_precision, $dis/1000;
     $Max_dis  = sprintf "%4".$dis_precision, $max_dis/1000;
-    $Gain = sprintf $rat_precision, $gain;
+    $Rate = sprintf $rat_precision, $rate;
     $Acc =  sprintf $acc_precision, $acc;
     print_trkpt("WARNING: before  ", "$Spd_txt distance between trackpoints = $Dis km (more than $Max_dis km)") if $dis > $max_dis;
     if(!$ignore) { # last trkpt has not been ignored
       $Spd_diff = spd_string($spd ne "" && $SPD[$i] ne "" ? $spd-$SPD[$i] : 0);
+      $Spd_rec = spd_string($SPD[$i]);
       print_trkpt("WARNING: towards ","$Spd_txt recorded speed is $Spd_rec km/h (deviation more than $max_spd_deviation km/h)") if abs($Spd_diff) > $max_spd_deviation;
     }
     $ignore = 1;
@@ -362,11 +368,11 @@ for($i=0; $i <= $#TIM; $i++) {
     elsif($Spd > $max_sensible_speed) {
       ignoring_trkpt("speed is more than $max_sensible_speed");
     }
-    elsif($gain ne "" && $Gain > $max_sensible_ele_gain) {
-      ignoring_trkpt(" ascent rate = $Gain m/h (more than $max_sensible_ele_gain)");
+    elsif($rate ne "" && $Rate > $max_sensible_ele_gain) {
+      ignoring_trkpt(" ascent rate = $Rate m/h (more than $max_sensible_ele_gain)");
     }
-    elsif($gain ne "" && $Gain < -$max_sensible_ele_loss) {
-      ignoring_trkpt("descent rate = $Gain m/h (less than -$max_sensible_ele_loss)");
+    elsif($rate ne "" && $Rate < -$max_sensible_ele_loss) {
+      ignoring_trkpt("descent rate = $Rate m/h (less than -$max_sensible_ele_loss)");
     }
     elsif($timediff ne "" && $timediff < $min_timediff) {
       ignoring_trkpt("time difference = $timediff sec (less than $min_timediff)");
@@ -395,7 +401,7 @@ for($i=0; $i <= $#TIM; $i++) {
     # will re-calculate speed etc. relative to same previous piont as before
   }
   else {
-    ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd, $prev_gain, $prev_acc) = ($lat, $lon, $ele, $sec, $spd, $gain, $acc);
+    ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd, $prev_gain, $prev_acc) = ($lat, $lon, $ele, $sec, $spd, $rate, $acc);
   }
 }
 $average_timediff = $num_pts_mov ? $sum_timediff_mov/$num_pts_mov : 0; # used for smoothing
@@ -472,15 +478,39 @@ for($i=0; $i <= $#TIM; $i++) {
 
 ### performing analysis/statistics
 
-sub push_climb_phase {
-  my $diff_ele = $_[0];
-  my $sec1     = $_[1];
-  my $sec2     = $_[2];
-  my $index    = $_[3];
-  $rate = $sec1 && $sec2 && $sec2 > $sec1 ? 3600*$diff_ele/($sec2-$sec1) : 0;
-  push @PHASE_INDEX, $index;
-  push @PHASE_DIFF , $diff_ele;
-  push @PHASE_RATE , $rate;
+sub push_phase {
+  my $start_index = $_[0];
+  my $end_index = $_[1];
+  my $sec1 = $SEC[$start_index];
+  my $sec2 = $SEC[$end_index];
+  my $diff_ele = $ELE[$end_index] - $ELE[$start_index];
+  my $dist     = 0;
+  my $rate     = 0;
+  my $spd      = 0;
+  my $max_rate = 0;
+  my $max_rate_index = 0;
+  my $max_spd  = 0;
+  my $max_spd_index = 0;
+  for (my $i = $start_index+1; $i <= $end_index; $i++) {
+    $dist += $DIST[$i];
+    $rate  = $RATE[$i];
+    $spd   = $SPD[$i];
+    ($max_rate, $max_rate_index) = ($rate, $i) if ($diff_ele >= 0 ? $rate > $max_rate : $rate < $max_rate);
+    ($max_spd , $max_spd_index ) = ($spd , $i) if $spd > $max_spd;
+  }
+  my $avg_spd = 0;
+  my $avg_rate = 0;
+  if ($sec1 && $sec2 && $sec2 > $sec1) {
+    $avg_spd = $dist/($sec2-$sec1);
+    $avg_rate = 3600*$diff_ele/($sec2-$sec1);
+  }
+  push @PHASE_DIFF, $diff_ele;
+  push @PHASE_DIST, $dist;
+  push @PHASE_SPD , $avg_spd;
+  push @PHASE_RATE, $avg_rate;
+  push @PHASE_MAXSPD_INDEX , $max_spd_index;
+  push @PHASE_MAXRATE_INDEX, $max_rate_index;
+  push @PHASE_END_INDEX    , $end_index;
 }
 
 $sum_timediff_mov = 0; # re-calculate, since points may have been ignored or smoothened
@@ -495,6 +525,7 @@ for($i=0; $i <= $#TIM+1; $i++) {
     $ele = $prev_turn_ele;
   }
   if ($SEG[$i]) { # (re-)start climb phase recognition on track segment start (including: at $i == 0)
+    $SPD[$i] = 0 if $SPD[$i] eq ""; # at segment start, set speed to 0 if no recorded speed available
     $direction = 0; 
     $last_gain_index = $last_loss_index = 0;
     $prev_turn_ele = $local_max_ele = $local_min_ele = "";
@@ -502,20 +533,17 @@ for($i=0; $i <= $#TIM+1; $i++) {
   ($prev_turn_ele, $prev_turn_index) = ($ele, $i) if ($prev_turn_ele eq "");
   ($local_max_ele, $local_max_index) = ($ele, $i) if $direction >= 0 && ($local_max_ele eq "" || $ele > $local_max_ele);
   ($local_min_ele, $local_min_index) = ($ele, $i) if $direction <= 0 && ($local_min_ele eq "" || $ele < $local_min_ele);
-  if($SEG[$i]) {
-    $SPD[$i] = 0 if $SPD[$i] eq ""; # at segment start, set speed to 0 if no recorded speed available
-  }
   if(!$SEG[$i] && $ele ne "") { # not at segment start
   check_next:
     $prev_turn_sec = $SEC[$prev_turn_index];
     $local_max_sec = $SEC[$local_max_index];
     $local_min_sec = $SEC[$local_min_index];
     $seg_end = $i == $#TIM || $SEG[$i+1];
-    if($direction >= 0 && $local_max_index > $prev_turn_index &&
-       ($ele <= $local_max_ele-$ele_threshold || $seg_end)) { # when actually starting going down, or at end
+    if ($direction >= 0 && $local_max_index > $prev_turn_index &&
+        ($ele <= $local_max_ele-$ele_threshold || $seg_end)) { # when actually starting going down, or at end
       $diff_ele = $local_max_ele-$prev_turn_ele;
       if ($diff_ele >= $ele_threshold) { 
-	push_climb_phase($diff_ele, $prev_turn_sec, $local_max_sec, $local_max_index) if ($climb_phases);
+	push_phase($prev_turn_index, $local_max_index) if ($phases);
 	$sum__ascent += $diff_ele;
 	$time__ascent += $local_max_sec - $prev_turn_sec;
 	$last_gain_index = $local_max_index;
@@ -524,11 +552,11 @@ for($i=0; $i <= $#TIM+1; $i++) {
       ($local_min_ele, $local_min_index) = ($ele, $i);
       $direction = -1;
       goto check_next;
-    } elsif($direction <= 0 && $local_min_index > $prev_turn_index &&
-	    ($ele >= $local_min_ele+$ele_threshold || $seg_end)) { # when actually starting going up, or at end
+    } elsif ($direction <= 0 && $local_min_index > $prev_turn_index &&
+	     ($ele >= $local_min_ele+$ele_threshold || $seg_end)) { # when actually starting going up, or at end
       $diff_ele = $local_min_ele-$prev_turn_ele;
       if (-$diff_ele >= $ele_threshold) {
-	push_climb_phase($diff_ele, $prev_turn_sec, $local_min_sec, $local_min_index) if ($climb_phases);
+	push_phase($prev_turn_index, $local_min_index) if ($phases);
 	$sum_descent += $diff_ele;
 	$time_descent += $local_min_sec - $prev_turn_sec;
 	$last_loss_index = $local_min_index;
@@ -539,9 +567,12 @@ for($i=0; $i <= $#TIM+1; $i++) {
       goto check_next;
     }
     if($i <= $#TIM) {
-      ($diff_ele, $timediff, $gain, $dis, $spd, $acc) = calc_diffs();
+      ($diff_ele, $timediff, $rate, $dis, $spd, $acc) = calc_diffs();
       $SPD[$i] = $spd if $spd ne ""; # set speed, preferring calculated over any recorded speed 
-      if($spd ne "" && 3.6*$spd >= $min_spd_mov) { # implies $timediff ne ""
+      $spd =  $SPD[$i];
+      push @DIST, $dis;
+      push @RATE, $rate;
+      if($spd ne "" && $timediff ne "" && 3.6*$spd >= $min_spd_mov) {
 	$sum_timediff_mov += $timediff;
 	$sum_dis += $dis;
       }
@@ -557,8 +588,8 @@ for($i=0; $i <= $#TIM+1; $i++) {
     $max_sec = $sec if $max_sec<$sec || $i == 0;
     ($min_ele, $min_ele_index) = ( $ele , $i) if $ele  ne "" && $min_ele>$ele || $i == 0;
     ($max_ele, $max_ele_index) = ( $ele , $i) if $ele  ne "" && $max_ele<$ele || $i == 0;
-    ($max_gain, $max_gain_index)= ($gain, $i) if $gain ne "" && $max_gain< $gain || $i == 0;
-    ($max_loss, $max_loss_index)= ($gain, $i) if $gain ne "" &&-$max_loss<-$gain || $i == 0;
+    ($max_gain, $max_gain_index)= ($rate, $i) if $rate ne "" && $max_gain< $rate || $i == 0;
+    ($max_loss, $max_loss_index)= ($rate, $i) if $rate ne "" &&-$max_loss<-$rate || $i == 0;
     ($max_spd , $max_spd_index) = ($spd , $i) if $spd  ne "" && $max_spd<$spd || $i == 0;
     ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd) = ($lat, $lon, $ele, $sec, $spd);
   }
@@ -663,24 +694,27 @@ sub point {
 			    .(sprintf $ele_precision, correct_ele(-1, $i)).
          "  time = $TIM[$i]".(" " x max(0,$tim_len-length($TIM[$i])))."  $n\n";
 }
-sub climb_phase_text {
+sub phase_text {
   my $i = $_[0];
-  my $Diff = sprintf $dif_precision, $PHASE_DIFF[$i];
-  my $Rate = sprintf $rat_precision, $PHASE_RATE[$i];
-  return (" " x max(0,length($#PHASE_INDEX+1)-length($i+1))).($i+1).". ".($Diff >=0 ? " ascent = " : "descent = ")."$Diff m at rate = $Rate m/s";
+  return (" " x max(0,length($#PHASE_END_INDEX+1)-length($i+1))).($i+1).". ";
 }
 
 $wpts="";
 for($j=0; $j <= $#WTIM; $j++) {
   $wpts.=wpt($j, -1, "");
 }
-$climb_phase_wpts="";
-for($i=0; $i <= $#PHASE_INDEX; $i++) {
-  $climb_phase_wpts.=wpt(-1, $PHASE_INDEX[$i], climb_phase_text($i));
-}
-$climb_phase_points="";
-for($i=0; $i <= $#PHASE_INDEX; $i++) {
-  $climb_phase_points.=point($PHASE_INDEX[$i], climb_phase_text($i));
+$phase_wpts="";
+$phase_points="";
+for($i=0; $i <= $#PHASE_END_INDEX; $i++) {
+  my $Spd  = phase_text($i)."max speed=    " .spd_string(               $SPD[$PHASE_MAXSPD_INDEX [$i]])." km/h; ".
+                            "avg speed =    ".spd_string(                    $PHASE_SPD          [$i] )." km/h";
+  my $Rate = phase_text($i)."max rate = "    .(sprintf $rat_precision, $RATE[$PHASE_MAXRATE_INDEX[$i]])."  m/h; ".
+                            "avg rate  ="    .(sprintf $rat_precision,       $PHASE_RATE         [$i] )."  m/h";
+  my $AscDesc = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
+  my $Dist = phase_text($i)."$AscDesc  = ".(sprintf     $dif_precision, $PHASE_DIFF[$i]     )."  m;   ".
+                            "distance  = ".(sprintf "%".$dis_precision, $PHASE_DIST[$i]/1000)." km  ";
+  $phase_wpts.=wpt(-1, $PHASE_MAXSPD_INDEX[$i], $Spd).wpt(-1, $PHASE_MAXRATE_INDEX[$i], $Rate).wpt(-1, $PHASE_END_INDEX[$i], $Dist);
+  $phase_points.=point($PHASE_MAXSPD_INDEX[$i], $Spd).point(  $PHASE_MAXRATE_INDEX[$i], $Rate).point(  $PHASE_END_INDEX[$i], $Dist);
 }
 $Max_spd      =                  spd_string($SPD[$max_spd_index]);
 $Max_gain_spd = sprintf $rat_precision, 3.6*$SPD[$max_gain_index];
@@ -689,15 +723,15 @@ while(substr($Max_gain_spd,0,1) eq " " && substr($Max_loss_spd,0,1) eq " ") {
   $Max_gain_spd = substr($Max_gain_spd,1);
   $Max_loss_spd = substr($Max_loss_spd,1);
 }
-$max_spd_text  = "max speed     =  $Max_spd km/h";
+$max_spd_text  = "max speed     = $Max_spd km/h";
 $min_ele_text  = "min altitude  = $Min_ele m";
 $max_ele_text  = "max altitude  = $Max_ele m";
 $sum__ascent_text = "total  ascent = $sum__ascent m";
 $sum_descent_text = "total descent = $sum_descent m";
-$avg__ascent_text = "average  ascent rate = $Avg__ascent_rate m/h";
-$avg_descent_text = "average descent rate = $Avg_descent_rate m/h";
-$max_gain_text = "max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h";
-$max_loss_text = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h";
+$avg__ascent_text = "avg rate = $Avg__ascent_rate m/h";
+$avg_descent_text = "avg rate = $Avg_descent_rate m/h";
+$max_gain_text = "max  ascent rate = "." $Max_gain m/h at $Max_gain_spd km/h";
+$max_loss_text = "max descent rate = ". "$Max_loss m/h at $Max_loss_spd km/h";
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
 $final_text = "
@@ -711,11 +745,11 @@ $wpts .= wpt(-1, 0, "start").
 wpt(-1, $max_spd_index  , $max_spd_text).
 wpt(-1, $min_ele_index  , $min_ele_text).
 wpt(-1, $max_ele_index  , $max_ele_text).
-wpt(-1, $last_gain_index,"$sum__ascent_text\n$avg__ascent_text").
-wpt(-1, $last_loss_index,"$sum_descent_text\n$avg_descent_text").
+wpt(-1, $last_gain_index,"$sum__ascent_text; $avg__ascent_text").
+wpt(-1, $last_loss_index,"$sum_descent_text; $avg_descent_text").
 wpt(-1, $max_gain_index , $max_gain_text).
 wpt(-1, $max_loss_index , $max_loss_text).
-$climb_phase_wpts.
+$phase_wpts.
 wpt(-1, $#TIM, "end$final_text
 ");
 $HEAD =~ s#(<trk>)#$wpts$1#s; # prepend collected and computed waypoints to track
@@ -730,7 +764,7 @@ point($last_gain_index,"$sum__ascent_text; $avg__ascent_text").
 point($last_loss_index,"$sum_descent_text; $avg_descent_text").
 point($max_gain_index , $max_gain_text).
 point($max_loss_index , $max_loss_text).
-$climb_phase_points.
+$phase_points.
 point($#TIM, "end").substr($final_text,1)."
 GPXConv statistics end
 ";
@@ -784,7 +818,7 @@ for($i=0; $i <= $#TIM; $i++) {
   print STDOUT "<time>$tim</time>" if $tim;
   print STDOUT "<extensions><speed>".spd_string($spd)."</speed></extensions>" if $spd && $include_speed;
   print STDOUT "<cmt>interpolated</cmt>" if $INT[$i];
-  print STDOUT "<cmt>a previous point was ignored</cmt>" if $IGN[$i];
+  print STDOUT "<cmt>previous point was ignored</cmt>" if $IGN[$i];
   print STDOUT "</trkpt>\n";
   print STDOUT "</trkseg>\n<trkseg>\n" if $SEG[$i+1] && $i<$#TIM;
 }
