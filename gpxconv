@@ -8,7 +8,7 @@
 # usage: gpxconv infile(s) >outfile
 # reads from file(s) given as argument (or STDIN) and writes to STDOUT
 #                             prints any warnings and errors to STDERR
-# Version 1.4 (c) 2012 David von Oheimb
+# Version 1.5 (c) 2017 David von Oheimb
 # License: Attribution-NonCommercial-ShareAlike, see
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
 ################################################################################
@@ -31,8 +31,8 @@ use Time::gmtime;
 $hiking    = 0;             # set this to 0 for driving etc.
 $smoothing = 1;             # set this to 0 to prevent smoothing
 $min_timediff          = $hiking ?    4 :    2;  # in seconds
-$max_sensible_ele_diff = $hiking ? 3600 : 10800; # maximal climb rate in     meters per hour
-$max_sensible_acc      = $hiking ?  0.5 :    2; # maximal rate of descent in meters per second per second
+$max_sensible_ele_diff = $hiking ? 3600 : 10800; # maximal ascent rate in     meters per hour
+$max_sensible_acc      = $hiking ?  0.5 :    3; # maximal rate of descent in meters per second per second
 $max_sensible_speed    = $hiking ?   20 :  200; # maximal speed in kilometers per hour
 $max_sensible_angle_diff = 9135;         # maximal turning angle
 $min_sensible_ele = -450;   # actual values may go down to -450 m (at Dead Sea)
@@ -194,14 +194,15 @@ sub calc_diffs() {
   # assuming no acceleration if no time difference available
 }
 
-#read all trackpoints from all segments
+#read all trackpoints from all track segments
 $/ = "<trkpt ";
 $state = 0;
 while(<>) {
   while(s#(<wpt .+?</wpt>\n?)##s) { #collect waypoints
     $wpt = $1;
     $wpt =~ s#\n##sg;
-    if (!($wpt =~ m#\[(max speed|(max|min) height|max (climb|descent) rate|total (gain|loss|distance)) = [\d\.]+ k?m(\/h)?#)) { #\]
+    if (!($wpt =~ m#\[(max speed|(max|min) height|max (climb|ascent|descent) rate|total (gain|loss|distance)) = [\d\.]+ k?m(\/h)?\]#) && 
+        !($wpt =~ m#\[(start|end;.*?)\]#)) { 
       parse_trkpt($wpt);
       $ele=$EE if $ele==0;
       push @WLAT,$lat;
@@ -503,19 +504,27 @@ $Avg_spd=sprintf $spd_precision, $sum_timediff_mov ? 3.6*$sum_dis/$sum_timediff_
 $Sum_gain = $sum_gain; #round()
 $Sum_loss = $sum_loss; #round()
 
+$ele_diff = $max_ele - $min_ele;
+$sec_diff = str_to_epoch($TIM[$max_ele_index]) - str_to_epoch($TIM[$min_ele_index]);
+$avg_gain = $sec_diff ? $ele_diff / $sec_diff * 3600 : 0;
+$Avg_gain = sprintf "%.0f", $avg_gain;
+
 $wpts = "
-<wpt lat=\"$LAT[$max_spd_index]\" "."lon=\"$LON[$max_spd_index]\">".
-     "<ele>$ELE[$max_spd_index]</ele><time>$TIM[$max_spd_index]</time>".
-     "<name>[max speed = $max_spd km/h]</name></wpt>
+<wpt lat=\"$LAT[0]\" "."lon=\"$LON[0]\">".
+     "<ele>$ELE[0]</ele><time>$TIM[0]</time>".
+     "<name>[start]</name></wpt>
 <wpt lat=\"$LAT[$min_ele_index]\" "."lon=\"$LON[$min_ele_index]\">".
      "<ele>$ELE[$min_ele_index]</ele><time>$TIM[$min_ele_index]</time>".
      "<name>[min height = $min_ele m]</name></wpt>
 <wpt lat=\"$LAT[$max_ele_index]\" "."lon=\"$LON[$max_ele_index]\">".
      "<ele>$ELE[$max_ele_index]</ele><time>$TIM[$max_ele_index]</time>".
      "<name>[max height = $max_ele m]</name></wpt>
+<wpt lat=\"$LAT[$max_spd_index]\" "."lon=\"$LON[$max_spd_index]\">".
+     "<ele>$ELE[$max_spd_index]</ele><time>$TIM[$max_spd_index]</time>".
+     "<name>[max speed = $max_spd km/h]</name></wpt>
 <wpt lat=\"$LAT[$max_gain_index]\" "."lon=\"$LON[$max_gain_index]\">".
      "<ele>$ELE[$max_gain_index]</ele><time>$TIM[$max_gain_index]</time>".
-     "<name>[max climb rate = $max_gain m/h]</name></wpt>
+     "<name>[max ascent rate = $max_gain m/h]</name></wpt>
 <wpt lat=\"$LAT[$max_loss_index]\" "."lon=\"$LON[$max_loss_index]\">".
      "<ele>$ELE[$max_loss_index]</ele><time>$TIM[$max_loss_index]</time>".
      "<name>[max descent rate = $max_loss m/h]</name></wpt>
@@ -527,7 +536,7 @@ $wpts = "
      "<name>[total loss = $Sum_loss m]</name></wpt>
 <wpt lat=\"$LAT[$#TIM]\" "."lon=\"$LON[$#TIM]\">".
      "<ele>$ELE[$#TIM]</ele><time>$TIM[$#TIM]</time>".
-     "<name>[total distance = $Sum_dis km;\ntotal moving time = $Sum_timediff_mov;\naverage moving speed = $Avg_spd km/h]</name></wpt>
+     "<name>[end;\ntotal distance = $Sum_dis km;\ntotal moving time = $Sum_timediff_mov;\naverage moving speed = $Avg_spd km/h\naverage gain = $Avg_gain m/h]</name></wpt>
 ";
 $HEAD =~ s#(<trk>)#substr($wpts,1).$1#se; # append computed waypoints just before track
 
@@ -536,14 +545,17 @@ GPXConv statistics (including interpolated trackpoints; not including ignored tr
 Total distance = $Sum_dis km
 Total moving time = $Sum_timediff_mov
 Average moving speed = $Avg_spd km/h
+Average gain = $Avg_gain m/h
 Total elevation gain = $Sum_gain m
 Total elevation loss = $Sum_loss m
 Elevation ".($geoid_corr ? "corrected by geoid height = $ele_corr m" : "not corrected")."
-At time=$TIM[$max_spd_index],\ lat/lon=$LAT[$max_spd_index]\,$LON[$max_spd_index]:\ max speed  = $max_spd km/h
-At time=$TIM[$min_ele_index],\ lat/lon=$LAT[$min_ele_index]\,$LON[$min_ele_index]:\ min height = $min_ele m
-At time=$TIM[$max_ele_index],\ lat/lon=$LAT[$max_ele_index]\,$LON[$max_ele_index]:\ max height = $max_ele m
-At time=$TIM[$max_gain_index], lat/lon=$LAT[$max_gain_index],$LON[$max_gain_index]: max climb   rate = $max_gain m/h
-At time=$TIM[$max_loss_index], lat/lon=$LAT[$max_loss_index],$LON[$max_loss_index]: max descent rate = $max_loss m/h
+At time=$TIM[0             ],\ lat/lon/ele=$LAT[0             ]\,$LON[0             ]\,$ELE[0             ]:\ start
+At time=$TIM[$min_ele_index],\ lat/lon/ele=$LAT[$min_ele_index]\,$LON[$min_ele_index]\,$ELE[$min_ele_index]:\ min height = $min_ele m
+At time=$TIM[$max_ele_index],\ lat/lon/ele=$LAT[$max_ele_index]\,$LON[$max_ele_index]\,$ELE[$max_ele_index]:\ max height = $max_ele m
+At time=$TIM[$max_spd_index],\ lat/lon/ele=$LAT[$max_spd_index]\,$LON[$max_spd_index]\,$ELE[$max_spd_index]:\ max speed  = $max_spd km/h
+At time=$TIM[$max_gain_index], lat/lon/ele=$LAT[$max_gain_index],$LON[$max_gain_index],$ELE[$max_gain_index]: max ascent  rate = $max_gain m/h
+At time=$TIM[$max_loss_index], lat/lon/ele=$LAT[$max_loss_index],$LON[$max_loss_index],$ELE[$max_loss_index]: max descent rate = $max_loss m/h
+At time=$TIM[$#TIM         ],\ lat/lon/ele=$LAT[$#TIM         ]\,$LON[$#TIM         ]\,$ELE[$#TIM         ]:\ end
 GPXConv statistics end
 ";
 $HEAD =~ s#(<trk>\s*(<name>.*?</name>)?)#$1\n<cmt></cmt>#s # add empty comment in track
@@ -556,6 +568,6 @@ for($i=0; $i <= $#TIM; $i++) {
   print STDOUT "<ele>$ELE[$i]</ele>" if $ELE[$i] != $EE;
   print STDOUT "<time>$TIM[$i]</time><extensions><speed>$SPD[$i]</speed></extensions>" if $TIM[$i];
   print STDOUT "</trkpt>\n";
-  print STDOUT "</trkseg>\n<trkseg>\n" if $SEG[$i];
+  print STDOUT "</trkseg>\n<trkseg>\n" if $SEG[$i] && $i<$#TIM;
 }
 print STDOUT "</trkseg>\n</trk>\n</gpx>\n";
