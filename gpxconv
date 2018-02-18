@@ -7,26 +7,41 @@
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 # Produces statistics, including ascent/descent rates of climbing phases.
 # Usage: gpxconv infile(s) >outfile
-# Options are simply set by changing global variable values in the source code.
+# Options can be set by changing values of the configuration variables below.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT
 #                             prints any warnings and errors to STDERR
-# Version 2.1 (c) 2012-2017 David von Oheimb
+# Version 2.2 (c) 2012-2017 David von Oheimb
 # License: Attribution-NonCommercial-ShareAlike, see
 # http://creativecommons.org/licenses/by-nc-sa/3.0/
 ################################################################################
 
 ### configuration variables
 
-$hiking    = 0;
-$driving   = 0;               # otherwise flying; only relevant if $hiking is 0
-$smoothing = 1;               # set this to 0 to disable smoothing
-$smoothing_max_timegap = 60;  # maximum number of seconds between trackpoint to be smoothened and its neighbors
+# basic output control
 $prune_wpts = 0; 
 $prune_automatic_wpts = 1;
 $prune_desc = 1;
 $prune_extensions = 1;
 $include_speed = 0;
-$climb_phases = 1;
+
+# analysis control
+$min_spd_mov = 1;             # threshold for detecting movement (in kilometers per hour)
+$climb_phases = 0;            # analysis of ascent/descent phases
+
+# smoothing control
+$smoothing = 0;               # set this to 0 to disable smoothing
+$smoothing_max_timegap = 60;  # maximum number of seconds between trackpoint to be smoothened and its neighbors
+
+# interpolation control
+$max_timegap = 3600;          # in seconds between neighboring trackpoints before interpolation should be used (3600 for both exiftool and TrailGuru)
+
+# warning output control
+$max_dis     = 2000;          # threshold for distance warning (in meters)
+$max_spd_deviation = 1;       # threshold for speed measuring deviation warning (in kilometers per hour)
+
+# pruning control
+$hiking    = 0;
+$driving   = 0;               # otherwise flying; only relevant if $hiking is 0
 $min_timediff          = $hiking ?    4 : ($driving ?     2 :     1); # in seconds
 $max_sensible_ele_gain = $hiking ? 1800 : ($driving ?  5000 : 25000); # maximal ascent rate in meters per hour
 $max_sensible_ele_loss = $hiking ? 3600 : ($driving ? 10000 : 50000); # maximal descent rate in meters per hour
@@ -34,10 +49,8 @@ $max_sensible_acc      = $hiking ?  0.5 : ($driving ?     3 :     5); # maximal 
 $max_sensible_speed    = $hiking ?   20 : ($driving ?   150 :  1100); # maximal speed in kilometers per hour
 $max_sensible_angle_diff = 170;         # maximal turning angle
 $min_sensible_ele = -10; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
-$max_timegap = 3600;     # in seconds between neighboring trackpoints before interpolation should be used (3600 for both exiftool and TrailGuru)
-$max_dis     = 2000;     # threshold for distance warning (in meters)
-$max_spd_deviation = 1;  # threshold for speed measuring deviation warning (in kilometers per hour)
-$min_spd_mov = 1;        # threshold for detecting movement (in kilometers per hour)
+
+# elevation correction control
 $geoid_corr = 0;         # whether to correct elevation wrt. geoid height retrieved online
 $ele_corr = 0; #47;      # default elevation correction, if used should be -(average geoid height)
 $ele_threshold = 20;     # for detecting/accepting ascent and descent phases, should be larger than short-term measurement error
@@ -164,10 +177,10 @@ sub calc_diffs() {
   my $diff_ele = ($ele ne "" && $prev_ele ne "" ? $ele-$prev_ele : "");
   #http://forums.howwhatwhy.com/showflat.php?Cat=&Board=scigen&Number=-208125
   my $timediff = ($sec && $prev_sec ? $sec-$prev_sec : "");
-  my $gain = $diff_ele ne "" && $timediff ne "" ? 3600*$diff_ele/($timediff) : "";
-  my $speed = ($timediff ne "" ? $dis/$timediff : $spd);
+  my $gain = $diff_ele ne "" && $timediff ne "" ? ($timediff > 0 ? 3600*$diff_ele/($timediff) : $prev_gain) : "";
+  my $speed = ($timediff ne "" ? ($timediff > 0 ? $dis/$timediff : $prev_spd) : $spd);
   $max_speed = $speed if $max_speed < $speed;
-  my $acc = ($speed ne "" && $prev_spd ne "" && $timediff ne "" ? ($speed-$prev_spd)/$timediff : "");
+  my $acc = ($speed ne "" && $prev_spd ne "" && $timediff ne "" ? ($timediff > 0 ? ($speed-$prev_spd)/$timediff : $prev_acc) : "");
   return ($diff_ele, $timediff, $gain, $dis, $speed, $acc);
 }
 
@@ -222,7 +235,7 @@ while(<>) {
     if (m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n# && $smoothing) {
       print STDERR "WARNING: smoothing apparently has already been done on input\n";
     }
-    print_trkpt("INFO: new track after  ",""); # typically, new file
+    print_trkpt("INFO: new track after  ","") if $#TIM >= 0; # typically, new file
     $state = 2 if $state > 2; # expecting new trkseg
   }
   else {
@@ -254,7 +267,13 @@ while(<>) {
       $diff_time = ($sec && $prev_sec ? $sec-$prev_sec : 0);
       if($diff_time < 0) { # this implies $sec && $prev_sec
         # print_trkpt("WARNING: time difference = ".timediff_string($diff_time)." negative at", "; waypoint checking may not work correctly");
-        print_trkpt("FATAL:   before  ", " negative time difference = ".timediff_string(-$diff_time)."\naborting"); exit 0;
+        print_trkpt("FATAL: before", " negative time difference (".timediff_string(-$diff_time).")\naborting"); exit 0;
+      }
+      if($sec && $prev_sec && $diff_time == 0 && ($lat != $prev_lat || $lon != $prev_lon)) {
+	print_trkpt("FATAL: point before", " has same time but different position ($prev_lat, $prev_lon)\naborting"); exit 0;
+      }
+      if($sec && $prev_sec && $diff_time == 0 && $ele != $prev_ele) {
+	print_trkpt("FATAL: point before", " has same time but different elevation ($prev_ele m)\naborting"); exit 0;
       }
     }
     ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd) = ($lat, $lon, $ele, $sec, $spd);
@@ -264,7 +283,7 @@ while(<>) {
     $state = 2; # starting new trkseg
   }
 }
-print_trkpt("INFO: last segment end ","");
+print_trkpt("INFO: last segment end ","") if $#TIM >= 0;
 
 
 ### sanitizing trackpoints
@@ -297,7 +316,7 @@ for($i=0; $i <= $#TIM; $i++) {
       ignoring_trkpt("elevation is less than $min_sensible_ele");
       $ignore = 1;
     }
-    $spd = $prev_spd = ""; # reset speed and acceleration
+    $spd = $prev_spd = $prev_acc = $prev_gain = ""; # reset speed, acceleration, etc.
   } else {
     if($i == $#SEG || $SEG[$i+1]) { # at segment end
       $theta_diff = 0;
@@ -376,7 +395,7 @@ for($i=0; $i <= $#TIM; $i++) {
     # will re-calculate speed etc. relative to same previous piont as before
   }
   else {
-    ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd) = ($lat, $lon, $ele, $sec, $spd);
+    ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd, $prev_gain, $prev_acc) = ($lat, $lon, $ele, $sec, $spd, $gain, $acc);
   }
 }
 $average_timediff = $num_pts_mov ? $sum_timediff_mov/$num_pts_mov : 0; # used for smoothing
