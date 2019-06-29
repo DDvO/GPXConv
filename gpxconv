@@ -135,7 +135,7 @@ sub parse_trkpt {
      $s =~ m#lon="(-?[\.\d ]+)"\s*lat="(-?[\.\d ]+)">\s*(<ele>(-?[\.\d ]+)</ele>)?\s*(<time>([-:T\dZ ]+)</time>)?#s) {
     $lat=$1;
     $lon=$2;
-    $ele=$4; # may be empty
+    $ele=$4; # may be empty or 0
     $tim=$6; # may be empty
     $lat_len = max($lat_len, length($lat));
     $lon_len = max($lon_len, length($lon));
@@ -145,6 +145,7 @@ sub parse_trkpt {
       ($lat, $lon) = ($lon, $lat);
     }
     $sec=str_to_epoch($tim); #or within a day: $7+60*($6+60*$5); #may be 0
+    $ele = "" if $ele == 0 && !$sec; # for routes generated, e.g., using Google My Maps
     $spd="";
     if($s =~ m#<speed>(-?[\.\d ]+)</speed>#s) {
       $spd = $1;
@@ -260,9 +261,27 @@ while(<>) {
     $ele_solution = "will try assuming no elevation change" if !$SEG[$#ELE] && $ELE[$#ELE-1] ne "";
     $time_solution = "cannot calculate speed and acceleration";
     $time_solution = "will try substituting time difference by distance/speed" if !$sec && $spd ne "";
-    print_trkpt("WARNING: no elevation found for","; $ele_solution")                 if  $sec && $ele eq "";
-    print_trkpt("WARNING: no time found for     ","; $time_solution")                if !$sec && $ele ne "";
-    print_trkpt("WARNING: no elevation&time for ","; $ele_solution; $time_solution") if !$sec && $ele eq "";
+    if($sec && $ele eq "") {
+        $num_no_ele++;
+        print_trkpt("WARNING: no elevation found for","; $ele_solution") unless $prev_lat && $prev_sec && $prev_ele eq "";
+    } elsif ($num_no_ele) {
+        print_trkpt("WARNING:                  until", " this has repeated ".$num_no_ele." times");
+        $num_no_ele=0;
+    }
+    if(!$sec && $ele ne "") {
+        $num_no_time++;
+        print_trkpt("WARNING: no time found for     ","; $time_solution") unless $prev_lat && !$prev_sec && $prev_ele ne "";
+    } elsif ($num_no_time) {
+        print_trkpt("WARNING:                  until", " this has repeated ".$num_no_time." times");
+        $num_no_time=0;
+    }
+    if(!$sec && $ele eq "") {
+        $num_no_ele_time++;
+        print_trkpt("WARNING: no elevation&time for ","; $ele_solution; $time_solution") unless $prev_lat && !$prev_sec && $prev_ele eq "";
+    } elsif ($num_no_ele_time) {
+        print_trkpt("WARNING:                  until", " this has repeated ".$num_no_ele_time." times");
+        $num_no_ele_time = 0;
+    }
     # will go wrong if previous trkpt gets ignored: $ELE[$#ELE] = $ELE[$#ELE-1] if $ele eq "" && !$SEG[$#ELE]; # implies $#ELE > 0
     if($state == 1) {
       print_trkpt("INFO: first segment at ","");
@@ -289,6 +308,9 @@ while(<>) {
   }
 }
 print_trkpt("INFO: last segment end ","") if $#TIM >= 0;
+print_trkpt("WARNING:                  until", " this has repeated ".$num_no_ele." times") if $num_no_ele;
+print_trkpt("WARNING:                  until", " this has repeated ".$num_no_time." times") if $num_no_time;
+print_trkpt("WARNING:                  until", " this has repeated ".$num_no_ele_time." times") if $num_no_ele_time;
 
 
 ### sanitizing trackpoints
