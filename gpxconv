@@ -781,11 +781,14 @@ for($i=0; $i <= $#TIM; $i++) {
   if($diff_time > $max_timegap) { # implies $i>0
     $npoints = int($diff_time / $max_timegap) + ($diff_time % $max_timegap == 0 ? 0 : 1);
     $time_inc = $diff_time/$npoints; # 0 < $time_inc <= $max_timegap
+    $dis = distance($prev_lat, $prev_lon, $prev_ele);
+    $Dis  = sprintf "%4".$dis_precision, $dis/1000;
     print_trkpt("WARNING: before  ",
-		" time difference = ".timediff_string($diff_time)."; interpolating points every ". (sprintf $sec_precision, $time_inc) ." seconds");
+		" time difference = ".timediff_string($diff_time)." over distance = ".$Dis." km".
+                "; interpolating points every ". (sprintf $sec_precision, $time_inc) ." seconds");
     $seg = $SEG[$i]; # if was a segment start, have segment starts just before and after interpolated points
     $ign = $IGN[$i]; # if previous point was ignored, carry this over to all interpolated points
-    # insert equidistant iterpolated pounts,
+    # insert equidistant iterpolated points,
     # plus in case of new segment: an extra trkpt that equals the end of the previous segment and and one the equals the start of the next segment
     $p = $i-1; # previous index
     $t = $seg ? 0 : $time_inc;
@@ -804,6 +807,7 @@ for($i=0; $i <= $#TIM; $i++) {
       $t+=$time_inc;
     }
   }
+  ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd) = ($lat, $lon, $ele, $sec, $spd);
 }
 
 
