@@ -10,7 +10,7 @@
 # Options can be set by changing values of the configuration variables below.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT
 #                             prints any warnings and errors to STDERR
-# (c) 2012-2018 David von Oheimb - License: MIT - Version 2.3
+# (c) 2012-2019 David von Oheimb - License: MIT - Version 2.3
 ################################################################################
 
 ### configuration variables
@@ -90,12 +90,12 @@ use Time::gmtime;
 sub str_to_epoch {
   my $s=$_[0];
 # return DateTime::Format::ISO8601->parse_datetime($s)->epoch(); # not used due to Perl library bug on Mac OS X: "dyld: lazy symbol binding failed: Symbol not found: _Perl_newSVpvn_flags"
-##http://www.en8848.com.cn/Reilly%20Books/perl3/cookbook/ch03_08.htm
-##use Time::Local;
-### $date is "1998-06-03" (YYYY-MM-DD form).
-##($yyyy, $mm, $dd) = ($date =~ /(\d+)-(\d+)-(\d+)/;
-### calculate epoch seconds at midnight on that day in this timezone
-##$epoch_seconds = timegm(0, 0, 0, $dd, $mm, $yyyy);
+# #http://www.en8848.com.cn/Reilly%20Books/perl3/cookbook/ch03_08.htm
+# #use Time::Local;
+# # $date is "1998-06-03" (YYYY-MM-DD form).
+# #($yyyy, $mm, $dd) = ($date =~ /(\d+)-(\d+)-(\d+)/;
+# # # calculate epoch seconds at midnight on that day in this timezone
+# #$epoch_seconds = timegm(0, 0, 0, $dd, $mm, $yyyy);
   $s =~ s/-/\//g;
   $s =~ s/T/ /;
   $s =~ s/Z/+0000/;
@@ -187,7 +187,7 @@ sub calc_diffs() {
 
 ### start main
 
-#read all trackpoints from all track segments
+## read all trackpoints from all track segments
 $/ = "<trkpt ";
 $state = 0; # processing first header (of first input file)
 push @DIST, 0;
@@ -314,7 +314,7 @@ print_trkpt("WARNING:                  until", " this has repeated ".$num_no_tim
 print_trkpt("WARNING:                  until", " this has repeated ".$num_no_ele_time." times") if $num_no_ele_time;
 
 
-### sanitizing trackpoints
+## sanitize trackpoints
 
 sub distance {
   my $prev_lat = $_[0];
@@ -430,7 +430,7 @@ for($i=0; $i <= $#TIM; $i++) {
 $average_timediff = $num_pts_mov ? $sum_timediff_mov/$num_pts_mov : 0; # used for smoothing
 
 
-### checking waypoints
+## check waypoints
 
 for($j=0; $j <= $#WSEC; $j++) {
   $sec=$WSEC[$j];
@@ -465,7 +465,7 @@ for($j=0; $j <= $#WSEC; $j++) {
 }
 
 
-### smoothing trackpoints
+## smoothen trackpoints
 
 # each point, by weightened average with (smoothened) previous point and (original) next point
 sub average {
@@ -499,7 +499,7 @@ for($i=0; $i <= $#TIM; $i++) {
 }
 
 
-### performing analysis/statistics
+## performg analysis/statistics
 
 sub push_phase {
   my $start_index = $_[0];
@@ -623,7 +623,7 @@ $avg_spd = $sum_timediff_mov ? $sum_dis/$sum_timediff_mov : 0;
 $avg__ascent_rate = $time__ascent ? 3600*$sum__ascent/$time__ascent : 0;
 $avg_descent_rate = $time_descent ? 3600*$sum_descent/$time_descent : 0;
 
-### optional elevation correction by geoid height
+## optional elevation correction by geoid height
 
 $found_corr = 0;
 sub neg_geoid_height { # potentially $updates $found_corr and $ele_corr
@@ -670,7 +670,7 @@ sub correct_ele { # may update $ele_corr; uses $ele_corr
 }
 
 
-### preparing output header
+## prepare output header
 
 #must be done before interpolating, which may shift indexes
 $Min_lat =sprintf $lat_precision, $min_lat;
@@ -796,7 +796,7 @@ $HEAD =~ s#(<trk>\s*(<name>.*?</name>)?)#$1\n<cmt></cmt>#s # add empty comment i
 $HEAD =~ s#(<trk>.*?<cmt>)#$1$stats#s; # prepend stats to track comment
 
 
-### filling overlong time gaps as far as needed with intermediate points by linear interpolation
+## fill overlong time gaps as far as needed with intermediate points by linear interpolation
 
 for($i=0; $i <= $#TIM; $i++) {
   ($lat, $lon, $ele, $tim, $sec, $spd) = ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i]); # needed also for print_trkpt
@@ -834,7 +834,7 @@ for($i=0; $i <= $#TIM; $i++) {
 }
 
 
-### finally writing output
+## finally write output
 
 print STDOUT $HEAD; # includes <gpx> <trk> <trkseg>
 for($i=0; $i <= $#TIM; $i++) {
