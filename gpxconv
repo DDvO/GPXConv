@@ -288,7 +288,7 @@ while(<>) {
     }
     else {
       print_trkpt("INFO: new segment at   ","") if $SEG[$#SEG];
-      $diff_time = ($sec && $prev_sec ? $sec-$prev_sec : 0);
+      $diff_time = ($sec && $last_given_sec ? $sec-$last_given_sec : 0);
       if($diff_time < 0) { # this implies $sec && $prev_sec
         # print_trkpt("WARNING: time difference = ".timediff_string($diff_time)." negative at", "; waypoint checking may not work correctly");
         print_trkpt("FATAL: before", " negative time difference (".timediff_string(-$diff_time).")\naborting"); exit 0;
@@ -300,6 +300,7 @@ while(<>) {
 	print_trkpt("FATAL: point before", " has same time but different elevation ($prev_ele m)\naborting"); exit 0;
       }
     }
+    $last_given_sec = $sec if $sec; # enable checking negative time difference also across missing time entries
     ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd) = ($lat, $lon, $ele, $sec, $spd);
     $state = 3; # ready to process further trkpt(s) in trkseg (or new trkseg or new track)
   }
