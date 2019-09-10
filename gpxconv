@@ -16,7 +16,7 @@
 ### configuration variables
 
 # basic output control
-$prune_wpts = 0; 
+$prune_wpts = 0;
 $prune_automatic_wpts = 1;
 $prune_desc = 1;
 $prune_extensions = 1;
@@ -76,7 +76,7 @@ $acc_precision  =  "%.1f"; # acceleration resolution = 0.1 m/s/s
 use List::Util qw[min max];
 
 #http://stackoverflow.com/questions/178539/how-do-you-round-a-floating-point-number-in-perl
-#use Math::Round; 
+#use Math::Round;
 use Math::Trig; #use Math::Trig 'great_circle_distance';
 use Math::Trig ':pi';
 
@@ -87,7 +87,7 @@ use Time::ParseDate;
 use Time::gmtime;
 
 # str_to_epoch("1970-01-01T00:00:00Z") = 0
-sub str_to_epoch { 
+sub str_to_epoch {
   my $s=$_[0];
 # return DateTime::Format::ISO8601->parse_datetime($s)->epoch(); # not used due to Perl library bug on Mac OS X: "dyld: lazy symbol binding failed: Symbol not found: _Perl_newSVpvn_flags"
 ##http://www.en8848.com.cn/Reilly%20Books/perl3/cookbook/ch03_08.htm
@@ -102,13 +102,13 @@ sub str_to_epoch {
   return Time::ParseDate::parsedate($s);
 }
 
-sub epoch_to_str { 
+sub epoch_to_str {
 #use DateTime; # not used due to Perl library bug on Mac OS X: "dyld: lazy symbol binding failed: Symbol not found: _Perl_newSVpvn_flags"
 #  my $dt = DateTime->from_epoch( epoch => $_[0] );
 #  return $dt->ymd."T".$dt->hms."Z";
 #use Date::Manip qw(ParseDate UnixDate);
 #$date = ParseDate("18 Jan 1973, 3:45:50");
-#  return UnixDate($_[0], "%Y-%m-%dT%H:%M:%SZ"); 
+#  return UnixDate($_[0], "%Y-%m-%dT%H:%M:%SZ");
   my $tm = gmtime($_[0]);
   return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", $tm->year+1900, $tm->mon+1, $tm->mday, $tm->hour, $tm->min, $tm->sec);
 }
@@ -160,11 +160,11 @@ sub parse_trkpt {
 
 sub print_trkpt {
   print STDERR "$_[0] ". ($#TIM < 0 ? "(no trackpoint)" :
-    "<trkpt"  ." lat=\"".(#sprintf $lat_precision, 
-      $lat."\"".(" " x max(0,$lat_len-length($lat))))." lon=\"".(#sprintf $lat_precision, 
-      $lon."\"".(" " x max(0,$lon_len-length($lon))))." <ele>".(#sprintf $ele_precision, 
+    "<trkpt"  ." lat=\"".(#sprintf $lat_precision,
+      $lat."\"".(" " x max(0,$lat_len-length($lat))))." lon=\"".(#sprintf $lat_precision,
+      $lon."\"".(" " x max(0,$lon_len-length($lon))))." <ele>".(#sprintf $ele_precision,
       (" " x max(0,$ele_len-length($ele)))).$ele." <time>".(
-      $tim.(" " x max(0,$tim_len-length($tim))))) . 
+      $tim.(" " x max(0,$tim_len-length($tim))))) .
     "$_[1]\n";
 }
 
@@ -199,12 +199,12 @@ while(<>) {
     $wpt = $1;
     $wpt =~ s#<extensions>.+?</extensions>\n?##sg if $prune_extensions;
     $wpt =~ s#\n##sg;
-    if (!$prune_wpts && 
-	!($wpt =~ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+-?[\d\.]+ k?m(\/h)?( at -?[\d\.]+ km/h)?\]#) && 
+    if (!$prune_wpts &&
+	!($wpt =~ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+-?[\d\.]+ k?m(\/h)?( at -?[\d\.]+ km/h)?\]#) &&
         !($wpt =~ m#\[(start|end.*?)\]#) &&
-	!($wpt =~ m#<name><!\[CDATA\[\d+\]\]></name># && $prune_automatic_wpts)) { 
+	!($wpt =~ m#<name><!\[CDATA\[\d+\]\]></name># && $prune_automatic_wpts)) {
       parse_trkpt($wpt);
-      $wpt =~ m#(<name>.*?)</wpt>#; 
+      $wpt =~ m#(<name>.*?)</wpt>#;
       push @WLAT, $lat;
       push @WLON, $lon;
       push @WELE, $ele;
@@ -450,7 +450,7 @@ for($j=0; $j <= $#WSEC; $j++) {
     if($i2 > $#TIM) {
       print STDERR "WARNING: no trackpoint found at same time or later than waypoint '$WSTR[$j]'; will extrapolate distance from the one before\n";
     }
-    $i1 = ($i2 > 0 ? $i2-1 : $i2);  # trackpoint just before, if any, else same as the one just determined 
+    $i1 = ($i2 > 0 ? $i2-1 : $i2);  # trackpoint just before, if any, else same as the one just determined
     $linear_factor= ($SEC[$i2]-$SEC[$i1] <= 0 ? 0 : ($sec-$SEC[$i1])/($SEC[$i2]-$SEC[$i1]));
     $lat = $LAT[$i1]+($LAT[$i2]-$LAT[$i1])*$linear_factor;
     $lon = $LON[$i1]+($LON[$i2]-$LON[$i1])*$linear_factor;
@@ -486,11 +486,11 @@ for($i=0; $i <= $#TIM; $i++) {
   ($lat, $lon, $ele, $tim, $sec) = ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i]);
   if($smoothing && 0 < $i && $i < $#SEC && $SEC[$i-1] && $sec && $SEC[$i+1] && !$SEG[$i] && !$SEG[$i+1]) {
     $diff_time1 = $sec-$SEC[$i-1];
-    $diff_time2 = $SEC[$i+1]-$sec; 
+    $diff_time2 = $SEC[$i+1]-$sec;
     if (max($diff_time1, $diff_time2) <= $smoothing_max_timegap) {
       $lat = average($prev_lat_orig*0+$LAT[$i-1], $LAT[$i], $LAT[$i+1]);
       $lon = average($prev_lon_orig*0+$LON[$i-1], $LON[$i], $LON[$i+1]);
-      $ele = average($prev_ele_orig*0+$ELE[$i-1], $ELE[$i], $ELE[$i+1]) if 
+      $ele = average($prev_ele_orig*0+$ELE[$i-1], $ELE[$i], $ELE[$i+1]) if
 	             $prev_ele_orig ne "" && $ELE[$i-1] ne "" && $ELE[$i] ne "" && $ELE[$i+1] ne "";
     }
   }
@@ -549,7 +549,7 @@ for($i=0; $i <= $#TIM+1; $i++) {
   }
   if ($SEG[$i]) { # (re-)start climb phase recognition on track segment start (including: at $i == 0)
     $SPD[$i] = 0 if $SPD[$i] eq ""; # at segment start, set speed to 0 if no recorded speed available
-    $direction = 0; 
+    $direction = 0;
     $last_gain_index = $last_loss_index = 0;
     $prev_turn_ele = $local_max_ele = $local_min_ele = "";
   }
@@ -565,7 +565,7 @@ for($i=0; $i <= $#TIM+1; $i++) {
     if ($direction >= 0 && $local_max_index > $prev_turn_index &&
         ($ele <= $local_max_ele-$ele_threshold || $seg_end)) { # when actually starting going down, or at end
       $diff_ele = $local_max_ele-$prev_turn_ele;
-      if ($diff_ele >= $ele_threshold) { 
+      if ($diff_ele >= $ele_threshold) {
 	push_phase($prev_turn_index, $local_max_index) if ($phases);
 	$sum__ascent += $diff_ele;
 	$time__ascent += $local_max_sec - $prev_turn_sec;
@@ -591,7 +591,7 @@ for($i=0; $i <= $#TIM+1; $i++) {
     }
     if($i <= $#TIM) {
       ($diff_ele, $timediff, $rate, $dis, $spd, $acc) = calc_diffs();
-      $SPD[$i] = $spd if $spd ne ""; # set speed, preferring calculated over any recorded speed 
+      $SPD[$i] = $spd if $spd ne ""; # set speed, preferring calculated over any recorded speed
       $spd =  $SPD[$i];
       push @DIST, $dis;
       push @RATE, $rate;
@@ -697,7 +697,7 @@ $bounds = "<bounds minlat=\"$Min_lat\" minlon=\"$Min_lon\" maxlat=\"$Max_lat\" m
 $HEAD =~ s#\n?<bounds .*?/>\n?##sg; # remove any pre-existing bounds entry
 $HEAD =~ s#(</metadata>)#\n$bounds\n$1#s; # add new bounds
 
-sub wpt { 
+sub wpt {
   my $j = $_[0]; # index of waypoint if >= 0
   my $i = $_[1]; # index of trackpoint otherwise
   my $n = $_[2]; # text to be attributed to trackpoint
@@ -709,7 +709,7 @@ sub wpt {
 	     ($j >= 0 ? @WTXT[$j] : "<name>[$n]</name>").
          "</wpt>\n";
 }
-sub point { 
+sub point {
   my $i = $_[0];
   my $n = $_[1];
   return "At lat,lon,ele = ".(sprintf $lat_precision, $LAT[$i]).","
@@ -821,7 +821,7 @@ for($i=0; $i <= $#TIM; $i++) {
       splice @SEG, $i, 0, $n == 0; # if $n = 0, here is a new segment start, duplicated from segment start just after interpolastion
       splice @LAT, $i, 0, $LAT[$p]+($lat-$LAT[$p])*$t/$diff_time;
       splice @LON, $i, 0, $LON[$p]+($lon-$LON[$p])*$t/$diff_time;
-      splice @ELE, $i, 0,($ELE[$p] ne "" && $ele ne "" ? 
+      splice @ELE, $i, 0,($ELE[$p] ne "" && $ele ne "" ?
                           $ELE[$p]+($ele-$ELE[$p])*$t/$diff_time : "");
       splice @TIM, $i, 0, epoch_to_str($SEC[$p]+$t);
       splice @SEC, $i, 0,              $SEC[$p]+$t;
