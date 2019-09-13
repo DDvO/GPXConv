@@ -47,7 +47,7 @@ $max_sensible_ele_loss = $hiking ? 3600 : ($driving ? 10000 : 50000); # maximal 
 $max_sensible_acc      = $hiking ?  0.5 : ($driving ?     3 :     5); # maximal acceleration meters per second per second
 $max_sensible_speed    = $hiking ?   20 : ($driving ?   150 :  1100); # maximal speed in kilometers per hour
 $max_sensible_angle_diff = 170;         # maximal turning angle
-$min_sensible_ele = -10; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
+$min_sensible_ele = -20; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
 
 # time correction control
 $trkpt_time_corr = 0;    # number of secconds to add to each trackpoint time stamp
@@ -342,8 +342,9 @@ for($i=0; $i <= $#TIM; $i++) {
   if($SEG[$i]) { # at segment start
     $ignore = 0;
     if($ele ne "" && $ele < $min_sensible_ele) {
-      ignoring_trkpt("elevation is less than $min_sensible_ele");
       $ignore = 1;
+      $Spd = 0;
+      ignoring_trkpt("elevation is less than $min_sensible_ele");
     }
     $spd = $prev_spd = $prev_acc = $prev_gain = ""; # reset speed, acceleration, etc.
   } else {
@@ -378,13 +379,14 @@ for($i=0; $i <= $#TIM; $i++) {
       $Spd_rec = spd_string($SPD[$i]);
       print_trkpt("WARNING: towards ","$Spd_txt recorded speed is $Spd_rec km/h (deviation more than $max_spd_deviation km/h)") if abs($Spd_diff) > $max_spd_deviation;
     }
+
     $ignore = 1;
-    if($max_sensible_angle_diff < abs($theta_diff)) {
+    if($ele ne "" && $ele < $min_sensible_ele) {
+      ignoring_trkpt("elevation is less than $min_sensible_ele");
+    }
+    elsif($max_sensible_angle_diff < abs($theta_diff)) {
       ignoring_trkpt("direction change = $Theta_diff° (".
                                         ($theta_diff >= 0 ? "more than  " : "less than -")."$max_sensible_angle_diff°)");
-    }
-    elsif($ele ne "" && $ele < $min_sensible_ele) { # TODO do also at segment start
-      ignoring_trkpt("elevation is less than $min_sensible_ele");
     }
     elsif($acc ne ""  && abs($acc) > $max_sensible_acc) {
       ignoring_trkpt("acceleration = $Acc m/s/s (".($acc >= 0 ? "more than " : "less than -")."$max_sensible_acc)");
@@ -808,9 +810,11 @@ for($i=0; $i <= $#TIM; $i++) {
     $time_inc = $diff_time/$npoints; # 0 < $time_inc <= $max_timegap
     $dis = distance($prev_lat, $prev_lon, $prev_ele);
     $Dis  = sprintf "%4".$dis_precision, $dis/1000;
+    $N = $npoints-1;
+    my $s = $N > 1 ? "s" : "";
     print_trkpt("WARNING: before  ",
 		" time difference = ".timediff_string($diff_time)." over distance = ".$Dis." km".
-                "; interpolating points every ". (sprintf $sec_precision, $time_inc) ." seconds");
+                "; inserting $N point$s by interpolation every ". (sprintf $sec_precision, $time_inc) ." seconds");
     $seg = $SEG[$i]; # if was a segment start, have segment starts just before and after interpolated points
     $ign = $IGN[$i]; # if previous point was ignored, carry this over to all interpolated points
     # insert equidistant iterpolated points,
