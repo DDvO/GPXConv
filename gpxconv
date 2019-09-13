@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+
 ################################################################################
 # GPX track converter: post-process tracks as typically produced by GPS loggers.
 # Concatenates multiple tracks preserving track segments, collecting waypoints.
@@ -185,7 +186,7 @@ sub calc_diffs() {
 }
 
 
-### start main
+### main loops
 
 ## read all trackpoints from all track segments
 $/ = "<trkpt ";
@@ -419,7 +420,7 @@ for($i=0; $i <= $#TIM; $i++) {
     splice @TIM, $i, 1;
     splice @SEC, $i, 1;
     splice @SPD, $i, 1; # speed will be re-calculated later anyway
-    $IGN[$i] = 1; # indicate that piont before has been ignored
+    $IGN[$i] = 1; # indicate that point before has been ignored
     $i--;
     # will re-calculate speed etc. relative to same previous piont as before
   }
@@ -499,7 +500,7 @@ for($i=0; $i <= $#TIM; $i++) {
 }
 
 
-## performg analysis/statistics
+## perform analysis/statistics
 
 sub push_phase {
   my $start_index = $_[0];
@@ -757,6 +758,7 @@ $max_gain_text = "max  ascent rate = "." $Max_gain m/h at $Max_gain_spd km/h";
 $max_loss_text = "max descent rate = ". "$Max_loss m/h at $Max_loss_spd km/h";
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
+
 $final_text = "
 total distance       = $Sum_dis km
 total   moving time  = $Sum_timediff_mov
