@@ -99,7 +99,7 @@ use constant SUBSTIIUTED_TIM    => 1<<5;
 use List::Util qw[min max];
 
 ##http://stackoverflow.com/questions/178539/how-do-you-round-a-floating-point-number-in-perl
-#use Math::Round;
+use Math::Round;
 use Math::Trig; #use Math::Trig 'great_circle_distance';
 use Math::Trig ':pi';
 
@@ -549,15 +549,20 @@ for(my $i=0; $i <= $#TIM; $i++) {
     $spd = $prev_spd = $prev_acc = $prev_gain = ""; # reset speed, acceleration, etc.
   } else {
     my $theta_diff = 0;
-    my $Theta_diff = 0;
-    if($i < $#SEG && !$SEG[$i+1]) { # not at segment end
+    if($i >= 2 && !$SEG[$i-1]) { # also previous point not at segment start
       # turning angle calculation for spike detection
-      my $theta1 = atan2($lon-$prev_lon ,$lat-$prev_lat )*360/pi2;
-      my $theta2 = atan2($LON[$i+1]-$lon,$LAT[$i+1]-$lat)*360/pi2;
-      $theta_diff = ($theta2 - $theta1) % 360;
-      $theta_diff -= 360 if $theta_diff >= 180;
-      $Theta_diff = sprintf "%.0f", $theta_diff;
+      my $prev_lon_diff = nearest(.00001, $prev_lon) - nearest(.00001, $LON[$i-2]);
+      my $prev_lat_diff = nearest(.00001, $prev_lat) - nearest(.00001, $LAT[$i-2]);
+      my $curr_lon_diff = nearest(.00001,      $lon) - nearest(.00001, $prev_lon );
+      my $curr_lat_diff = nearest(.00001,      $lat) - nearest(.00001, $prev_lat );
+      if ($prev_lon_diff && $prev_lat_diff && $curr_lon_diff && $curr_lat_diff) {
+        my $theta1 = atan2($prev_lon_diff, $prev_lat_diff)*360/pi2;
+        my $theta2 = atan2($curr_lon_diff, $curr_lat_diff)*360/pi2;
+        $theta_diff = ($theta2 - $theta1) % 360;
+        $theta_diff -= 360 if $theta_diff >= 180;
+      }
     }
+    my $Theta_diff = sprintf "%+.0f", $theta_diff;
     ($diff_ele, $timediff, $rate, $dis, $spd, $acc) = calc_diffs();
     my $Spd = spd_string($spd);
     my $Spd_txt = $spd ne "" ? " at speed = $Spd km/h" : "";
