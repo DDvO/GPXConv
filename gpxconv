@@ -78,8 +78,8 @@ use constant METERS_PER_DEGREE_LAT => 10000*1000/90; # on Earth, by definition
 use constant LAT_PRECISION  =>  "%.5f"; # latitude resolution = 0.00001° (<= 1.11 meters)
 use constant LON_PRECISION  =>  "%.5f"; # longitude resolution = 0.00001° (<= 1.11 meters)
 use constant ELE_PRECISION  => "%5.0f"; # elevation resolution = 1 meters
-use constant DIF_PRECISION  => "%5.0f"; # elevation difference resolution = 1 meters
-use constant RAT_PRECISION  => "%5.0f"; # elevation ascent/descent rate resolution = 1 meters
+use constant DIF_PRECISION  => "%+5.0f"; # elevation difference resolution = 1 meters
+use constant RAT_PRECISION  => "%+5.0f"; # elevation ascent/descent rate resolution = 1 meters
 use constant DIS_PRECISION  =>   ".2f"; # distance resolution = 0.01 km
 use constant SEC_PRECISION  =>  "%.0f"; # seconds resolution = 1 second
 use constant SPD_PRECISION  =>  "%.0f"; # speed resolution = 1 km/h
@@ -813,6 +813,7 @@ for($i=0; $i < $#TIM+1; $i++) {
     ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd) = ($lat, $lon, $ele, $sec, $spd);
   }
 }
+$max_speed = $max_spd if $max_speed < $max_spd;
 $avg_spd = $sum_timediff_mov ? $sum_dis/$sum_timediff_mov : 0;
 #$sec_diff = $SEC[$max_ele_index] - $SEC[$min_ele_index];
 #$avg_gain = $sec_diff != 0 ? ($max_ele - $min_ele) / $sec_diff * 3600 : 0;
@@ -933,8 +934,9 @@ sub point {
 			         .$ele_val.$time_val.": $n\n";
 }
 sub phase_text {
-  my $i = $_[0];
-  return (" " x max(0,length($#PHASE_END_INDEX+1)-length($i+1))).($i+1).". ";
+  my $i = $_[0] + 1;
+  my $d = $i % 10;
+  return (" " x max(0,length($#PHASE_END_INDEX+1)-length($i))).$i.(11 <= $i && $i <= 13 ? "th" : $d == 1 ? "st" : $d == 2 ? "nd" : $d == 3 ? "rd" : "th")." ";
 }
 
 $wpts="";
@@ -944,32 +946,35 @@ for($j=0; $j <= $#WTIM; $j++) {
 $phase_wpts="";
 $phase_points="";
 for($i=0; $i <= $#PHASE_END_INDEX; $i++) {
-  my $Spd  = phase_text($i)."max speed=    " .spd_string(               $SPD[$PHASE_MAXSPD_INDEX [$i]])." km/h; ".
-                            "avg speed =    ".spd_string(                    $PHASE_SPD          [$i] )." km/h";
-  my $Rate = phase_text($i)."max rate = "    .(sprintf RAT_PRECISION, $RATE[$PHASE_MAXRATE_INDEX[$i]])."  m/h; ".
-                            "avg rate  ="    .(sprintf RAT_PRECISION,       $PHASE_RATE         [$i] )."  m/h";
+  my $Spd  = phase_text($i)."max speed =   " .spd_string(               $SPD[$PHASE_MAXSPD_INDEX [$i]])." km/h; ".
+                            "avg speed  =  " .spd_string(                    $PHASE_SPD          [$i] )." km/h";
+  my $Rate = phase_text($i)."max rate  = "    .(sprintf RAT_PRECISION, $RATE[$PHASE_MAXRATE_INDEX[$i]] )."  m/h; ".
+                            "avg rate   ="    .(sprintf RAT_PRECISION,       $PHASE_RATE         [$i]  )."  m/h";
   my $AscDesc = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
-  my $Dist = phase_text($i)."$AscDesc  = ".(sprintf     DIF_PRECISION, $PHASE_DIFF[$i]     )."  m;   ".
-                            "distance  = ".(sprintf "%".DIS_PRECISION, $PHASE_DIST[$i]/1000)." km  ";
+  my $Dist = phase_text($i)."$AscDesc   = ".(sprintf     DIF_PRECISION, $PHASE_DIFF[$i]     )."  m;   ".
+                            "distance   =" .                           ($PHASE_DIST[$i]/1000 >= 10 ? "" : " ")
+                                           .(sprintf "%".DIS_PRECISION, $PHASE_DIST[$i]/1000)." km  ";
   $phase_wpts.=wpt(-1, $PHASE_MAXSPD_INDEX[$i], $Spd).wpt(-1, $PHASE_MAXRATE_INDEX[$i], $Rate).wpt(-1, $PHASE_END_INDEX[$i], $Dist);
   $phase_points.=point($PHASE_MAXSPD_INDEX[$i], $Spd).point(  $PHASE_MAXRATE_INDEX[$i], $Rate).point(  $PHASE_END_INDEX[$i], $Dist);
 }
 $Max_spd      =                  spd_string($SPD[$max_spd_index]);
-$Max_gain_spd = sprintf RAT_PRECISION, 3.6*$SPD[$max_gain_index];
-$Max_loss_spd = sprintf RAT_PRECISION, 3.6*$SPD[$max_loss_index];
+$Max_gain_spd = sprintf SPD_PRECISION, 3.6*$SPD[$max_gain_index];
+$Max_loss_spd = sprintf SPD_PRECISION, 3.6*$SPD[$max_loss_index];
 while(substr($Max_gain_spd,0,1) eq " " && substr($Max_loss_spd,0,1) eq " ") {
   $Max_gain_spd = substr($Max_gain_spd,1);
   $Max_loss_spd = substr($Max_loss_spd,1);
 }
-$max_spd_text  = "max speed     = $Max_spd km/h";
-$min_ele_text  = "min altitude  = $Min_ele m";
-$max_ele_text  = "max altitude  = $Max_ele m";
-$sum__ascent_text = "total  ascent = $sum__ascent m";
-$sum_descent_text = "total descent = $sum_descent m";
+print STDERR "$Max_gain##\n";
+print STDERR "$Max_loss##\n";
+$max_spd_text  = "max speed       =   $Max_spd km/h";
+$min_ele_text  = "min altitude    = $Min_ele  m";
+$max_ele_text  = "max altitude    = $Max_ele  m";
+$sum__ascent_text = "total  ascent   = $sum__ascent m";
+$sum_descent_text = "total descent   = $sum_descent m";
 $avg__ascent_text = "avg rate = $Avg__ascent_rate m/h";
 $avg_descent_text = "avg rate = $Avg_descent_rate m/h";
-$max_gain_text = "max  ascent rate = "." $Max_gain m/h at $Max_gain_spd km/h";
-$max_loss_text = "max descent rate = ". "$Max_loss m/h at $Max_loss_spd km/h";
+$max_gain_text = "max  ascent rate=  $Max_gain m/h at $Max_gain_spd km/h";
+$max_loss_text = "max descent rate=  $Max_loss m/h at $Max_loss_spd km/h";
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
 
@@ -1074,7 +1079,7 @@ for($i=0; $i <= $#TIM; $i++) {
                       '" lon="'.(sprintf LON_PRECISION, $LON[$i]).'">';
   print STDOUT "<ele>".(sprintf ELE_PRECISION, correct_ele(-1, $i))."</ele>" if $ELE[$i] ne "";
   print STDOUT "<time>$tim</time>" if $tim;
-  print STDOUT "<cmt>$IGN[$i] previous points were ignored</cmt>" if $IGN[$i];
+  print STDOUT "<cmt>$IGN[$i] previous point".($IGN[$i] == 1 ? " was" : "s were")." ignored</cmt>" if $IGN[$i];
   my $src = "";
   $src = "time gap interpolated from points before and after" if $FLG[$i] & INTERPOLATED_POINT;
   $src .= ($src eq "" ? "" : "; ")."interpolated elevation" if $FLG[$i] & INTERPOLATED_ELE;
