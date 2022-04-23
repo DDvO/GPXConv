@@ -38,7 +38,8 @@ use constant FILL_TIME_MISS => 1;          # interpolate missing time
 
 # analysis control
 use constant MIN_SPEED_MOVING => 1;        # threshold for detecting movement (in km/h)
-use constant ANALYZE_PHASES => 1;          # analysis of ascent/descent phases
+use constant ANALYZE_PHASES => 1;          # perform analysis of ascent/descent phases
+use constant ELE_THRESHOLD => 20;          # threshold for detecting/accepting ascent or descent; should be larger than short-term elevation measurement error
 
 # smoothing control
 use constant ENABLE_SMOOTHING => 0;        # by default set to 0 to disable smoothing
@@ -60,8 +61,8 @@ use constant MAX_SENSIBLE_ELE_GAIN => WALKING ? 1800 : (DRIVING ?  5000 : 25000)
 use constant MAX_SENSIBLE_ELE_LOSS => WALKING ? 3600 : (DRIVING ? 10000 : 50000); # maximal descent rate in m/h
 use constant MAX_SENSIBLE_ACCELERATION      => WALKING ?  0.5 : (DRIVING ?     3 :     5); # maximal acceleration m/s/s
 use constant MAX_SENSIBLE_SPEED    => WALKING ?   20 : (DRIVING ?   150 :  1100); # maximal speed in km/h
-use constant MAX_SENSIBLE_ANGLE_DIFF => 170;         # maximal turning angle
-use constant MIN_SENSIBLE_ELE => -20; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
+use constant MAX_SENSIBLE_ANGLE_DIFF => 170;         # maximal sensible turning angle
+use constant MIN_SENSIBLE_ELE => -450; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
 
 # time correction control
 use constant TIME_CORRECTION => 0;    # number of seconds to add to time stamps in trkpt and wpt
@@ -69,7 +70,6 @@ use constant TIME_CORRECTION => 0;    # number of seconds to add to time stamps 
 # elevation correction control
 use constant GEOID_ELE_CORRECTION => 0;         # whether to correct elevation wrt. geoid height retrieved online
 use constant DEFAULT_ELE_CORRECTION => 0; #47;  # if used should be -(average geoid height)
-use constant ELE_THRESHOLD => 20;     # for detecting/accepting ascent and descent phases, should be larger than short-term measurement error
 
 
 ### other constants
@@ -156,9 +156,11 @@ sub parse_trkpt {
   my $s=$_[0];
   #  $s =~ m#lat="(-?\d+\.?\d*)"\s*lon="(-?\d+\.?\d*)">\s*
   #  <ele>(-?\d+\.?\d*)</ele>\s*<time>(.*?T(\d\d):(\d\d):(\d\d)Z?)</time>#s
-  if($s =~ m#lat="(-?[\.\d ]+)"\s*lon="(-?[\.\d ]+)">\s*(<ele>(-?[\.\d ]+)</ele>)?[^<]*(<time>([\d-T:Z\s]+)</time>)?#s) {
+  if($s =~ m#lat=\s*"(-?[\.\d]+)"\s*lon=\s*"(-?[\.\d]+)"\s*>\s*(<ele>\s*(-?[\.\d]+)\s*</ele>)?\s*(<time>\s*([-:T\dZ]+)\s*</time>)?#s ||
+     $s =~ m#lon=\s*"(-?[\.\d]+)"\s*lat=\s*"(-?[\.\d]+)"\s*>\s*(<ele>\s*(-?[\.\d]+)\s*</ele>)?\s*(<time>\s*([-:T\dZ]+)\s*</time>)?#s) {
     $lat=$1;
     $lon=$2;
+    $ele_str=$3;
     $ele=$4; # may be empty or 0
     $tim=$6; # may be empty
     $lat_len = max($lat_len, length($lat)); # sprintf LAT_PRECISION,
@@ -173,7 +175,7 @@ sub parse_trkpt {
 	$sec += TIME_CORRECTION;
 	$tim = epoch_to_str($sec);
     }
-    $ele = "" if $ele == 0 && !$sec; # for routes generated, e.g., using Google My Maps
+    $ele = "" if !$ele_str && !$sec; # for routes generated, e.g., using Google My Maps
     $spd="";
     if($s =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s) {
       $spd = $2;
@@ -189,10 +191,11 @@ sub parse_trkpt {
 }
 
 sub print_trkpt { print_trkpt_i(-1, $_[0], $_[1]); }
-sub print_trkpt_i { # using original precision here for better traceability
+sub print_trkpt_i {
   my $i=$_[0];
   my ($lati, $long, $elev, $time) = $i < 0 ? ($lat, $lon, $ele, $tim) :
       ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]);
+  # using original precision here for better traceability
   # $lati = sprintf LAT_PRECISION, $lati;
   # $long = sprintf LON_PRECISION, $long;
   $elev = $elev ne "" ? $elev : "NONE "; # sprintf "%.0f",
@@ -209,7 +212,7 @@ sub print_trkpt_i { # using original precision here for better traceability
 sub ignoring_trkpt { ignoring_trkpt_i(-1, $_[0]); }
 sub ignoring_trkpt_i {
   my $Spd_txt = $Spd ne "" ? " at speed = $Spd km/h" : "";
-  print_trkpt($_[0], "WARNING: ignor.", "$Spd_txt because $_[1]");
+  print_trkpt_i($_[0], "WARNING: ignoring", "$Spd_txt because $_[1]");
 }
 
 sub remove_trkpt {
@@ -233,12 +236,12 @@ sub distance {
   my $prev_lat = $_[0];
   my $prev_lon = $_[1];
   my $prev_ele = $_[2];
-  my $diff_lat = ($lat-$prev_lat)*METERS_PER_DEGREE_LAT;
-  my $diff_lon = ($lon-$prev_lon)*METERS_PER_DEGREE_LAT*cos(deg2rad(($lat+$prev_lat)/2));
-  #my$diff_lon = ($lon*cos(deg2rad($lat))-$prev_lon*cos(deg2rad($prev_lat)))*METERS_PER_DEGREE_LAT;
-  my $diff_ele = ($ele ne "" && $prev_ele ne "" ? $ele-$prev_ele : 0);
+  my $diff_lat = ($lat-$prev_lat) * METERS_PER_DEGREE_LAT;
+  my $diff_lon = ($lon-$prev_lon) * METERS_PER_DEGREE_LAT * cos(deg2rad(($lat + $prev_lat)/2));
+  #my$diff_lon = ($lon * cos(deg2rad($lat)) - $prev_lon * cos(deg2rad($prev_lat))) * METERS_PER_DEGREE_LAT;
+  my $diff_ele = ($ele ne "" && $prev_ele ne "" ? $ele - $prev_ele : 0);
   # assuming no elevation change if no elevation available
-  return sqrt($diff_lat*$diff_lat+$diff_lon*$diff_lon+$diff_ele*$diff_ele);
+  return sqrt($diff_lat * $diff_lat + $diff_lon * $diff_lon + $diff_ele * $diff_ele);
   #$distance = Math::Trig::great_circle_distance( #does not account for $diff_ele!
   #						  deg2rad($lon)     , deg2rad(90 - $lat     ),
   #						  deg2rad($prev_lon), deg2rad(90 - $prev_lat),
@@ -263,6 +266,10 @@ sub calc_diffs() {
 ## read all trackpoints from all track segments, optionally completing them
 $ele_miss_start = 0;
 $tim_miss_start = 0;
+$num_no_ele = 0;
+$ele_gap_length = 0;
+$num_no_time = 0;
+$time_gap_length = 0;
 $state = 0;
 $i = 0;
 $prev_avail_ele = "";
@@ -274,9 +281,9 @@ $max_sec = 0;
 $/ = "<trkpt ";
 while(<>) {
   s#<desc>.+?</desc>\n?##sg if PRUNE_DESC;
-   s#<link.+?</link>\n?##sg if PRUNE_LINK;
-  while(s#(<wpt .+?</wpt>\n?)##s) { #collect waypoints, possibly in later headers
-    $wpt = $1;
+   s# *<link.+?</link>\n?##sg if PRUNE_LINK;
+  while(s#(<wpt .+?) *(</wpt>\n?)##s) { #collect waypoints, possibly in later headers
+    $wpt = $1.$2;
     $wpt =~ s#<extensions>.+?</extensions>\n?##sg if PRUNE_EXTENSIONS;
     $wpt =~ s#\n##sg;
     parse_trkpt($wpt); # collect some basic data even if pruned
@@ -310,7 +317,7 @@ while(<>) {
     else {
       s#(^.*</type>).*#$1\n<trkseg>\n#s; #ignore rest of (header-only) file having no trkpt
     }
-    s#[\s]+$#\n#s; #remove trailing spaces, but then add newline
+    s#[\s]+\n$#\n#s; #remove any trailing spaces on line before
     $HEAD = $_;
     $state = 1; # expecting the very first trkpt
   }
@@ -326,7 +333,7 @@ while(<>) {
     # when $state == 3: processing further trkpt in trkseg
     parse_trkpt($_);
     $flags = 0;
-    print STDERR "### read point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd; state = $state\n";
+    ## print STDERR "### read point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd; state = $state\n";
 
     if($state == 1) {
       print_trkpt("INFO: first segment at     ", "");
@@ -363,7 +370,7 @@ while(<>) {
           $FLG[$i-1] |= SUBSTITUTED_TIM;
           $TIM[$i-1] = $tim;
           $SEC[$i-1] = $sec;
-          print_trkpt_i($i-1, "WARNING: at segment end    ", " no time given; using value from begin of next segment");
+          print_trkpt_i($i-1, "WARNING: at segment end    ", " no time      given; using value from begin of next segment");
         }
       }
       elsif ($tim_miss_start) {
@@ -373,32 +380,28 @@ while(<>) {
       print_trkpt("INFO: further segment at   ", "") if $state == 2;
       if ($ele eq "") {
         if ($prev_avail_ele eq "") { # $prev_ele
-          ###$num_no_ele = 1;
           $resolution = " and no previous value available";
         } elsif (CARRY_OVER_ELE) {
           $ele = $prev_avail_ele; # $prev_ele; # will become $ELE[$i]
           $resolution = "; using previous available value";
           $flags |= SUBSTITUTED_ELE;
         } else {
-          ###$num_no_ele = 1;
           $resolution = " and carrying over previous available value is disabled";
         }
         print_trkpt("WARNING: at segment start  ", " no elevation given$resolution");
       }
       if ($tim eq "") {
         if ($prev_tim eq "") {
-          ###$num_no_time = 1;
-          $resolution = " and previous value not available";
+          $resolution = " and no previous value available";
         } elsif (CARRY_OVER_TIME) {
           $tim = $prev_tim;  # will become $TIM[$i]
           $sec = $prev_sec;  # will become $SEC[$i]
           $flags |= SUBSTITUTED_TIM;
           $resolution = "; using previous value";
         } else {
-          ###$num_no_time = 1;
           $resolution = " and carrying over previous value is disabled";
         }
-        print_trkpt("WARNING: at segment start  ", " no time given$resolution");
+        print_trkpt("WARNING: at segment start  ", " no time      given$resolution");
       }
     } else { # state == 3, further (i.e., not the first) point in trkseg
       $dis = distance($prev_lat, $prev_lon, $prev_ele); # is within segment
@@ -410,7 +413,7 @@ while(<>) {
         $calc_sec_ = $prev_sec + $dis/$spd;  # substitute time using recorded speed and distance from previous point
         $tim = epoch_to_str($calc_sec); # will become $TIM[$i]
         $sec = $calc_sec;               # will become $SEC[$i]
-        print_trkpt("WARNING: at                ", " no time given, substituted using time difference by distance/speed");
+        print_trkpt("WARNING: at                ", " no time      given, filled in using time difference calculated by distance / speed");
         $FLG[$i] |= SUBSTITUTED_TIM;
       }
       if($tim eq "" && FILL_TIME_MISS && ($tim_miss_start || $prev_tim ne "")) { # not $prev_avail_tim, which may be an earlier time
@@ -433,7 +436,7 @@ while(<>) {
         $ELE[$j] = sprintf "%.0f", $ele_curr;
         # not changing $ele nor $prev_ele such that below time interpolation is not affected
         $FLG[$j] |= INTERPOLATED_ELE;
-        # print STDERR "### interpolating missing ele at point $j with ele=$ELE[$j]\n";
+        ## print STDERR "### interpolating missing ele at point $j with ele=$ELE[$j]\n";
       }
       $ele_miss_start = 0;
     }
@@ -462,7 +465,7 @@ while(<>) {
           $TIM[$j] = epoch_to_str($sec_curr);
           $FLG[$j] |= INTERPOLATED_TIM;
           $sec_prev = $sec_curr;
-          # print STDERR "### interpolating missing time at point $j with time=$TIM[$j]\n";
+          ## print STDERR "### interpolating missing time at point $j with time=$TIM[$j]\n";
         }
       }
       $tim_miss_start = 0;
@@ -484,28 +487,25 @@ while(<>) {
     $ele_solution = "trying to interpolate elevation" if $ele_miss_start;
     $time_solution = "cannot calculate speed and acceleration";
     $time_solution = "trying to interpolate time" if $tim_miss_start;
-#    $ele_solution = "trying to interpolate elevation" if $ele_miss_start && $tim_miss_start;
-#    $time_solution = "time between earlier and following points" if $ele_miss_start && $tim_miss_start;
-#    if($sec eq "" && $ele eq "") {
-#        $num_no_ele_time++;
-#        print_trkpt("WARNING: no elevation&time for  ", "; $ele_solution and $time_solution") if $num_no_ele_time == 1;
-#    } elsif ($num_no_ele_time) {
-#        print_trkpt("WARNING: no elevation&time until", " for ".$num_no_ele_time." points") if $num_no_ele_time > 1;
-#        $num_no_ele_time = 0;
-#    }
     if($ele eq "") {
         $num_no_ele++;
+        $ele_gap_length += $dis;
         print_trkpt("WARNING: no elevation at   ", "; $ele_solution") if $num_no_ele == 1;
     } elsif ($num_no_ele) {
-        print_trkpt_i($i-1, "WARNING: no elevation up to", " for ".$num_no_ele." points") if $num_no_ele > 1;
-        $num_no_ele=0;
+        $Len  = sprintf "%4".DIS_PRECISION, $ele_gap_length/1000;
+        print_trkpt_i($i-1, "WARNING: no elevation up to", " for ".$num_no_ele." points over a distance of $Len km") if $num_no_ele > 1;
+        $num_no_ele = 0;
+        $ele_gap_length = 0;
     }
     if($sec eq "") {
         $num_no_time++;
-        print_trkpt("WARNING: no time at        ", "; $time_solution") if $num_no_time == 1;
+        $time_gap_length += $dis;
+        print_trkpt("WARNING: no time      at   ", "; $time_solution") if $num_no_time == 1;
     } elsif ($num_no_time) {
-        print_trkpt_i($i-1, "WARNING: no time      up to", " for ".$num_no_time." points") if $num_no_time > 1;
-        $num_no_time=0;
+        $Len  = sprintf "%4".DIS_PRECISION, $time_gap_length/1000;
+        print_trkpt_i($i-1, "WARNING: no time      up to", " for ".$num_no_time." points over a distance of $Len km") if $num_no_time > 1;
+        $num_no_time = 0;
+        $time_gap_length = 0;
     }
     # will go wrong if previous trkpt gets ignored: $ELE[$#ELE] = $ELE[$#ELE-1] if $ele eq "" && !$SEG[$#ELE]; # implies $#ELE > 0
 
@@ -522,9 +522,10 @@ while(<>) {
     $prev_spd = "";
   }
 }
-print_trkpt_i($i-1, "WARNING: no elevation up to", " for ".$num_no_ele." times") if $num_no_ele > 1;
-print_trkpt_i($i-1, "WARNING: no time      up to", " for ".$num_no_time." times") if $num_no_time > 1;
-#print_trkpt_i($i-1, "WARNING: no time&elev up to", " for ".$num_no_ele_time." times") if $num_no_ele_time > 1;
+$Len  = sprintf "%4".DIS_PRECISION, $ele_gap_length/1000;
+print_trkpt_i($i-1, "WARNING: no elevation up to", " for ".$num_no_ele." points over a distance of $Len km") if $num_no_ele > 1;
+$Len  = sprintf "%4".DIS_PRECISION, $time_gap_length/1000;
+print_trkpt_i($i-1, "WARNING: no time      up to", " for ".$num_no_time." points over a distance of $Len km") if $num_no_time > 1;
 print_trkpt("INFO: last segment end     ","") if $#TIM >= 0;
 print_trkpt("WARNING:                 at", " was unable to interpolate missing elevation by end of last segment") if $ele_miss_start;
 print_trkpt("WARNING:                 at", " was unable to interpolate missing time by end of last segment") if $tim_miss_start;
@@ -537,7 +538,7 @@ my $num_pts_mov = 0;
 my $ignore = 0;
 for(my $i=0; $i <= $#TIM; $i++) {
   ($lat, $lon, $ele, $tim, $sec, $spd) = ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i]);
-  print STDERR "### sanitizing point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd\n";
+  ## print STDERR "### sanitizing point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd\n";
   if($SEG[$i]) { # at segment start
     $ignore = 0;
     if($ele ne "" && $ele < MIN_SENSIBLE_ELE) {
@@ -564,7 +565,7 @@ for(my $i=0; $i <= $#TIM; $i++) {
     my $Max_dis  = sprintf "%4".DIS_PRECISION, WARNING_DIST/1000;
     my $Rate = sprintf RAT_PRECISION, $rate;
     my $Acc =  sprintf ACC_PRECISION, $acc;
-    print_trkpt("WARNING: before", "$Spd_txt distance between points = $Dis km (more than $Max_dis km)") if $dis > WARNING_DIST;
+    print_trkpt("WARNING: before  ", "$Spd_txt distance between points = $Dis km (more than $Max_dis km)") if $dis > WARNING_DIST;
     if(!$ignore) { # last trkpt has not been ignored
       my $Spd_diff = spd_string($spd ne "" && $SPD[$i] ne "" ? $spd-$SPD[$i] : 0);
       my $Spd_rec = spd_string($SPD[$i]);
@@ -586,7 +587,7 @@ for(my $i=0; $i <= $#TIM; $i++) {
       ignoring_trkpt("acceleration = $Acc m/s/s (".($acc >= 0 ? "more than " : "less than -")."MAX_SENSIBLE_ACCELERATION)");
     }
     elsif($rate ne "" && $Rate > MAX_SENSIBLE_ELE_GAIN) {
-      ignoring_trkpt(" ascent rate = $Rate m/h (more than ".MAX_SENSIBLE_ELE_GAIN.")");
+      ignoring_trkpt("ascent rate = $Rate m/h (more than ".MAX_SENSIBLE_ELE_GAIN.")");
     }
     elsif($rate ne "" && $Rate < -MAX_SENSIBLE_ELE_LOSS) {
       ignoring_trkpt("descent rate = $Rate m/h (less than -".MAX_SENSIBLE_ELE_LOSS.")");
@@ -617,6 +618,7 @@ $average_timediff = $num_pts_mov ? $sum_timediff_mov/$num_pts_mov : 0; # used fo
 
 for($j=0; $j <= $#WSEC; $j++) {
   $sec=$WSEC[$j];
+  next unless $sec;
   $diff_time = ($j>0 && $sec && $WSEC[$j-1] ? $sec-$WSEC[$j-1] : 0);
   if($diff_time < 0) {
     print STDERR "WARNING: waypoint '$WSTR[$j]' is before previous waypoint: $WTIM[$j-1]\n";
@@ -627,7 +629,7 @@ for($j=0; $j <= $#WSEC; $j++) {
   else {
     # find trackpoint at or just after wpt
     $i2 = 0; # would be more efficient to do this just before the wpt loop, but then cannot deal with wpts not in time order
-    while ($i2 <= $#TIM && $SEC[$i2] < $sec) {
+    while ($i2 <= $#TIM && $SEC[$i2] < $sec) { # note that $SEC[$i2] may be 0
       $i2++;
     }
     if($i2 > $#TIM) {
@@ -639,7 +641,7 @@ for($j=0; $j <= $#WSEC; $j++) {
     $lon = $LON[$i1]+($LON[$i2]-$LON[$i1])*$linear_factor;
     $ele2 = $ELE[$i2] eq "" ? ($WELE[$j] eq "" ? $ELE[$i1] : $WELE[$j]): $ELE[$i2];
     $ele1 = $ELE[$i1] eq "" ? $ele2 : $ELE[$i1];
-    $ele = $ele1+($ele2-$ele1)*$linear_factor;
+    $ele = $ele1 eq "" || $ele2 eq "" ? "" : $ele1+($ele2-$ele1)*$linear_factor;
     $dis = distance($WLAT[$j], $WLON[$j], $WELE[$j]);
     $sec=0; # do not print time for interpolated point, since done already for wpt
     $Dis=sprintf "%.0f", $dis;
@@ -719,10 +721,19 @@ sub push_phase {
   push @PHASE_MAXRATE_INDEX, $max_rate_index;
   push @PHASE_END_INDEX    , $end_index;
 }
+
 $sum_timediff_mov = 0; # re-calculate this var, since points may have been ignored or smoothened
 $sum_dis = 0;
 $sum__ascent = $sum_descent = 0;
 $time__ascent = $time_descent = 0;
+$min_ele_index = -1;
+$max_ele_index = -1;
+$max_gain_index = -1;
+$max_loss_index = -1;
+$last_gain_index = -1;
+$last_loss_index = -1;
+$local_max_index = 0;
+$max_spd_index = -1;
 $max_spd = 0;
 for($i=0; $i < $#TIM+1; $i++) {
   if($i <= $#TIM) {
@@ -732,7 +743,7 @@ for($i=0; $i < $#TIM+1; $i++) {
   }
   if ($SEG[$i]) { # (re-)start climb phase recognition on track segment start (including: at $i == 0)
     $direction = 0;
-    $last_gain_index = $last_loss_index = 0;
+    $last_gain_index = $last_loss_index = 0 if $ele ne "";
     $prev_turn_ele = $local_max_ele = $local_min_ele = "";
   }
   ($prev_turn_ele, $prev_turn_index) = ($ele, $i) if ($prev_turn_ele eq "");
@@ -751,7 +762,7 @@ for($i=0; $i < $#TIM+1; $i++) {
 	push_phase($prev_turn_index, $local_max_index) if ANALYZE_PHASES;
 	$sum__ascent += $diff_ele;
 	$time__ascent += $local_max_sec - $prev_turn_sec;
-	$last_gain_index = $local_max_index;
+	$last_gain_index = $local_max_index if $ele ne "";
       }
       ($prev_turn_ele, $prev_turn_index) = ($local_max_ele, $local_max_index);
       ($local_min_ele, $local_min_index) = ($ele, $i);
@@ -764,23 +775,23 @@ for($i=0; $i < $#TIM+1; $i++) {
 	push_phase($prev_turn_index, $local_min_index) if ANALYZE_PHASES;
 	$sum_descent += $diff_ele;
 	$time_descent += $local_min_sec - $prev_turn_sec;
-	$last_loss_index = $local_min_index;
+	$last_loss_index = $local_min_index if $ele ne "";
       }
       ($prev_turn_ele, $prev_turn_index) = ($local_min_ele, $local_min_index);
       ($local_max_ele, $local_max_index) = ($ele, $i);
       $direction = 1;
       goto check_next;
     }
-    if($i <= $#TIM) {
-      ($diff_ele, $timediff, $rate, $dis, $spd, $acc) = calc_diffs();
-      $SPD[$i] = $spd if $spd ne ""; # set speed, preferring calculated over any recorded speed
-      $spd =  $SPD[$i];
-      push @DIST, $dis;
-      push @RATE, $rate;
-      if($spd ne "" && $timediff ne "" && 3.6*$spd >= MIN_SPEED_MOVING) {
-	$sum_timediff_mov += $timediff;
-	$sum_dis += $dis;
-      }
+  }
+  if($i <= $#TIM) {
+    ($diff_ele, $timediff, $rate, $dis, $spd, $acc) = calc_diffs();
+    $sum_dis += $dis if $i > 0;
+    $SPD[$i] = $spd if $spd ne ""; # set speed, preferring calculated over any recorded speed
+    $spd =  $SPD[$i];
+    push @DIST, $dis;
+    push @RATE, $rate;
+    if($spd ne "" && $timediff ne "" && 3.6*$spd >= MIN_SPEED_MOVING) {
+      $sum_timediff_mov += $timediff;
     }
   }
   if($i < $#TIM) {
@@ -789,11 +800,11 @@ for($i=0; $i < $#TIM+1; $i++) {
     $min_lon = $lon if $min_lon>$lon || $i == 0;
     $max_lon = $lon if $max_lon<$lon || $i == 0;
     $max_sec = $sec if $max_sec<$sec || $i == 0;
-    ($min_ele, $min_ele_index) = ( $ele , $i) if $ele  ne "" && $min_ele>$ele || $i == 0;
-    ($max_ele, $max_ele_index) = ( $ele , $i) if $ele  ne "" && $max_ele<$ele || $i == 0;
-    ($max_gain, $max_gain_index)= ($rate, $i) if $rate ne "" && $max_gain< $rate || $i == 0;
-    ($max_loss, $max_loss_index)= ($rate, $i) if $rate ne "" &&-$max_loss<-$rate || $i == 0;
-    ($max_spd , $max_spd_index) = ($spd , $i) if $spd  ne "" && $max_spd<$spd || $i == 0;
+    ($min_ele, $min_ele_index) = ( $ele , $i) if $ele  ne "" && ($min_ele > $ele || $i == 0);
+    ($max_ele, $max_ele_index) = ( $ele , $i) if $ele  ne "" && ($max_ele < $ele || $i == 0);
+    ($max_gain, $max_gain_index)= ($rate, $i) if $rate ne "" && ($max_gain < $rate || $i == 0);
+    ($max_loss, $max_loss_index)= ($rate, $i) if $rate ne "" && (-$max_loss < -$rate || $i == 0);
+    ($max_spd , $max_spd_index) = ($spd , $i) if $spd  ne "" && ($max_spd < $spd || $i == 0);
     ($prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd) = ($lat, $lon, $ele, $sec, $spd);
   }
 }
@@ -841,8 +852,10 @@ sub linear_ele_correction {
 
 sub correct_ele { # may update $ele_corr; uses $ele_corr
   my $j = $_[0]; # index of waypoint if >= 0
-  my $i = $_[1]; # index of trackpoint otherwise
+  my $i = $_[1]; # otherwise, index of trackpoint or < 0 for none
+  return "" if $j < 0 && $i < 0;
   my ($lat, $lon, $ele, $sec) = $j >= 0 ? ($WLAT[$j], $WLON[$j], $WELE[$j], $WSEC[$j]) : ($LAT[$i], $LON[$i], $ELE[$i], $SEC[$i]);
+  return "" if $ele eq "";
   $ele_corr = neg_geoid_height($lat,$lon) if ($j >= 0 || $i == 0 || $SEC[$i-1]); # do expensive operation only at specific points or beginning of track segment
   if($ele_corr && $ele ne "") {
     $ele += $ele_corr + linear_ele_correction($sec);
@@ -874,25 +887,29 @@ $Sum_timediff_mov = timediff_string($sum_timediff_mov);
 $HEAD =~ s/(<gpx )/$1creator="GPXConv" / unless $HEAD =~ m/<gpx.*? creator\s*=.*?>/;
 $HEAD =~ s/(<gpx )/$1version="1.1" /     unless $HEAD =~ m/<gpx.*? version\s*=.*?>/;
 $HEAD =~ s|(<gpx )|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" |;
-$HEAD =~ s|<time>.*?</time>\n?||sg; # remove any pre-existing time entry
-$HEAD =~ s|(</metadata>)|\n<time>$min_tim</time>$1|s; # add new time
+if($min_tim ne "") {
+  $HEAD =~ s| *<time>.*?</time>\n?||sg; # remove any pre-existing time entry
+  $HEAD =~ s|(( )*</metadata>)|$2$2<time>$min_tim</time>\n$1|s; # add new time
+}
 $bounds = '<bounds minlat="'.$Min_lat.'" minlon="'.$Min_lon.'" maxlat="'.$Max_lat.'" maxlon="'.$Max_lon.'"/>';
 #http://docstore.mik.ua/orelly/perl/cookbook/ch06_07.htm match multiple lines with 's' option
-$HEAD =~ s|\n?<bounds .*?/>\n?||sg; # remove any pre-existing bounds entry
-$HEAD =~ s|(</metadata>)|\n$bounds\n$1|s; # add new bounds
+$HEAD =~ s| *<bounds .*?/>\n?||sg; # remove any pre-existing bounds entry
+$HEAD =~ s|(( )*</metadata>)|$2$2$bounds\n$1|s; # add new bounds
 #$speed_extension = '<xsd:element name="speed" type="xsd:decimal" minOccurs="0"><xsd:annotation><xsd:documentation>The current speed relative to the previous point, in meters per second</xsd:documentation></xsd:annotation></xsd:element>';
-#$HEAD =~ s|(</metadata>)|<extensions>$speed_extension</extensions>\n$1|s if $speed_extensoin ne ""; # add declaration for speed extension
-$HEAD =~ s/\n(\n<trk>)/$1/g; # remove any double empty line (after metadata) before trk
+#$HEAD =~ s|(( )*</metadata>)|$2$2<extensions>$speed_extension</extensions>\n$1|s if $speed_extensoin ne ""; # add declaration for speed extension
+$HEAD =~ s/\n?\n *(<trk>)/\n$1/g; # remove any double empty line (after metadata) before trk
+$HEAD =~ s/ *$//;
 
 sub wpt {
   my $j = $_[0]; # index of waypoint if >= 0
-  my $i = $_[1]; # index of trackpoint otherwise
+  my $i = $_[1]; # otherwise, index of trackpoint or < 0 for no wpt
   my $n = $_[2]; # text to be attributed to trackpoint
+  return "" if $j < 0 && $i < 0;
   my ($lat, $lon, $tim) = $j >= 0 ? ($WLAT[$j], $WLON[$j], $WTIM[$j]) : ($LAT[$i], $LON[$i], $TIM[$i]);
   my $ele = correct_ele($j, $i);
   my $name = $j >= 0 ? @WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
   return '<wpt lat="'.(sprintf LAT_PRECISION, $lat).'" '.
-              'lon="'.(sprintf LOT_PRECISION, $lon).'">'.
+              'lon="'.(sprintf LON_PRECISION, $lon).'">'.
              ($ele eq "" ? "" : "<ele>" . (sprintf ELE_PRECISION, $ele)."</ele>").
              ($tim eq "" ? "" : "<time>$tim".(" " x max(0,$tim_len-length($tim)))."</time>").
 	     $name.
@@ -901,10 +918,14 @@ sub wpt {
 sub point {
   my $i = $_[0];
   my $n = $_[1];
-  return "At lat,lon,ele = ".(sprintf LAT_PRECISION, $LAT[$i]).","
-                            .(sprintf LON_PRECISION, $LON[$i]).","
-			    .(sprintf ELE_PRECISION, correct_ele(-1, $i)).
-         "  time = $TIM[$i]".(" " x max(0,$tim_len-length($TIM[$i])))."  $n\n";
+  return "" if $i < 0;
+  my $ele = correct_ele(-1, $i);
+  my $ele_text = $ele eq "" ? "" : ",ele";
+  my $ele_val = $ele eq "" ? "" : ",".(sprintf ELE_PRECISION, $ele);
+  my $time_val = $TIM[$i] eq "" ? "" : "  time = $TIM[$i]".(" " x max(0,$tim_len-length($TIM[$i])));
+  return "At lat,lon$ele_text = ".(sprintf LAT_PRECISION, $LAT[$i]).","
+                                 .(sprintf LON_PRECISION, $LON[$i])
+			         .$ele_val.$time_val.": $n\n";
 }
 sub phase_text {
   my $i = $_[0];
@@ -949,9 +970,10 @@ $max_loss_text = "max descent rate = ". "$Max_loss m/h at $Max_loss_spd km/h";
 
 $final_text = "
 total distance       = $Sum_dis km
-total   moving time  = $Sum_timediff_mov
-average moving speed =  $Avg_spd km/h
-elevation ".(GEOID_ELE_CORRECTION ? "corrected by ".($found_corr ? "last retrieved": "assumed")." geoid height = $ele_corr m" : "not corrected").
+";
+$final_text .= "total   moving time  = $Sum_timediff_mov\n" if $sum_timediff_mov;
+$final_text .= "average moving speed =  $Avg_spd km/h\n" if $avg_spd;
+$final_text .= "elevation ".(GEOID_ELE_CORRECTION ? "corrected by ".($found_corr ? "last retrieved": "assumed")." geoid height = $ele_corr m" : "not corrected").
 (ENABLE_SMOOTHING ? "
 track points that are at most $SMOOTHING_MAX_GAP seconds apart have been smoothened": "");
 $wpts .= wpt(-1, 0, "start").
@@ -981,7 +1003,7 @@ $phase_points.
 point($#TIM, "end").substr($final_text,1)."
 GPXConv statistics end
 ";
-$HEAD =~ s|(<trk>\s*(<name>.*?</name>)?)|$1\n<cmt></cmt>|s # add empty comment in track
+$HEAD =~ s|(<trk>\s*(<name>.*?</name>)?)|$1\n  <cmt>  </cmt>|s # add preliminarily empty comment in track
            unless $HEAD =~ m/<trk>.*?<cmt>/s;              # if not already existing
 $HEAD =~ s/(<trk>.*?<cmt>)/$1$stats/s; # prepend stats to track comment
 
@@ -990,7 +1012,7 @@ $HEAD =~ s/(<trk>.*?<cmt>)/$1$stats/s; # prepend stats to track comment
 
 for($i=0; INTERPOLATE_POINTS && $i <= $#TIM; $i++) {
   ($lat, $lon, $ele, $tim, $sec, $spd) = ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i]); # needed also for print_trkpt
-  # print STDERR "### checking gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd\n";
+  ## print STDERR "### checking gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd\n";
   $diff_time = $i>0 && $sec && $SEC[$i-1] ? int($sec-$SEC[$i-1]) : 0;
   if($i==13&&$diff_time > INTERPOLATION_MAX_GAP) { # implies $i>0
     my $n_spans = int($diff_time / INTERPOLATION_MAX_GAP) + ($diff_time % INTERPOLATION_MAX_GAP == 0 ? 0 : 1);
@@ -1059,6 +1081,6 @@ for($i=0; $i <= $#TIM; $i++) {
   print STDOUT "<fix>$fix</fix>" if $fix ne "";
   print STDOUT "<extensions><x:TrackPointExtension><x:speed>".spd_string($spd)."</x:speed></x:TrackPointExtension></extensions>" if $spd && INCLUDE_SPEED;
   print STDOUT "</trkpt>\n";
-  print STDOUT "</trkseg>\n<trkseg>\n" if $SEG[$i+1] && $i<$#TIM;
+  print STDOUT "  </trkseg>\n  <trkseg>\n" if $SEG[$i+1] && $i<$#TIM;
 }
-print STDOUT "</trkseg>\n</trk>\n</gpx>\n";
+print STDOUT "  </trkseg>\n</trk>\n</gpx>\n";
