@@ -57,11 +57,11 @@ use constant MAX_SPEED_DEVIATION => 1;     # threshold for speed measuring devia
 use constant WALKING => 0;
 use constant DRIVING => 1;                 # otherwise flying; only relevant if WALKING is 0
 use constant MIN_TIMEDIFF          => WALKING ?    4 : (DRIVING ?     2 :     1); # in seconds
-use constant MAX_SENSIBLE_ELE_GAIN => WALKING ? 1800 : (DRIVING ?  5000 : 25000); # maximal ascent rate in m/h
+use constant MAX_SENSIBLE_ELE_GAIN => WALKING ? 1800 : (DRIVING ?  7000 : 25000); # maximal ascent rate in m/h
 use constant MAX_SENSIBLE_ELE_LOSS => WALKING ? 3600 : (DRIVING ? 10000 : 50000); # maximal descent rate in m/h
-use constant MAX_SENSIBLE_ACCELERATION      => WALKING ?  0.5 : (DRIVING ?     3 :     5); # maximal acceleration m/s/s
+use constant MAX_SENSIBLE_ACCEL    => WALKING ?  0.5 : (DRIVING ?     3 :     5); # maximal acceleration m/s/s
 use constant MAX_SENSIBLE_SPEED    => WALKING ?   20 : (DRIVING ?   150 :  1100); # maximal speed in km/h
-use constant MAX_SENSIBLE_ANGLE_DIFF => 170;         # maximal sensible turning angle
+use constant MAX_SENSIBLE_ANGLE_DIFF => 175;         # maximal sensible turning angle
 use constant MIN_SENSIBLE_ELE => -450; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
 
 # time correction control
@@ -220,7 +220,7 @@ sub remove_trkpt {
   $IGN[$i+1] = $IGN[$i]+1; # indicate that previous point has been ignored, in addition to any previous ignores
   $SEG[$i+1] = 1 if $SEG[$i] && $i < $#SEG; # take over any segment start
   $DIS[$i+1] += $DIS[$i];
-  splice @IGN, $j, 1;
+  splice @IGN, $i, 1;
   splice @SEG, $i, 1;
   splice @FLG, $i, 1;
   splice @LAT, $i, 1;
@@ -588,17 +588,17 @@ for(my $i=0; $i <= $#TIM; $i++) {
     elsif($Spd > MAX_SENSIBLE_SPEED) {
       ignoring_trkpt("speed is more than ".MAX_SENSIBLE_SPEED." km/h");
     }
-    elsif($acc ne ""  && abs($acc) > MAX_SENSIBLE_ACCELERATION) {
-      ignoring_trkpt("acceleration = $Acc m/s/s (".($acc >= 0 ? "more than " : "less than -")."MAX_SENSIBLE_ACCELERATION)");
+    elsif($acc ne ""  && abs($acc) > MAX_SENSIBLE_ACCEL) {
+      ignoring_trkpt("acceleration = $Acc m/s/s (".($acc >= 0 ? "more than " : "less than -").MAX_SENSIBLE_ACCEL.")");
     }
     elsif($rate ne "" && $Rate > MAX_SENSIBLE_ELE_GAIN) {
-      ignoring_trkpt("ascent rate = $Rate m/h (more than ".MAX_SENSIBLE_ELE_GAIN.")");
+      ignoring_trkpt(" ascent rate = $Rate m/h (more than  ".MAX_SENSIBLE_ELE_GAIN.")");
     }
     elsif($rate ne "" && $Rate < -MAX_SENSIBLE_ELE_LOSS) {
       ignoring_trkpt("descent rate = $Rate m/h (less than -".MAX_SENSIBLE_ELE_LOSS.")");
     }
     elsif($timediff ne "" && $timediff < MIN_TIMEDIFF) {
-      ignoring_trkpt("time difference = $timediff sec (< ".MIN_TIMEDIFF.")");
+      ignoring_trkpt("time difference = $timediff sec (less than ".MIN_TIMEDIFF.")");
     }
     else {
       $ignore = 0;
@@ -847,7 +847,6 @@ sub neg_geoid_height { # potentially $updates $found_corr and $ele_corr
 sub linear_ele_correction {
   return 0; # linear correction not wanted
   my $sec=$_[0];
-##print "$ele @ $sec\n" if $ele==4720 || $ele==1925;
   my $sec1=1296543617; #start time
   my $sec2=1296569335; #end   time
   return 0 if !($sec1 <= $sec && $sec <= $sec2); # linear correction not in scope
@@ -964,8 +963,6 @@ while(substr($Max_gain_spd,0,1) eq " " && substr($Max_loss_spd,0,1) eq " ") {
   $Max_gain_spd = substr($Max_gain_spd,1);
   $Max_loss_spd = substr($Max_loss_spd,1);
 }
-print STDERR "$Max_gain##\n";
-print STDERR "$Max_loss##\n";
 $max_spd_text  = "max speed       =   $Max_spd km/h";
 $min_ele_text  = "min altitude    = $Min_ele  m";
 $max_ele_text  = "max altitude    = $Max_ele  m";
@@ -1082,10 +1079,10 @@ for($i=0; $i <= $#TIM; $i++) {
   print STDOUT "<cmt>$IGN[$i] previous point".($IGN[$i] == 1 ? " was" : "s were")." ignored</cmt>" if $IGN[$i];
   my $src = "";
   $src = "time gap interpolated from points before and after" if $FLG[$i] & INTERPOLATED_POINT;
-  $src .= ($src eq "" ? "" : "; ")."interpolated elevation" if $FLG[$i] & INTERPOLATED_ELE;
-  $src .= ($src eq "" ? "" : "; ")."interpolated time"      if $FLG[$i] & INTERPOLATED_TIM;
-  $src .= ($src eq "" ? "" : "; ")."substituted elevation" if $FLG[$i] & SUBSTITUTED_ELE;
-  $src .= ($src eq "" ? "" : "; ")."substituted time"       if $FLG[$i] & SUBSTITUTED_TIM;
+  $src .= ($src eq "" ? "" : "; ")."interpolated elevation"   if $FLG[$i] & INTERPOLATED_ELE;
+  $src .= ($src eq "" ? "" : "; ")."interpolated time"        if $FLG[$i] & INTERPOLATED_TIM;
+  $src .= ($src eq "" ? "" : "; ")."substituted elevation"    if $FLG[$i] & SUBSTITUTED_ELE;
+  $src .= ($src eq "" ? "" : "; ")."substituted time"         if $FLG[$i] & SUBSTITUTED_TIM;
   print STDOUT "<src>$src</src>" if $src ne "";
   my $fix = $flags == 0 ? "" : ($FLG[$i] & (INTERPOLATED_POINT|INTERPOLATED_TIM|SUBSTITUTED_TIM) == 0 ? "2d" : "none");
   print STDOUT "<fix>$fix</fix>" if $fix ne "";
