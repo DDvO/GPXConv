@@ -26,19 +26,19 @@
 use constant PRUNE_WPTS => 0;              # ignore all wayponts
 use constant PRUNE_AUTOMATIC_WPT => 1;    # ignore waypoints containing <name><!\[CDATA\[\d+\]\]></name>
 use constant PRUNE_DESC => 1;              # remove any descriptions
-use constant PRUNE_LINK => 1;              # remove any links
+use constant PRUNE_LINK => 0;              # remove any links
 use constant PRUNE_EXTENSIONS => 1;        # remove any extensions
 use constant INCLUDE_SPEED => 1;           # include speed extensions
 
 # control filling in missing elevation and/or time
 use constant CARRY_OVER_ELE => 1;          # copy elevation from last available value or begin of following segment
-use constant CARRY_OVER_TIME => 1;         # copy time from end of previous segment of begin of following segment
+use constant CARRY_OVER_TIME => 1;         # copy time from end of previous segment or begin of following segment
 use constant FILL_ELE_MISS => 1;           # interpolate missing elevation
 use constant FILL_TIME_MISS => 1;          # interpolate missing time
 
 # analysis control
 use constant MIN_SPEED_MOVING => 1;        # threshold for detecting movement (in km/h)
-use constant ANALYZE_PHASES => 1;          # perform analysis of ascent/descent phases
+use constant ANALYZE_PHASES => 0;          # perform analysis of ascent/descent phases
 use constant ELE_THRESHOLD => 20;          # threshold for detecting/accepting ascent or descent; should be larger than short-term elevation measurement error
 
 # smoothing control
