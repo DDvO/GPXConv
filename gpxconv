@@ -50,7 +50,8 @@ use constant INTERPOLATE_POINTS => 1;      # enable inserting interpolated point
 use constant INTERPOLATION_MAX_GAP => 3600;# in seconds between neighboring trackpoints before interpolation should be used (3600 for both exiftool and TrailGuru)
 
 # warning output control
-use constant WARNING_DIST     => 2000;     # threshold for distance warning (in meters)
+use constant WARNING_TPT_DIST => 2000;     # threshold for trackpoint distance warning (in meters)
+use constant WARNING_WPT_DIST =>  100;     # threshold for waypoint distance warning (in meters)
 use constant MAX_SPEED_DEVIATION => 1;     # threshold for speed measuring deviation warning (in km/h)
 
 # pruning control
@@ -219,7 +220,7 @@ sub remove_trkpt {
   my $i=$_[0];
   $IGN[$i+1] = $IGN[$i]+1; # indicate that previous point has been ignored, in addition to any previous ignores
   $SEG[$i+1] = 1 if $SEG[$i] && $i < $#SEG; # take over any segment start
-  $DIS[$i+1] += $DIS[$i];
+  $DIS[$i+1] = distance($LAT[$i+1], $LON[$i+1], $ELE[$i+1], $LAT[$i-1], $LON[$i-1], $ELE[$i-1]) if $i>0;
   splice @IGN, $i, 1;
   splice @SEG, $i, 1;
   splice @FLG, $i, 1;
@@ -233,9 +234,12 @@ sub remove_trkpt {
 }
 
 sub distance {
-  my $prev_lat = $_[0];
-  my $prev_lon = $_[1];
-  my $prev_ele = $_[2];
+  my $lat = $_[0];
+  my $lon = $_[1];
+  my $ele = $_[2];
+  my $prev_lat = $_[3];
+  my $prev_lon = $_[4];
+  my $prev_ele = $_[5];
   my $diff_lat = ($lat-$prev_lat) * METERS_PER_DEGREE_LAT;
   my $diff_lon = ($lon-$prev_lon) * METERS_PER_DEGREE_LAT * cos(deg2rad(($lat + $prev_lat)/2));
   #my$diff_lon = ($lon * cos(deg2rad($lat)) - $prev_lon * cos(deg2rad($prev_lat))) * METERS_PER_DEGREE_LAT;
@@ -248,9 +252,11 @@ sub distance {
   #						  40*1000*1000/pi/2); #http://perldoc.perl.org/Math/Trig.html
   #print "diff_lat=$diff_lat, diff_lon=$diff_lon, dis=$dis, distance=$distance\n";
 }
-
-sub calc_diffs() {
-  my $dis = distance($prev_lat, $prev_lon, $prev_ele); # re-calculating distance since coordinates may have been filled in or smoothened
+sub distance_curr { # of $lat, $lon, $ele
+    return distance($lat, $lon, $ele, $_[0], $_[1], $_[2]);
+}
+sub calc_diffs() { # of $lat, $lon, $ele relative to $prev_lat, $prev_lon, $prev_ele
+  my $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # re-calculating distance since coordinates may have been filled in or smoothened
   my $diff_ele = ($ele ne "" && $prev_ele ne "" ? $ele-$prev_ele : "");
   #http://forums.howwhatwhy.com/showflat.php?Cat=&Board=scigen&Number=-208125
   my $timediff = ($sec && $prev_sec ? $sec-$prev_sec : "");
@@ -404,7 +410,7 @@ while(<>) {
         print_trkpt("WARNING: at segment start  ", " no time      given$resolution");
       }
     } else { # state == 3, further (i.e., not the first) point in trkseg
-      $dis = distance($prev_lat, $prev_lon, $prev_ele); # is within segment
+      $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # is within segment
       if($ele eq "" && FILL_ELE_MISS && ($ele_miss_start || $prev_ele ne "")) { # $prev_avail_ele
         ($ele_miss_start, $ele_miss_length) = ($i, 0) if !$ele_miss_start; # $i is > 0
         $ele_miss_length += $dis;
@@ -425,12 +431,11 @@ while(<>) {
       my $end = $i;
       if ($state < 3) { # have been carrying over ele to end of last section
         $end--;
-      } else {
-        $ELE[$end] = $ele;
+      } else { # state == 3, further (i.e., not the first) point in trkseg
         $ele_miss_length += $dis;
       }
       my $ele_curr = $ELE[$ele_miss_start-1]; # $prev_avail_ele
-      my $ele_gradient = $ele_miss_length > 0 ? ($ELE[$end] - $ele_curr) / $ele_miss_length : 0;
+      my $ele_gradient = $ele_miss_length > 0 ? ($ele - $ele_curr) / $ele_miss_length : 0;
       for($j = $ele_miss_start; $j < $end; $j++) {
         $ele_curr += $DIS[$j] * $ele_gradient;
         $ELE[$j] = sprintf "%.0f", $ele_curr;
@@ -444,29 +449,18 @@ while(<>) {
       my $end = $i;
       if ($state < 3) { # have been carrying over time to end of last section
         $end--;
-      } else {
-        $SEC[$end] = $sec;
+      } else { # state == 3, further (i.e., not the first) point in trkseg
         $tim_miss_length += $dis;
       }
       my $sec_curr = $SEC[$tim_miss_start - 1]; # corresponds to $prev_tim
-      my $sec_prev = $sec_curr;
-      my $sec_gradient = $tim_miss_length > 0 ? ($SEC[$end] - $sec_curr) / $tim_miss_length : 0;
+      my $sec_gradient = $tim_miss_length > 0 ? ($sec - $sec_curr) / $tim_miss_length : 0;
+      print STDERR "### over ".($tim_miss_length/1000)." km, secdiff = ".($sec-$sec_curr)."\n";  my $sec_end=$sec; my $ldis=0;
       for($j = $tim_miss_start; $j < $end; $j++) {
         $sec_curr += $DIS[$j] * $sec_gradient;
-        my $sec_diff = int($sec_curr - $sec_prev);
-        if($sec_diff < MIN_TIMEDIFF) {
-          ignoring_trkpt($j, "time difference = $sec_diff sec (< ".MIN_TIMEDIFF.") due to distance = $DIS[j]");
-          remove_trkpt($j--);
-          $i--;
-          $end--;
-          # will re-calculate speed etc. relative to same previous point as before
-        } else {
-          $SEC[$j] = $sec_curr;
-          $TIM[$j] = epoch_to_str($sec_curr);
-          $FLG[$j] |= INTERPOLATED_TIM;
-          $sec_prev = $sec_curr;
-          ## print STDERR "### interpolating missing time at point $j with time=$TIM[$j]\n";
-        }
+        $SEC[$j] = $sec_curr;
+        $TIM[$j] = epoch_to_str($sec_curr);
+        $FLG[$j] |= INTERPOLATED_TIM;
+        ## print STDERR "### interpolating missing time at point $j with time=$TIM[$j]\n";
       }
       $tim_miss_start = 0;
     }
@@ -493,7 +487,7 @@ while(<>) {
         print_trkpt("WARNING: no elevation at   ", "; $ele_solution") if $num_no_ele == 1;
     } elsif ($num_no_ele) {
         $Len  = sprintf "%4".DIS_PRECISION, $ele_gap_length/1000;
-        print_trkpt_i($i-1, "WARNING: no elevation up to", " for ".$num_no_ele." points over a distance of $Len km") if $num_no_ele > 1;
+        print_trkpt_i($i-1, "WARNING: no elevation up to", " for ".$num_no_ele." point".($num_no_ele > 1 ? "s" : "")." over a distance of $Len km");
         $num_no_ele = 0;
         $ele_gap_length = 0;
     }
@@ -503,7 +497,7 @@ while(<>) {
         print_trkpt("WARNING: no time      at   ", "; $time_solution") if $num_no_time == 1;
     } elsif ($num_no_time) {
         $Len  = sprintf "%4".DIS_PRECISION, $time_gap_length/1000;
-        print_trkpt_i($i-1, "WARNING: no time      up to", " for ".$num_no_time." points over a distance of $Len km") if $num_no_time > 1;
+        print_trkpt_i($i-1, "WARNING: no time      up to", " for ".$num_no_time." point".($num_no_time > 1 ? "s" : "")." over a distance of $Len km");
         $num_no_time = 0;
         $time_gap_length = 0;
     }
@@ -567,10 +561,10 @@ for(my $i=0; $i <= $#TIM; $i++) {
     my $Spd = spd_string($spd);
     my $Spd_txt = $spd ne "" ? " at speed = $Spd km/h" : "";
     my $Dis  = sprintf "%4".DIS_PRECISION, $dis/1000;
-    my $Max_dis  = sprintf "%4".DIS_PRECISION, WARNING_DIST/1000;
+    my $Warn_dis  = sprintf "%".DIS_PRECISION, WARNING_TPT_DIST/1000;
     my $Rate = sprintf RAT_PRECISION, $rate;
     my $Acc =  sprintf ACC_PRECISION, $acc;
-    print_trkpt("WARNING: before  ", "$Spd_txt distance between points = $Dis km (more than $Max_dis km)") if $dis > WARNING_DIST;
+    print_trkpt("WARNING: before  ", "$Spd_txt distance between points = $Dis km (more than $Warn_dis km)") if $dis > WARNING_TPT_DIST;
     if(!$ignore) { # last trkpt has not been ignored
       my $Spd_diff = spd_string($spd ne "" && $SPD[$i] ne "" ? $spd-$SPD[$i] : 0);
       my $Spd_rec = spd_string($SPD[$i]);
@@ -588,7 +582,7 @@ for(my $i=0; $i <= $#TIM; $i++) {
     elsif($Spd > MAX_SENSIBLE_SPEED) {
       ignoring_trkpt("speed is more than ".MAX_SENSIBLE_SPEED." km/h");
     }
-    elsif($acc ne ""  && abs($acc) > MAX_SENSIBLE_ACCEL) {
+    elsif($acc ne ""  && abs($acc) > MAX_SENSIBLE_ACCEL && ($FLG[$i-1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
       ignoring_trkpt("acceleration = $Acc m/s/s (".($acc >= 0 ? "more than " : "less than -").MAX_SENSIBLE_ACCEL.")");
     }
     elsif($rate ne "" && $Rate > MAX_SENSIBLE_ELE_GAIN) {
@@ -597,8 +591,9 @@ for(my $i=0; $i <= $#TIM; $i++) {
     elsif($rate ne "" && $Rate < -MAX_SENSIBLE_ELE_LOSS) {
       ignoring_trkpt("descent rate = $Rate m/h (less than -".MAX_SENSIBLE_ELE_LOSS.")");
     }
-    elsif($timediff ne "" && $timediff < MIN_TIMEDIFF) {
-      ignoring_trkpt("time difference = $timediff sec (less than ".MIN_TIMEDIFF.")");
+    elsif($timediff ne "" && $timediff < MIN_TIMEDIFF && ($FLG[$i-1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
+      my $inter = ($FLG[$i] & INTERPOLATED_TIM) ? "interpolated " : "";
+      ignoring_trkpt($inter."time difference = ".int($timediff)." sec (less than ".MIN_TIMEDIFF.") over a distance of $Dis km");
     }
     else {
       $ignore = 0;
@@ -623,18 +618,21 @@ $average_timediff = $num_pts_mov ? $sum_timediff_mov/$num_pts_mov : 0; # used fo
 
 for($j=0; $j <= $#WSEC; $j++) {
   $sec=$WSEC[$j];
-  next unless $sec;
-  $diff_time = ($j>0 && $sec && $WSEC[$j-1] ? $sec-$WSEC[$j-1] : 0);
-  if($diff_time < 0) {
-    print STDERR "WARNING: waypoint '$WSTR[$j]' is before previous waypoint: $WTIM[$j-1]\n";
+  unless($sec) {
+    print STDERR "WARNING: waypoint '$WSTR[$j]' has no time information; skipping proximity check\n";
+    next;
+  }
+  if($j>0 && $WSEC[$j-1] && $sec-$WSEC[$j-1] < 0) {
+    print STDERR "WARNING: waypoint '$WSTR[$j]' is before previous waypoint: $WSTR[$j-1]\n";
   }
   if($#TIM < 0) {
-    print STDERR "WARNING: no trackpoint found for checking waypoint '$WSTR[$j]'\n";
+    print STDERR "WARNING: no trackpoint found for checking waypoints\n";
+    last;
   }
   else {
     # find trackpoint at or just after wpt
     $i2 = 0; # would be more efficient to do this just before the wpt loop, but then cannot deal with wpts not in time order
-    while ($i2 <= $#TIM && $SEC[$i2] < $sec) { # note that $SEC[$i2] may be 0
+    while ($i2 <= $#TIM && $SEC[$i2] < $sec && ($i2 == 0 || $SEC[$i2-1] != 0)) {
       $i2++;
     }
     if($i2 > $#TIM) {
@@ -647,10 +645,10 @@ for($j=0; $j <= $#WSEC; $j++) {
     $ele2 = $ELE[$i2] eq "" ? ($WELE[$j] eq "" ? $ELE[$i1] : $WELE[$j]): $ELE[$i2];
     $ele1 = $ELE[$i1] eq "" ? $ele2 : $ELE[$i1];
     $ele = $ele1 eq "" || $ele2 eq "" ? "" : $ele1+($ele2-$ele1)*$linear_factor;
-    $dis = distance($WLAT[$j], $WLON[$j], $WELE[$j]);
+    $dis = distance_curr($WLAT[$j], $WLON[$j], $WELE[$j]);
     $sec=0; # do not print time for interpolated point, since done already for wpt
     $Dis=sprintf "%.0f", $dis;
-    print_trkpt("WARNING: waypoint '$WSTR[$j]' is not close to track (interpolated distance = $Dis m); it should be approximately at") if $dis >= 50;
+    print_trkpt("WARNING: according to its time information, waypoint '$WSTR[$j]' appears not close to track (interpolated distance = $Dis m > ".WARNING_WPT_DIST."); it should be approximately at") if $dis > WARNING_WPT_DIST;
   }
 }
 
@@ -1024,13 +1022,13 @@ for($i=0; INTERPOLATE_POINTS && $i <= $#TIM; $i++) {
   if($i==13&&$diff_time > INTERPOLATION_MAX_GAP) { # implies $i>0
     my $n_spans = int($diff_time / INTERPOLATION_MAX_GAP) + ($diff_time % INTERPOLATION_MAX_GAP == 0 ? 0 : 1);
     my $time_inc = $diff_time/$n_spans; # 0 < $time_inc <= INTERPOLATION_MAX_GAP
-    my $dis = distance($prev_lat, $prev_lon, $prev_ele); # re-calculating distance since coordinates may have been filled in or smoothened
+    my $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # re-calculating distance since coordinates may have been filled in or smoothened
     my $Dis  = sprintf "%4".DIS_PRECISION, $dis/1000;
     my $dis_inc = $dis/$n_spans;
     my $N_points = $n_spans-1;
     my $s = $N_points > 1 ? "s" : "";
     print_trkpt("WARNING: before",
-		"  long time gap = ".timediff_string($diff_time)." over distance = ".$Dis." km".
+		"  long time gap = ".timediff_string($diff_time)." over a distance of ".$Dis." km".
                 "; inserting $N_points point$s"); # by interpolation every ". (sprintf SEC_PRECISION, $time_inc) ." seconds");
     my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after interpolated points
     my $start = $seg ? 0 : 1;
