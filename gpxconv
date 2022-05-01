@@ -1,20 +1,22 @@
 #!/usr/bin/perl
 
 ################################################################################
-# GPX track converter: post-process tracks as typically produced by GPS loggers.
-# Concatenates multiple tracks preserving track segments, collecting waypoints.
-# Reports missing data and ignores trackpoints containing non-plausible data.
+# GPX converter: post-process routes and tracks typically produced by GPS loggers.
+# Concatenates multiple tracks/routes preserving segments, collecting waypoints.
+# Reports missing data and ignores points containing non-plausible data.
 # Optionally fills in elevation and time data by interpolation within segments.
 # Optionally interpolates points in long gaps (by default, > 3600 seconds).
 # Optionally corrects elevation and sanitizes and smoothens trackpoints.
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 # Produces statistics, including ascent/descent rates of climbing phases.
-# Usage: gpxconv infile(s) >outfile
+#
+# Usage:
+#   gpxconv infile(s) >outfile
 # Options can be set by changing values of the configuration variables below.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT
 #                             prints any warnings and errors to STDERR
-# (c) 2012-2019 David von Oheimb - License: MIT - Version 2.3
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.3
 ################################################################################
 
 #use strict;
@@ -24,7 +26,7 @@
 
 # basic output control
 use constant PRUNE_WPTS => 0;              # ignore all wayponts
-use constant PRUNE_AUTOMATIC_WPT => 1;    # ignore waypoints containing <name><!\[CDATA\[\d+\]\]></name>
+use constant PRUNE_AUTOMATIC_WPT => 1;     # ignore waypoints containing <name><!\[CDATA\[\d+\]\]></name>
 use constant PRUNE_DESC => 1;              # remove any descriptions
 use constant PRUNE_LINK => 0;              # remove any links
 use constant PRUNE_EXTENSIONS => 1;        # remove any extensions
