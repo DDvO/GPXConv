@@ -16,7 +16,7 @@
 # Options can be set by changing values of the configuration variables below.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT
 #                             prints any warnings and errors to STDERR
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.3
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.4
 ################################################################################
 
 #use strict;
