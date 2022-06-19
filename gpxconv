@@ -30,7 +30,7 @@ use constant PRUNE_AUTOMATIC_WPT => 1;     # ignore waypoints containing <name><
 use constant PRUNE_DESC => 1;              # remove any descriptions
 use constant PRUNE_LINK => 0;              # remove any links
 use constant PRUNE_EXTENSIONS => 1;        # remove any extensions
-use constant INCLUDE_SPEED => 1;           # include speed extensions
+use constant INCLUDE_CALC_SPEED => 0;      # include speed extensions with calculated speed
 
 # control filling in missing elevation and/or time
 use constant CARRY_OVER_ELE => 1;          # copy elevation from last available value or begin of following segment
@@ -94,6 +94,7 @@ use constant INTERPOLATED_ELE   => 1<<2;
 use constant INTERPOLATED_TIM   => 1<<3;
 use constant SUBSTIIUTED_ELE    => 1<<4;
 use constant SUBSTIIUTED_TIM    => 1<<5;
+use constant CALCULATED_SPEED   => 1<<6;
 
 ### various subprocedures
 
@@ -188,7 +189,7 @@ sub parse_trkpt {
     }
     $ele = "" if !$ele_str && !$sec; # for routes generated, e.g., using Google My Maps
     $spd="";
-    if($s =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s) {
+    if ($s =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s) {
       $spd = $2 / 3.6; # assuming speed is given in km/h
       $max_speed = $spd if $max_speed < $spd;
     }
@@ -354,12 +355,12 @@ while(<>) {
     parse_trkpt($_);
     $flags = 0;
     ## print STDERR "### read point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd; state = $state\n";
+    my $diff_time = $sec && $prev_avail_sec ? $sec - $prev_avail_sec : 0;
 
     if($state == 1) {
       print_trkpt("INFO: first   segment at   ", "");
     }
     else {
-      my $diff_time = $sec && $prev_avail_sec ? $sec - $prev_avail_sec : 0;
       if($diff_time < 0) { # this implies $sec && $prev_sec
         # print_trkpt("WARNING: time difference = ".timediff_string($diff_time)." negative at", "; waypoint checking may not work correctly");
         print_trkpt("FATAL: before", " negative time difference (".timediff_string(-$diff_time).")\naborting"); exit 0;
@@ -372,8 +373,8 @@ while(<>) {
       }
     }
 
+    $dis = $state == 1 ? 0 : distance_curr($prev_lat, $prev_lon, $prev_ele);
     if ($state < 3) { # the first point in trkseg
-      $dis = 0;
       if (CARRY_OVER_ELE && $ele ne "") {
         if($i>0 && $ELE[$i-1] eq "") {
           $FLG[$i-1] |= SUBSTITUTED_ELE;
@@ -397,7 +398,13 @@ while(<>) {
         print_trkpt_i($i-1, "WARNING:              up to", " was unable to interpolate missing time within segment");
         $tim_miss_start = 0;
       }
-      print_trkpt("INFO: further segment at   ", "") if $state == 2;
+      if ($state == 2) {
+        my $Dis  = sprintf "%4".DIS_PRECISION, $dis/1000;
+        my $Gap = timediff_string($diff_time);
+        $Gap =~ s/^\s+//;
+        print_trkpt("INFO: further segment at   ", " after a gap of $Gap and $Dis km");
+      }
+
       if ($ele eq "") {
         if ($prev_avail_ele eq "") { # $prev_ele
           $resolution = " and no previous value available";
@@ -424,7 +431,6 @@ while(<>) {
         print_trkpt("WARNING: at segment start  ", " no time      given$resolution");
       }
     } else { # state == 3, further (i.e., not the first) point in trkseg
-      $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # is within segment
       if($ele eq "" && FILL_ELE_MISS && ($ele_miss_start || $prev_ele ne "")) { # $prev_avail_ele
         ($ele_miss_start, $ele_miss_length) = ($i, 0) if !$ele_miss_start; # $i is > 0
         $ele_miss_length += $dis;
@@ -808,7 +814,10 @@ for($i=0; $i < $#TIM+1; $i++) {
   if($i <= $#TIM) {
     ($diff_ele, $timediff, $rate, $dis, $spd, $acc) = $SEG[$i] ? (0, 0, 0, 0, 0, 0) : calc_diffs();
     $sum_dis += $dis if $i > 0;
-    $SPD[$i] = $spd if $spd ne ""; # set speed, preferring calculated over any recorded speed
+    if ($SPD[$i] eq "") { # set calculated speed if recorded speed is not available
+      $SPD[$i] = $spd;
+      $FLG[$i] |= CALCULATED_SPEED;
+    }
     $spd =  $SPD[$i];
     push @DIST, $dis;
     push @RATE, $rate;
@@ -1107,10 +1116,11 @@ for($i=0; $i <= $#TIM; $i++) {
   $src .= ($src eq "" ? "" : "; ")."interpolated time"        if $FLG[$i] & INTERPOLATED_TIM;
   $src .= ($src eq "" ? "" : "; ")."substituted elevation"    if $FLG[$i] & SUBSTITUTED_ELE;
   $src .= ($src eq "" ? "" : "; ")."substituted time"         if $FLG[$i] & SUBSTITUTED_TIM;
+  $src .= ($src eq "" ? "" : "; ")."calculated speed"         if $FLG[$i] & CALCULATED_SPEED && INCLUDE_CALC_SPEED;
   print STDOUT "<src>$src</src>" if $src ne "";
   my $fix = $flags == 0 ? "" : ($FLG[$i] & (INTERPOLATED_POINT|INTERPOLATED_TIM|SUBSTITUTED_TIM) == 0 ? "2d" : "none");
   print STDOUT "<fix>$fix</fix>" if $fix ne "";
-  print STDOUT "<extensions>".SPEED.spd_string($spd)._SPEED."</extensions>" if $spd && INCLUDE_SPEED;
+  print STDOUT "<extensions>".SPEED.spd_string($spd)._SPEED."</extensions>" if $spd ne "" && (!($FLG[$i] & CALCULATED_SPEED) || INCLUDE_CALC_SPEED);
   print STDOUT "</trkpt>\n";
   print STDOUT "  </trkseg>\n  <trkseg>\n" if $SEG[$i+1] && $i<$#TIM;
 }
