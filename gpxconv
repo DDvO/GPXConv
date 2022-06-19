@@ -60,10 +60,10 @@ use constant MAX_SPEED_DEVIATION => 2;     # threshold for speed measuring devia
 use constant WALKING => 0;
 use constant DRIVING => 1;                 # otherwise flying; only relevant if WALKING is 0
 use constant MIN_TIMEDIFF          => WALKING ?    4 : (DRIVING ?     2 :     1); # in seconds
-use constant MAX_SENSIBLE_ELE_GAIN => WALKING ? 1800 : (DRIVING ? 10000 : 25000); # maximal ascent rate in m/h
-use constant MAX_SENSIBLE_ELE_LOSS => WALKING ? 3600 : (DRIVING ? 10000 : 50000); # maximal descent rate in m/h
-use constant MAX_SENSIBLE_ACCEL    => WALKING ?  0.5 : (DRIVING ?     3 :     5); # maximal acceleration m/s/s
-use constant MAX_SENSIBLE_SPEED    => WALKING ?   20 : (DRIVING ?   150 :  1100); # maximal speed in km/h
+use constant MAX_SENSIBLE_SPEED    => WALKING ?   20 : (DRIVING ?   200 :  1200); # maximal speed in km/h
+use constant MAX_SENSIBLE_ACCEL    => WALKING ?  0.5 : (DRIVING ?     5 :    10); # maximal acceleration m/s/s
+use constant MAX_SENSIBLE_ELE_GAIN => WALKING ? 1800 : (DRIVING ? 20000 : 30000); # maximal ascent rate in m/h
+use constant MAX_SENSIBLE_ELE_LOSS => WALKING ? 3600 : (DRIVING ? 20000 : 50000); # maximal descent rate in m/h
 use constant MAX_SENSIBLE_ANGLE_DIFF => 175;         # maximal sensible turning angle
 use constant MIN_SENSIBLE_ELE => -450; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
 
