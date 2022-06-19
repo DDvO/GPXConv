@@ -204,19 +204,21 @@ sub parse_trkpt {
 sub print_trkpt { print_trkpt_i(-1, $_[0], $_[1]); }
 sub print_trkpt_i {
   my $i=$_[0];
-  my ($lati, $long, $elev, $time) = $i < 0 ? ($lat, $lon, $ele, $tim) :
+  my $head=$_[1]; # may be empty
+  my $tail=$_[2]; # may be empty
+  my ($lati, $long, $elev, $t) = $i < 0 ? ($lat, $lon, $ele, $tim) :
       ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]);
   # using original precision here for better traceability
   # $lati = sprintf LAT_PRECISION, $lati;
   # $long = sprintf LON_PRECISION, $long;
   $elev = $elev ne "" ? $elev : "NONE "; # sprintf "%.0f",
-  $time = $time ne "" ? $time : "NONE";
-  print STDERR "$_[1] ". (
-    "<trkpt"  .' lat="'.(
-      $lati.'"'.(' ' x max(0,$lat_len-length($lati)))).' lon="'.(
-      $long.'"'.(' ' x max(0,$lon_len-length($long))))." <ele>".ele_string($elev)." <time>".(
-      $time.(" " x max(0,$tim_len-length($time))))) .
-    "$_[2]\n";
+  my $time = $t ne "" ? $t : "NONE";
+  print STDERR "$head ".
+    "<trkpt"  .' lat="'.($lati.'"'.(' ' x max(0,$lat_len-length($lati)))).
+               ' lon="'.($long.'"'.(' ' x max(0,$lon_len-length($long)))).
+    " <ele>".ele_string($elev).
+    ($t ne "NO" ? " <time>".($time.(" " x max(0,$tim_len-length($time)))) : "").
+    "$tail\n";
 }
 
 sub ignoring_trkpt { ignoring_trkpt_i(-1, $_[0]); }
@@ -298,16 +300,17 @@ $max_sec = 0;
 $/ = "<trkpt ";
 while(<>) {
   s#<desc>.+?</desc>\n?##sg if PRUNE_DESC;
-   s# *<link.+?</link>\n?##sg if PRUNE_LINK;
+  s# *<link.+?</link>\n?##sg if PRUNE_LINK;
   while(s#(<wpt .+?) *(</wpt>\n?)##s) { #collect waypoints, possibly in later headers
     $wpt = $1.$2;
     $wpt =~ s#<extensions>.+?</extensions>\n?##sg if PRUNE_EXTENSIONS;
     $wpt =~ s#\n##sg;
     parse_trkpt($wpt); # collect some basic data even if pruned
     if (!PRUNE_WPTS &&
-	!($wpt =~ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+-?[\d\.]+ k?m(\/h)?( at -?[\d\.]+ km/h)?\]#) &&
-        !($wpt =~ m#\[(start|end.*?)\]#) &&
-	!($wpt =~ m#<name><!\[CDATA\[\d+\]\]></name># && PRUNE_AUTOMATIC_WPTS)) {
+	!($wpt =~ m#<name><!\[CDATA\[\d+\]\]></name># && PRUNE_AUTOMATIC_WPTS) &&
+        !($wpt =~ m#\[(start|end.*?)\]#) && # waypoint with statistics added previously by this tool
+	!($wpt =~ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+[+-]?[\d\.]+ k?m(\/h)?( at -?[\d\.]+ km/h|;\s+avg\s+rate\s+=\s+[+-]?[\d.]+ m/h)?\]#)
+        ) {
       $wpt =~ m#(<name>.*?)</wpt>#;
       push @WLAT, $lat;
       push @WLON, $lon;
@@ -648,10 +651,12 @@ for($j=0; $j <= $#WSEC; $j++) {
     while ($i2 <= $#TIM && $SEC[$i2] < $sec && ($i2 == 0 || $SEC[$i2-1] != 0)) {
       $i2++;
     }
-    if($i2 > $#TIM) {
+    $i1 = ($i2 > 0 ? $i2-1 : $i2);  # trackpoint just before, if any, else same as the one just determined
+    next if $LAT[$i1] == $WLAT[$j] && $LON[$i1] == $WLON[$j] && $ELE[$i1] == $WELE[$j]; # late finishing point
+    next if $LAT[$i2] == $WLAT[$j] && $LON[$i2] == $WLON[$j] && $ELE[$i2] == $WELE[$j]; # early starting point
+    if ($i2 > $#TIM) {
       print STDERR "WARNING: no trackpoint found at same time or later than waypoint '$WSTR[$j]'; will extrapolate distance from the one before\n";
     }
-    $i1 = ($i2 > 0 ? $i2-1 : $i2);  # trackpoint just before, if any, else same as the one just determined
     $linear_factor= ($SEC[$i2]-$SEC[$i1] <= 0 ? 0 : ($sec-$SEC[$i1])/($SEC[$i2]-$SEC[$i1]));
     $lat = $LAT[$i1]+($LAT[$i2]-$LAT[$i1])*$linear_factor;
     $lon = $LON[$i1]+($LON[$i2]-$LON[$i1])*$linear_factor;
@@ -659,7 +664,7 @@ for($j=0; $j <= $#WSEC; $j++) {
     $ele1 = $ELE[$i1] eq "" ? $ele2 : $ELE[$i1];
     $ele = $ele1 eq "" || $ele2 eq "" ? "" : $ele1+($ele2-$ele1)*$linear_factor;
     $dis = distance_curr($WLAT[$j], $WLON[$j], $WELE[$j]);
-    $sec=0; # do not print time for interpolated point, since done already for wpt
+    $tim="NO"; # do not print time for interpolated point, since done already for wpt
     $Dis=sprintf "%.0f", $dis;
     print_trkpt("WARNING: according to its time information, waypoint '$WSTR[$j]' appears not close to track (interpolated distance = $Dis m > ".WARNING_WPT_DIST."); it should be approximately at") if $dis > WARNING_WPT_DIST;
   }
