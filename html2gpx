@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+
+################################################################################
+# convert to GPX the HTML-formated track data exported from mytkstar.net
+# (c) 2022 David von Oheimb - License: MIT - Version 2.4
+################################################################################
+
+use strict;
+use warnings;
+
+ use constant TZ => "+0200"; # CEST
+#use constant TZ => "+0100"; # CET
+#use constant TZ => ""; # automatic according current time zone and DST
+
+# str_to_epoch("1970-01-01T00:00:00Z") = 0
+sub str_to_epoch {
+    use Time::ParseDate;
+    my $s=$_[0];
+    $s =~ s/-/\//g;
+    $s =~ s/T/ /;
+    $s =~ s/Z/+0000/;
+    return Time::ParseDate::parsedate($s);
+}
+
+sub epoch_to_str {
+    use DateTime; # maybe better not use due to Perl library bug on Mac OS X: "dyld: lazy symbol binding failed: Symbol not found: _Perl_newSVpvn_flags"
+    my $dt = DateTime->from_epoch( epoch => $_[0] );
+    return $dt->ymd."T".$dt->hms."Z";
+    # use Time::gmtime;
+    # my $tm = gmtime($_[0]);
+    # return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", $tm->year+1900, $tm->mon+1, $tm->mday, $tm->hour, $tm->min, $tm->sec);
+}
+
+$/ = "<tr><th>";
+while (<>) {
+    if (m|<b>From:([\d-]+) ([\d:]+)|) { # ignoring " &nbsp;To.([\d-]+) ([\d:]+)</b>"
+        my $time = "    <time>$1T$2</time>";
+        my $name = "    <name>$ARGV</name>\n";
+        my $desc = "";
+        $desc = "    <desc>$1</desc>\n" if m|<span[^>]*>([^<]+)</span>|;
+        print STDOUT '<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<gpx xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" version="1.1" creator="mytkstar.net and html2gpx" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+'.$name.$desc.$time.'
+  </metadata>
+<trk>
+  <trkseg>
+';
+        next;
+    }
+    next if m|^No.</th><th>Position time</th><th>Lat</th><th>Lon</th><th>Speed</th><th>Direction</th><th>Track way</th></tr>|;
+    if (m|^(\d+)</th><th>([\d-]+) ([\d:]+)</th><th>([^<]+)</th><th>([^<]+)</th><th>([^<]+)</th><th>([^<]+)</th><th>([^<]+)</th></tr>|) {
+        my ($num, $tim, $lat, $lon, $spd, $cou, $typ) = ($1, "$2T$3".TZ, $4, $5, $6, $7, $8);
+        my $Tim = epoch_to_str(str_to_epoch($tim)); # convert to Zulu time (Z)
+        #my $Spd = sprintf "%.1f", $6 / 3.6; # in m/s
+        my $Spd = sprintf "%3.0f", $spd; # in km/h
+        my $Cou = sprintf "%3d", $cou; 
+        print STDOUT "  <trkpt lat=\"$lat\" lon=\"$lon\"><time>$Tim</time><extensions><speed>$Spd</speed><course>$Cou</course></extensions></trkpt>\n";
+        next;
+    }
+    print STDERR "WARNING: ignoring line $/$_\n";
+}
+print STDOUT "  </trkseg>\n</trk>\n</gpx>\n";
+
