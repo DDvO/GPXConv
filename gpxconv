@@ -20,7 +20,7 @@
 # Other options can be set by changing values of the configuration variables below.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT
 # Prints information (if enabled), any warnings (if enabled), an errors to STDERR
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.4
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5
 ################################################################################
 
 #use strict;
@@ -34,7 +34,7 @@ use constant PRUNE_AUTOMATIC_WPT => 1;     # ignore waypoints containing <name><
 use constant PRUNE_DESC => 1;              # remove any descriptions
 use constant PRUNE_LINK => 0;              # remove any links
 use constant PRUNE_EXTENSIONS => 1;        # remove any extensions
-use constant INCLUDE_CALC_SPEED => 0;      # include speed extensions with calculated speed
+use constant INCLUDE_CALC_SPEED => 1;      # include speed extensions with calculated speed
 
 # control filling in missing elevation and/or time
 use constant CARRY_OVER_ELE => 1;          # copy elevation from last available value or begin of following segment
@@ -64,12 +64,13 @@ use constant MAX_SPEED_DEVIATION => 2;     # threshold for speed measuring devia
 
 # pruning control
 use constant WALKING => 0;
+use constant CYCLING => 1;
 use constant DRIVING => 1;                 # otherwise flying; only relevant if WALKING is 0
-use constant MIN_TIMEDIFF          => WALKING ?    4 : (DRIVING ?     2 :     1); # in seconds
-use constant MAX_SENSIBLE_SPEED    => WALKING ?   20 : (DRIVING ?   200 :  1200); # maximal speed in km/h
-use constant MAX_SENSIBLE_ACCEL    => WALKING ?  0.5 : (DRIVING ?     5 :    10); # maximal acceleration m/s/s
-use constant MAX_SENSIBLE_ELE_GAIN => WALKING ? 1800 : (DRIVING ? 20000 : 30000); # maximal ascent rate in m/h
-use constant MAX_SENSIBLE_ELE_LOSS => WALKING ? 3600 : (DRIVING ? 20000 : 50000); # maximal descent rate in m/h
+use constant MIN_TIMEDIFF          => WALKING ?    4 : (CYCLING ?    2 : (DRIVING ?     2 :     1)); # in seconds
+use constant MAX_SENSIBLE_SPEED    => WALKING ?   20 : (CYCLING ?   80 : (DRIVING ?   200 :  1200)); # maximal speed in km/h
+use constant MAX_SENSIBLE_ACCEL    => WALKING ?  0.5 : (CYCLING ?    4 : (DRIVING ?     5 :    10)); # maximal acceleration m/s/s
+use constant MAX_SENSIBLE_ELE_GAIN => WALKING ? 1800 : (CYCLING ? 3000 : (DRIVING ? 20000 : 30000)); # maximal ascent rate in m/h
+use constant MAX_SENSIBLE_ELE_LOSS => WALKING ? 3600 : (CYCLING ? 9000 : (DRIVING ? 20000 : 50000)); # maximal descent rate in m/h
 use constant MAX_SENSIBLE_ANGLE_DIFF => 175;         # maximal sensible turning angle
 use constant MIN_SENSIBLE_ELE => -450; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
 
@@ -216,8 +217,12 @@ sub parse_trkpt {
   }
 }
 
-sub warn {
+sub warning {
     print STDERR "WARNING: $_[0]\n" if $print_warnings;
+}
+
+sub info {
+    print STDERR "INFO: $_[0]\n" if $print_info;
 }
 
 sub debug {
@@ -388,7 +393,7 @@ while(<>) {
     s#<extensions>.+?</extensions>\n?##sg if PRUNE_EXTENSIONS;
     if(s#\nGPXConv statistics (.*?)GPXConv statistics end\n##s) { #remove any earlier statistics section
       $stats = $1;
-      warn("smoothing apparently has already been done on input") if $stats =~ m#smoothened# && ENABLE_SMOOTHING;
+      warning("smoothing apparently has already been done on input") if $stats =~ m#smoothened# && ENABLE_SMOOTHING;
     }
     if(m#$/#s) {
       s#$/##s; #remove trailing "<trkpt "
@@ -402,7 +407,7 @@ while(<>) {
   }
   elsif(m#(<gpx )#s) { # processing further track, ignoring its header
     if (m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n# && ENABLE_SMOOTHING) {
-      warn("smoothing apparently has already been done on input");
+      warning("smoothing apparently has already been done on input");
     }
     info_trkpt("further track after  ", "") if $#TIM >= 0; # typically, new file
     $state = 2 if $state > 2; # expecting new trkseg
@@ -703,14 +708,14 @@ $average_timediff = $num_pts_mov ? $sum_timediff_mov/$num_pts_mov : 0; # used fo
 for($j=0; $j <= $#WSEC; $j++) {
   $sec=$WSEC[$j];
   unless($sec) {
-    warn("waypoint '$WSTR[$j]' does not have time information; skipping proximity check");
+    warning("waypoint '$WSTR[$j]' does not have time information; skipping proximity check");
     next;
   }
   if($j>0 && $WSEC[$j-1] && $sec-$WSEC[$j-1] < 0) {
-    warn("waypoint '$WSTR[$j]' is before previous waypoint: $WSTR[$j-1]");
+    warning("waypoint '$WSTR[$j]' is before previous waypoint: $WSTR[$j-1]");
   }
   if($#TIM < 0) {
-    warn("no trackpoint found for checking waypoints");
+    warning("no trackpoint found for checking waypoints");
     last;
   }
   else {
@@ -723,7 +728,7 @@ for($j=0; $j <= $#WSEC; $j++) {
     next if $LAT[$i1] == $WLAT[$j] && $LON[$i1] == $WLON[$j] && $ELE[$i1] == $WELE[$j]; # late finishing point
     next if $LAT[$i2] == $WLAT[$j] && $LON[$i2] == $WLON[$j] && $ELE[$i2] == $WELE[$j]; # early starting point
     if ($i2 > $#TIM) {
-      warn("no trackpoint found at same time or later than waypoint '$WSTR[$j]'; will extrapolate distance from the one before");
+      warning("no trackpoint found at same time or later than waypoint '$WSTR[$j]'; will extrapolate distance from the one before");
     }
     $linear_factor= ($SEC[$i2]-$SEC[$i1] <= 0 ? 0 : ($sec-$SEC[$i1])/($SEC[$i2]-$SEC[$i1]));
     $lat = $LAT[$i1]+($LAT[$i2]-$LAT[$i1])*$linear_factor;
@@ -778,6 +783,46 @@ for($i=0; $i <= $#TIM; $i++) {
 
 ## perform analysis/statistics
 
+$sum_timediff_mov = 0; # re-calculate this var, since points may have been ignored or smoothened
+$sum_dis = 0;
+$sum__ascent = $sum_descent = 0;
+$time__ascent = $time_descent = 0;
+$min_ele_index = -1;
+$max_ele_index = -1;
+$max_gain_index = -1;
+$max_loss_index = -1;
+$last_gain_index = -1;
+$last_loss_index = -1;
+$local_max_index = 0;
+$max_spd_index = -1;
+$max_spd = 0;
+
+my $sum_energy = 0;
+sub energy {
+    my $t  = $_[0]; # start date and time
+    my $dt = $_[1]; # time difference in s
+    my $d  = $_[2]; # 3-dimensional distance in m
+    my $dh = $_[3]; # elevation difference in m
+    my $v0 = $_[4]; # speed before in m/s
+    my $v1 = $_[5]; # speed after  in m/s
+    # values below taken from https://www.sheldonbrown.com/rinard/aero/formulas.html
+    my $g  = 9.81;  # gravity constant in m/(s^2)
+    my $r = 1.2;    # density of air in kg/(m^3)
+    my $m = 80;     # total mass including vehicle and rider in kg        - adapt
+    my $cr = 0.003; # coefficient of rolling friction for racing bike     - adapt
+    my $cwA = 0.39; # coefficient of wind resistance * frontal area in m2 - adapt
+    my $v = ($v0 + $v1) / 2; # average speed
+    my $roll = $cr * $m * $g * $d;
+    my $slope = $m * $g * $dh;
+    my $accel = $m/2 * ($v1 * $v1 - $v0 * $v0);
+    my $wind = $r * $cwA / 2 * $v * $v * $d;
+    my $sum =  $roll + $slope + $accel + $wind; # in joule
+    my $debug_inputs = "dt=".int($dt)." d=".int($d)." dh=".int($dh)." v0=".int($v0)." v1=".int($v1);
+    my $debug_outputs = "roll:".int($roll)." + slope:".int($slope)." + accel:".int($accel)." + wind:".int($wind);
+    # debug "energy @ time=$t  $debug_inputs   =>   $debug_outputs = sum:".int($sum);
+    return $sum;
+}
+
 sub push_phase {
   my $start_index = $_[0];
   my $end_index = $_[1];
@@ -813,20 +858,6 @@ sub push_phase {
   push @PHASE_END_INDEX    , $end_index;
 }
 
-$prev_sec = 0;
-$sum_timediff_mov = 0; # re-calculate this var, since points may have been ignored or smoothened
-$sum_dis = 0;
-$sum__ascent = $sum_descent = 0;
-$time__ascent = $time_descent = 0;
-$min_ele_index = -1;
-$max_ele_index = -1;
-$max_gain_index = -1;
-$max_loss_index = -1;
-$last_gain_index = -1;
-$last_loss_index = -1;
-$local_max_index = 0;
-$max_spd_index = -1;
-$max_spd = 0;
 for($i=0; $i < $#TIM+1; $i++) {
   if($i <= $#TIM) {
     ($lat, $lon, $ele, $tim, $sec, $spd) = ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i]);
@@ -882,12 +913,16 @@ for($i=0; $i < $#TIM+1; $i++) {
       $SPD[$i] = $spd;
       $FLG[$i] |= CALCULATED_SPEED;
     }
-    $spd =  $SPD[$i];
+    $spd = $SPD[$i];
     push @DIST, $dis;
     push @RATE, $rate;
     if($spd ne "" && $timediff ne "" && 3.6*$spd >= MIN_SPEED_MOVING) {
       $sum_timediff_mov += $timediff;
     }
+    my $tim = $TIM[$i - 1];
+    $tim =~ s/(:\d\d)(\.\d+)/$1/; # strip fractional seconds
+    $sum_energy += energy($tim, $sec - $prev_sec, $dis, $ele - $prev_ele, $prev_spd, $spd)
+        unless ($SEG[$i]); # not at segment start
   }
   $min_lat = $lat if $min_lat>$lat || $i == 0;
   $max_lat = $lat if $max_lat<$lat || $i == 0;
@@ -982,6 +1017,7 @@ $Avg__ascent_rate=sprintf RAT_PRECISION, $avg__ascent_rate;
 $Avg_descent_rate=sprintf RAT_PRECISION, $avg_descent_rate;
 $Avg_descent_rate =~ s/\+/-/ if !$avg_descent_rate;
 $Sum_dis =sprintf  "%".DIS_PRECISION, $sum_dis/1000;
+$Sum_energy = sprintf "%.0f", $sum_energy / 1000;
 $Avg_spd =spd_string($avg_spd);
 $Avg_spd =~ s/^\s+//;
 $Sum_timediff_mov = timediff_string($sum_timediff_mov);
@@ -1079,7 +1115,8 @@ $max_loss_text = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h";
 
 $final_text = "\n";
 $final_text .= "total distance       = $Sum_dis km\n";
-$final_text .= "total   moving time  = $Sum_timediff_mov\n" if $sum_timediff_mov;
+$final_text .= "total moving time    = $Sum_timediff_mov\n" if $sum_timediff_mov;
+$final_text .= "total biking energy  = $Sum_energy kJ\n" if $sum_timediff_mov;
 $final_text .= "average moving speed = $Avg_spd km/h\n" if $avg_spd;
 $final_text .= "elevation ".(GEOID_ELE_CORRECTION ? "corrected by ".($found_corr ? "last retrieved": "assumed")." geoid height = $ele_corr m" : "not corrected").
 (ENABLE_SMOOTHING ? "
@@ -1108,11 +1145,12 @@ point($max_gain_index , $max_gain_text).
 point($max_loss_index , $max_loss_text).
 $phase_points.
 point($#TIM, "end").substr($final_text,1)."
-GPXConv statistics end
-";
+GPXConv statistics end";
+
+info($stats);
 $HEAD =~ s|(<trk>\s*(<name>.*?</name>)?)|$1<cmt></cmt>\n|s # add preliminarily empty comment in track
            unless $HEAD =~ m/<trk>.*?<cmt>/s;              # if not already existing
-$HEAD =~ s/(<trk>.*?<cmt>)/$1$stats/s; # prepend stats to track comment
+$HEAD =~ s/(<trk>.*?<cmt>)/$1$stats\n    /s; # prepend stats to track comment
 
 
 ## fill long time gaps as far as needed with intermediate points by linear interpolation
