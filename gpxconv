@@ -12,7 +12,8 @@
 # Produces statistics, including ascent/descent rates of climbing phases.
 #
 # Usage:
-#   gpxconv infile(s) >outfile
+#   gpxconv infile(s) [>outfile]
+#   gpxconv [-o outfile] infile(s)
 # Options can be set by changing values of the configuration variables below.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT
 # Prints information (if enabled), any warnings (if enable), an errors to STDERR
@@ -305,6 +306,15 @@ sub calc_diffs() { # of $lat, $lon, $ele relative to $prev_lat, $prev_lon, $prev
   return ($diff_ele, $timediff, $rate, $dis, $speed, $acc);
 }
 
+
+### parse command line
+
+$out = STDOUT;
+print "$#ARGV $ARGV[0] $ARGV[1] $ARGV[2] \n";
+if ($ARGV[0] eq "-o" && $#ARGV > 1) {
+    open($out, "> $ARGV[1]");
+    shift @ARGV; shift @ARGV;
+}
 
 ### main loops
 
@@ -1137,15 +1147,15 @@ for($i=0; INTERPOLATE_POINTS && $i <= $#TIM; $i++) {
 
 use constant SPEED => "<speed>"; # "<x:TrackPointExtension><x:speed>"
 use constant _SPEED => "</speed>"; # </x:speed></x:TrackPointExtension>"
-print STDOUT $HEAD; # includes <gpx> <trk> <trkseg>
+print $out $HEAD; # includes <gpx> <trk> <trkseg>
 for($i=0; $i <= $#TIM; $i++) {
   ($tim, $spd) = ($TIM[$i], $SPD[$i]);
   $tim =~ s/(:\d\d)(\.\d+)/$1/; # strip fractional seconds
-  print STDOUT '  <trkpt lat="'.(sprintf LAT_PRECISION, $LAT[$i]).
-                      '" lon="'.(sprintf LON_PRECISION, $LON[$i]).'">';
-  print STDOUT "<ele>".ele_string($ele_prec_len, int(correct_ele(-1, $i)))."</ele>" if $ELE[$i] ne "";
-  print STDOUT "<time>$tim</time>" if $tim;
-  print STDOUT "<cmt>$IGN[$i] previous point".($IGN[$i] == 1 ? " was" : "s were")." ignored</cmt>" if $IGN[$i];
+  print $out '  <trkpt lat="'.(sprintf LAT_PRECISION, $LAT[$i]).
+                    '" lon="'.(sprintf LON_PRECISION, $LON[$i]).'">';
+  print $out "<ele>".ele_string($ele_prec_len, int(correct_ele(-1, $i)))."</ele>" if $ELE[$i] ne "";
+  print $out "<time>$tim</time>" if $tim;
+  print $out "<cmt>$IGN[$i] previous point".($IGN[$i] == 1 ? " was" : "s were")." ignored</cmt>" if $IGN[$i];
   my $src = "";
   $src = "time gap interpolated from points before and after" if $FLG[$i] & INTERPOLATED_POINT;
   $src .= ($src eq "" ? "" : "; ")."interpolated elevation"   if $FLG[$i] & INTERPOLATED_ELE;
@@ -1153,11 +1163,14 @@ for($i=0; $i <= $#TIM; $i++) {
   $src .= ($src eq "" ? "" : "; ")."substituted elevation"    if $FLG[$i] & SUBSTITUTED_ELE;
   $src .= ($src eq "" ? "" : "; ")."substituted time"         if $FLG[$i] & SUBSTITUTED_TIM;
   $src .= ($src eq "" ? "" : "; ")."calculated speed"         if $FLG[$i] & CALCULATED_SPEED && INCLUDE_CALC_SPEED;
-  print STDOUT "<src>$src</src>" if $src ne "";
+  print $out "<src>$src</src>" if $src ne "";
   my $fix = $flags == 0 ? "" : ($FLG[$i] & (INTERPOLATED_POINT|INTERPOLATED_TIM|SUBSTITUTED_TIM) == 0 ? "2d" : "none");
-  print STDOUT "<fix>$fix</fix>" if $fix ne "";
-  print STDOUT "<extensions>".SPEED.spd_string($spd)._SPEED."</extensions>" if $spd ne "" && (!($FLG[$i] & CALCULATED_SPEED) || INCLUDE_CALC_SPEED);
-  print STDOUT "</trkpt>\n";
-  print STDOUT "  </trkseg>\n  <trkseg>\n" if $SEG[$i+1] && $i<$#TIM;
+  print $out "<fix>$fix</fix>" if $fix ne "";
+  print $out "<extensions>".SPEED.spd_string($spd)._SPEED."</extensions>" if $spd ne "" && (!($FLG[$i] & CALCULATED_SPEED) || INCLUDE_CALC_SPEED);
+  print $out "</trkpt>\n";
+  print $out "  </trkseg>\n  <trkseg>\n" if $SEG[$i+1] && $i<$#TIM;
 }
-print STDOUT "  </trkseg>\n</trk>\n</gpx>\n";
+print $out "  </trkseg>\n</trk>\n</gpx>\n";
+
+close $out if $out != STDOUT;
+exit 0;
