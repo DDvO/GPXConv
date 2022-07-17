@@ -12,11 +12,14 @@
 # Produces statistics, including ascent/descent rates of climbing phases.
 #
 # Usage:
-#   gpxconv infile(s) [>outfile]
-#   gpxconv [-o outfile] infile(s)
-# Options can be set by changing values of the configuration variables below.
+#   gpxconv <options> <infile(s)> [> <outfile>]
+# <options> may be:
+#   -o <outfile> - output the resulting track to <outfile>
+#   -nw          - do not print warnings
+#   -ni          - do not print information
+# Other options can be set by changing values of the configuration variables below.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT
-# Prints information (if enabled), any warnings (if enable), an errors to STDERR
+# Prints information (if enabled), any warnings (if enabled), an errors to STDERR
 # (c) 2012-2022 David von Oheimb - License: MIT - Version 2.4
 ################################################################################
 
@@ -53,8 +56,8 @@ use constant INTERPOLATE_POINTS => 1;      # enable inserting interpolated point
 use constant INTERPOLATION_MAX_GAP => 3600;# in seconds between neighboring trackpoints before interpolation should be used (3600 for both exiftool and TrailGuru)
 
 # warning output control
-use constant PRINT_WARNINGS => 1;          # whether printing warnings is enabled
-use constant PRINT_INFO => 1;              # whether printing information is enabled
+use constant PRINT_WARNINGS => 1;          # whether printing warnings is enabled by default
+use constant PRINT_INFO => 1;              # whether printing information is enabled by default
 use constant WARNING_TPT_DIST => 2000;     # threshold for trackpoint distance warning (in meters)
 use constant WARNING_WPT_DIST =>  100;     # threshold for waypoint distance warning (in meters)
 use constant MAX_SPEED_DEVIATION => 2;     # threshold for speed measuring deviation warning (in km/h)
@@ -98,6 +101,12 @@ use constant INTERPOLATED_TIM   => 1<<3;
 use constant SUBSTIIUTED_ELE    => 1<<4;
 use constant SUBSTIIUTED_TIM    => 1<<5;
 use constant CALCULATED_SPEED   => 1<<6;
+
+# global variables
+
+my $print_warnings = PRINT_WARNINGS;
+my $print_info = PRINT_INFO;
+my $out = STDOUT;
 
 ### various subprocedures
 
@@ -208,16 +217,16 @@ sub parse_trkpt {
 }
 
 sub warn {
-    print STDERR "WARNING: $_[0]\n" if PRINT_WARNINGS;
+    print STDERR "WARNING: $_[0]\n" if $print_warnings;
 }
 
 sub debug {
     print STDERR "### DEBUG: $_[0]\n";
 }
 
-sub info_trkpt { print_trkpt_i(-1, "INFO: $_[0]", $_[1]) if PRINT_INFO; }
+sub info_trkpt { print_trkpt_i(-1, "INFO: $_[0]", $_[1]) if $print_info; }
 sub warn_trkpt { warn_trkpt_i(-1, $_[0], $_[1]); }
-sub warn_trkpt_i { print_trkpt_i($_[0], "WARNING: $_[1]", $_[2]) if PRINT_WARNINGS; }
+sub warn_trkpt_i { print_trkpt_i($_[0], "WARNING: $_[1]", $_[2]) if $print_warnings; }
 sub print_trkpt { print_trkpt_i(-1, $_[0], $_[1]); }
 sub print_trkpt_i {
   my $i=$_[0];
@@ -309,12 +318,26 @@ sub calc_diffs() { # of $lat, $lon, $ele relative to $prev_lat, $prev_lon, $prev
 
 ### parse command line
 
-$out = STDOUT;
-print "$#ARGV $ARGV[0] $ARGV[1] $ARGV[2] \n";
-if ($ARGV[0] eq "-o" && $#ARGV > 1) {
-    open($out, "> $ARGV[1]");
-    shift @ARGV; shift @ARGV;
+while ($#ARGV >= 1 # at least two command-line arguments
+       && $ARGV[0] =~ m/^-/) { # option argument
+    if ($ARGV[0] eq "-nw") {
+        $print_warnings = 0;
+    } elsif ($ARGV[0] eq "-ni") {
+        $print_info = 0;
+    } elsif ($ARGV[0] eq "-o") {
+        if ($#ARGV < 2) {
+            printf STDERR "missing outfile argument for -o option\n";
+            exit 2;
+        }
+        open($out, "> $ARGV[1]");
+        shift @ARGV;
+    } else {
+        printf STDERR "unknown option: $ARGV[0]\n";
+        exit 2;
+    }
+    shift @ARGV;
 }
+
 
 ### main loops
 
