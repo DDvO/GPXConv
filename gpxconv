@@ -783,6 +783,7 @@ for($i=0; $i <= $#TIM; $i++) {
 
 ## perform analysis/statistics
 
+$start_sec = $#TIM < 0 ? 0 : $SEC[0];
 $sum_timediff_mov = 0; # re-calculate this var, since points may have been ignored or smoothened
 $sum_dis = 0;
 $sum__ascent = $sum_descent = 0;
@@ -798,28 +799,38 @@ $max_spd_index = -1;
 $max_spd = 0;
 
 my $sum_energy = 0;
-sub energy {
+sub energy { # calculate energy difference between track points
     my $t  = $_[0]; # start date and time
-    my $dt = $_[1]; # time difference in s
-    my $d  = $_[2]; # 3-dimensional distance in m
-    my $dh = $_[3]; # elevation difference in m
-    my $v0 = $_[4]; # speed before in m/s
-    my $v1 = $_[5]; # speed after  in m/s
-    # values below taken from https://www.sheldonbrown.com/rinard/aero/formulas.html
+    my $t0 = $_[1]; # start time relative to begin of track in s
+    my $t1 = $_[2]; # end   time relative to begin of track in s
+    my $dt = $t1 - $t0;       # duration in s
+    my $d  = $_[3]; # 3-dimensional distance in m
+    my $h0 = $_[4]; # elevation before in m
+    my $h1 = $_[5]; # elevation after  in m
+    my $h  = ($h0 + $h1) / 2; # average elevation, used for air density
+    my $v0 = $_[6]; # speed before in m/s
+    my $v1 = $_[7]; # speed after  in m/s
+    my $v  = ($v0 + $v1) / 2; # average speed, used for air drag, assumed with no wind (i.e., calm air)
     my $g  = 9.81;  # gravity constant in m/(s^2)
-    my $r = 1.2;    # density of air in kg/(m^3)
-    my $m = 80;     # total mass including vehicle and rider in kg        - adapt
-    my $cr = 0.003; # coefficient of rolling friction for racing bike     - adapt
-    my $cwA = 0.39; # coefficient of wind resistance * frontal area in m2 - adapt
-    my $v = ($v0 + $v1) / 2; # average speed
-    my $roll = $cr * $m * $g * $d;
-    my $slope = $m * $g * $dh;
+
+    # values and formuls adapted from https://www.sheldonbrown.com/rinard/aero/formulas.html
+    my $m = 80;     # total mass including vehicle and rider in kg         - adapt
+    my $cr = 0.003; # coefficient of rolling friction for racing bike      - adapt
+    my $cdA = 0.39; # coefficient of wind resistance * frontal area in m^2 - adapt
+    my $r = 1.2;    # air density on average weather (20 °C) at sea level in kg/(m^3)
+    my $density = $r - (0.55 * $r) * $h / 5000; # roughly corrected air density depending on elevation
+
+    # energy components and their sum along the distance $d in Joule
+    my $roll  = $cr * $m * $g * $d;
+    my $slope = $m * $g * ($h1 - $h0);
     my $accel = $m/2 * ($v1 * $v1 - $v0 * $v0);
-    my $wind = $r * $cwA / 2 * $v * $v * $d;
-    my $sum =  $roll + $slope + $accel + $wind; # in joule
+    my $drag  = $density * $cdA/2 * $v * $v * $d;
+    my $sum = $roll + $slope + $accel + $drag;
+
     my $debug_inputs = "dt=".int($dt)." d=".int($d)." dh=".int($dh)." v0=".int($v0)." v1=".int($v1);
-    my $debug_outputs = "roll:".int($roll)." + slope:".int($slope)." + accel:".int($accel)." + wind:".int($wind);
+    my $debug_outputs = "roll:".int($roll)." + slope:".int($slope)." + accel:".int($accel)." + drag:".int($drag);
     # debug "energy @ time=$t  $debug_inputs   =>   $debug_outputs = sum:".int($sum);
+
     return $sum;
 }
 
@@ -921,7 +932,7 @@ for($i=0; $i < $#TIM+1; $i++) {
     }
     my $tim = $TIM[$i - 1];
     $tim =~ s/(:\d\d)(\.\d+)/$1/; # strip fractional seconds
-    $sum_energy += energy($tim, $sec - $prev_sec, $dis, $ele - $prev_ele, $prev_spd, $spd)
+    $sum_energy += energy($tim, $prev_sec - $start_sec, $sec - $start_sec, $dis, $prev_ele, $ele, $prev_spd, $spd)
         unless ($SEG[$i]); # not at segment start
   }
   $min_lat = $lat if $min_lat>$lat || $i == 0;
