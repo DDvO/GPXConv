@@ -12,15 +12,15 @@
 # Produces statistics, including ascent/descent rates of climbing phases.
 #
 # Usage:
-#   gpxconv <options> <infile(s)> [> <outfile>]
-# <options> may be:
-#   -o <outfile> - output the resulting track to <outfile>
+#   gpxconv <option(s) and infile(s)> [> <outfile>]
+# Command-line options:
 #   -nw          - do not print warnings
 #   -ni          - do not print information
+#   -o <outfile> - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables below.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT
 # Prints information (if enabled), any warnings (if enabled), an errors to STDERR
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.1
 ################################################################################
 
 #use strict;
@@ -229,10 +229,11 @@ sub debug {
     print STDERR "### DEBUG: $_[0]\n";
 }
 
-sub info_trkpt { print_trkpt_i(-1, "INFO: $_[0]", $_[1]) if $print_info; }
-sub warn_trkpt { warn_trkpt_i(-1, $_[0], $_[1]); }
-sub warn_trkpt_i { print_trkpt_i($_[0], "WARNING: $_[1]", $_[2]) if $print_warnings; }
+sub info_trkpt  {  info_trkpt_i(-1, $_[0], $_[1]); }
+sub warn_trkpt  {  warn_trkpt_i(-1, $_[0], $_[1]); }
 sub print_trkpt { print_trkpt_i(-1, $_[0], $_[1]); }
+sub info_trkpt_i { print_trkpt_i($_[0], , "INFO: $_[1]", $_[2]) if $print_info; }
+sub warn_trkpt_i { print_trkpt_i($_[0], "WARNING: $_[1]", $_[2]) if $print_warnings; }
 sub print_trkpt_i {
   my $i=$_[0];
   my $head=$_[1]; # may be empty
@@ -323,24 +324,30 @@ sub calc_diffs() { # of $lat, $lon, $ele relative to $prev_lat, $prev_lon, $prev
 
 ### parse command line
 
-while ($#ARGV >= 1 # at least two command-line arguments
-       && $ARGV[0] =~ m/^-/) { # option argument
-    if ($ARGV[0] eq "-nw") {
+my $i = 0;
+while ($#ARGV - $i >= 0) {
+    # not checking for duplicate options
+    my $j = $i + 1;
+    if ($ARGV[$i] eq "-nw") {
         $print_warnings = 0;
-    } elsif ($ARGV[0] eq "-ni") {
+    } elsif ($ARGV[$i] eq "-ni") {
         $print_info = 0;
-    } elsif ($ARGV[0] eq "-o") {
-        if ($#ARGV < 2) {
+    } elsif ($ARGV[$i] eq "-o") {
+        # not checking for operlap with shell-level redirection of STDOUT using '>'
+        if ($#ARGV - $i < 1) {
             printf STDERR "missing outfile argument for -o option\n";
             exit 2;
         }
-        open($out, "> $ARGV[1]");
-        shift @ARGV;
-    } else {
-        printf STDERR "unknown option: $ARGV[0]\n";
+        open($out, "> $ARGV[$j]");
+        splice @ARGV, $j, 1; # remove from ARGV the option argument
+    } elsif ($ARGV[$i] =~ m/^-/) {
+        printf STDERR "unknown option: $ARGV[$i]\n";
         exit 2;
+    } else {
+        $i++;
+        next; # infile
     }
-    shift @ARGV;
+    splice @ARGV, $i, 1; # remove from ARGV the option just handled
 }
 
 
@@ -405,11 +412,14 @@ while(<>) {
     $HEAD = $_;
     $state = 1; # expecting the very first trkpt
   }
-  elsif(m#(<gpx )#s) { # processing further track, ignoring its header
+  elsif(m#(<gpx )#s) { # processing further track file, ignoring its header
     if (m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n# && ENABLE_SMOOTHING) {
       warning("smoothing apparently has already been done on input");
     }
-    info_trkpt("further track after  ", "") if $#TIM >= 0; # typically, new file
+    if ($#TIM >= 0) { # typically, new file
+      info_trkpt_i($i - 1, "end of  segment at ", "") if $i > 0;
+      info("further track, from file $ARGV");
+    }
     $state = 2 if $state > 2; # expecting new trkseg
   }
   else {
@@ -421,13 +431,14 @@ while(<>) {
     my $diff_time = $sec && $prev_avail_sec ? $sec - $prev_avail_sec : 0;
 
     if($state == 1) {
-      info_trkpt("first   segment at   ", "");
+      info("first   track, from file $ARGV");
+      info_trkpt("first   segment at ", "");
     }
     else {
       if($diff_time < 0) { # this implies $sec && $prev_sec
           # warn_trkpt("time difference = ".timediff_string($diff_time)." negative at",
           # "; waypoint checking may not work correctly");
-          print_trkpt("FATAL: before", " negative time difference (".timediff_string(-$diff_time).")");
+          print_trkpt("FATAL: before", " negative time difference (-".timediff_string(-$diff_time).")");
       }
       if($sec && $prev_sec && $diff_time == 0 && ($lat != $prev_lat || $lon != $prev_lon)) {
 	print_trkpt("FATAL: point before", " has same time ($prev_tim) but different position ($prev_lat, $prev_lon)");
@@ -466,7 +477,7 @@ while(<>) {
         my $Dis  = sprintf "%4".DIS_PRECISION, $dis/1000;
         my $Gap = timediff_string($diff_time);
         $Gap =~ s/^\s+//;
-        info_trkpt("further segment at   ", " after a gap of $Gap and $Dis km");
+        info_trkpt("further segment at ", " after a gap of $Gap and $Dis km");
       }
 
       if ($ele eq "") {
@@ -597,16 +608,18 @@ while(<>) {
     $state = 3; # ready to process further trkpt(s) in trkseg (or new trkseg or new track)
   }
   if(m#</trkseg>.*<trkseg>#s) {
+    info_trkpt_i($i - 1, "end of  segment at ", "") if $i > 0;
     $state = 2; # starting new trkseg
     #reset intra-segment values
     $prev_spd = "";
   }
+  info("further track, again from file $ARGV") if $i > 0 && !(m#(<gpx )#s) && m#<trk>#;
 }
 $Len  = sprintf "%4".DIS_PRECISION, $ele_gap_length/1000;
 warn_trkpt_i($i-1, "no elevation up to", " for ".$num_no_ele." points over a distance of $Len km") if $num_no_ele > 1;
 $Len  = sprintf "%4".DIS_PRECISION, $time_gap_length/1000;
 warn_trkpt_i($i-1, "no time      up to", " for ".$num_no_time." points over a distance of $Len km") if $num_no_time > 1;
-info_trkpt("last    segment end  ","") if $#TIM >= 0;
+info_trkpt("last    segment end","") if $#TIM >= 0;
 warn_trkpt("                at", " was unable to interpolate missing elevation by end of last segment") if $ele_miss_start;
 warn_trkpt("                at", " was unable to interpolate missing time by end of last segment") if $tim_miss_start;
 
@@ -1159,9 +1172,9 @@ point($#TIM, "end").substr($final_text,1)."
 GPXConv statistics end";
 
 info($stats);
-$HEAD =~ s|(<trk>\s*(<name>.*?</name>)?)|$1<cmt></cmt>\n|s # add preliminarily empty comment in track
+$HEAD =~ s|(<trk>\s*(<name>.*?</name>)?)|$1\n<cmt></cmt>|s # add preliminarily empty comment in track
            unless $HEAD =~ m/<trk>.*?<cmt>/s;              # if not already existing
-$HEAD =~ s/(<trk>.*?<cmt>)/$1$stats\n    /s; # prepend stats to track comment
+$HEAD =~ s/(<trk>.*?<cmt>)/$1$stats\n/s; # prepend stats to track comment
 
 
 ## fill long time gaps as far as needed with intermediate points by linear interpolation
@@ -1223,8 +1236,8 @@ print $out $HEAD; # includes <gpx> <trk> <trkseg>
 for($i=0; $i <= $#TIM; $i++) {
   ($tim, $spd) = ($TIM[$i], $SPD[$i]);
   $tim =~ s/(:\d\d)(\.\d+)/$1/; # strip fractional seconds
-  print $out '  <trkpt lat="'.(sprintf LAT_PRECISION, $LAT[$i]).
-                    '" lon="'.(sprintf LON_PRECISION, $LON[$i]).'">';
+  print $out '<trkpt lat="'.(sprintf LAT_PRECISION, $LAT[$i]).
+                  '" lon="'.(sprintf LON_PRECISION, $LON[$i]).'">';
   print $out "<ele>".ele_string($ele_prec_len, int(correct_ele(-1, $i)))."</ele>" if $ELE[$i] ne "";
   print $out "<time>$tim</time>" if $tim;
   print $out "<cmt>$IGN[$i] previous point".($IGN[$i] == 1 ? " was" : "s were")." ignored</cmt>" if $IGN[$i];
@@ -1240,9 +1253,9 @@ for($i=0; $i <= $#TIM; $i++) {
   print $out "<fix>$fix</fix>" if $fix ne "";
   print $out "<extensions>".SPEED.spd_string($spd)._SPEED."</extensions>" if $spd ne "" && (!($FLG[$i] & CALCULATED_SPEED) || INCLUDE_CALC_SPEED);
   print $out "</trkpt>\n";
-  print $out "  </trkseg>\n  <trkseg>\n" if $SEG[$i+1] && $i<$#TIM;
+  print $out "</trkseg>\n<trkseg>\n" if $SEG[$i+1] && $i<$#TIM;
 }
-print $out "  </trkseg>\n</trk>\n</gpx>\n";
+print $out "</trkseg>\n</trk>\n</gpx>\n";
 
 close $out if $out != STDOUT;
 exit 0;
