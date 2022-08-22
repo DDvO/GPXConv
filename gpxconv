@@ -1144,7 +1144,8 @@ $final_text .= "total biking energy  = $Sum_energy kJ\n" if $sum_timediff_mov;
 $final_text .= "average moving speed = $Avg_spd km/h\n" if $avg_spd;
 $final_text .= "elevation ".(GEOID_ELE_CORRECTION ? "corrected by ".($found_corr ? "last retrieved": "assumed")." geoid height = $ele_corr m" : "not corrected").
 (ENABLE_SMOOTHING ? "
-track points that are at most $SMOOTHING_MAX_GAP seconds apart have been smoothened": "");
+track points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened": "");
+
 $wpts .= wpt(-1, 0, "start").
 wpt(-1, $max_spd_index  , $max_spd_text).
 wpt(-1, $min_ele_index  , $min_ele_text).
