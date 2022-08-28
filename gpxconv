@@ -10,6 +10,8 @@
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 # Produces statistics, including ascent/descent rates of climbing phases.
+# Reads from file(s) given as argument (or STDIN) and writes to STDOUT.
+# Prints information (if enabled), any warnings (if enabled), an errors to STDERR.
 #
 # Usage:
 #   gpxconv <option(s) and infile(s)> [> <outfile>]
@@ -17,10 +19,8 @@
 #   -nw          - do not print warnings
 #   -ni          - do not print information
 #   -o <outfile> - output the resulting track to <outfile>
-# Other options can be set by changing values of the configuration variables below.
-# Reads from file(s) given as argument (or STDIN) and writes to STDOUT
-# Prints information (if enabled), any warnings (if enabled), an errors to STDERR
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.1
+# Other options can be set by changing values of the configuration variables.
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.2
 ################################################################################
 
 #use strict;
