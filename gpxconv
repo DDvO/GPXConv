@@ -684,7 +684,7 @@ for(my $i=0; $i <= $#TIM; $i++) {
                                         ($theta_diff >= 0 ? "more than  " : "less than -").MAX_SENSIBLE_ANGLE_DIFF."°)");
     }
     elsif($Spd > MAX_SENSIBLE_SPEED) {
-      ignoring_trkpt("speed is more than ".MAX_SENSIBLE_SPEED." km/h");
+      ignoring_trkpt("speed $Spd more than ".MAX_SENSIBLE_SPEED." km/h");
     }
     elsif($acc ne ""  && abs($acc) > MAX_SENSIBLE_ACCEL && ($FLG[$i-1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
       ignoring_trkpt("acceleration = $Acc m/s/s (".($acc >= 0 ? "more than " : "less than -").MAX_SENSIBLE_ACCEL.")");
