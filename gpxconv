@@ -1073,7 +1073,7 @@ sub wpt {
   my ($lat, $lon, $tim) = $j >= 0 ? ($WLAT[$j], $WLON[$j], $WTIM[$j]) : ($LAT[$i], $LON[$i], $TIM[$i]);
   $tim =~ s/(:\d\d)(\.\d+)/$1/; # strip fractional seconds
   my $ele = correct_ele($j, $i);
-  my $name = $j >= 0 ? @WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
+  my $name = $j >= 0 ? $WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
   return '<wpt lat="'.(sprintf LAT_PRECISION, $lat).'" '.
               'lon="'.(sprintf LON_PRECISION, $lon).'">'.
              ($ele eq "" ? "" : "<ele>".ele_string($ele_prec_len, int($ele))."</ele>").
