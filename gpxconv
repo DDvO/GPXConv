@@ -16,11 +16,12 @@
 # Usage:
 #   gpxconv <option(s) and infile(s)> [> <outfile>]
 # Command-line options:
-#   -nw          - do not print warnings
-#   -ni          - do not print information
-#   -o <outfile> - output the resulting track to <outfile>
+#   -drive, -walk, -cycle, -fly  - type of recorded activity, default: drive
+#   -nw                          - do not print warnings
+#   -ni                          - do not print information
+#   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.2
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.3
 ################################################################################
 
 #use strict;
@@ -65,16 +66,14 @@ use constant WARNING_WPT_DIST    =>  100; # threshold for waypoint distance warn
 use constant MAX_SPEED_DEVIATION =>    2; # threshold for speed measuring deviation warning (in km/h)
 
 # pruning control
-use constant WALKING => 0;
-use constant CYCLING => 1;
-use constant DRIVING => 1; # otherwise flying; only relevant if WALKING is 0
-use constant MIN_TIMEDIFF          => WALKING ?    4 : (CYCLING ?    2 : (DRIVING ?     2 :     1)); # in seconds
-use constant MAX_SENSIBLE_SPEED    => WALKING ?   20 : (CYCLING ?   80 : (DRIVING ?   200 :  1200)); # maximal speed in km/h
-use constant MAX_SENSIBLE_ACCEL    => WALKING ?  0.5 : (CYCLING ?    4 : (DRIVING ?     5 :    10)); # maximal acceleration m/s/s
-use constant MAX_SENSIBLE_ELE_GAIN => WALKING ? 1800 : (CYCLING ? 3000 : (DRIVING ? 20000 : 30000)); # maximal ascent rate in m/h
-use constant MAX_SENSIBLE_ELE_LOSS => WALKING ? 3600 : (CYCLING ? 9000 : (DRIVING ? 20000 : 50000)); # maximal descent rate in m/h
-use constant MAX_SENSIBLE_ANGLE_DIFF => 175;         # maximal sensible turning angle
-use constant MIN_SENSIBLE_ELE => -450; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
+my $activity = "-drive"; # default
+my $MIN_TIMEDIFF         ; # in seconds
+my $MAX_SENSIBLE_SPEED   ; # maximal speed in km/h
+my $MAX_SENSIBLE_ACCEL   ; # maximal acceleration m/s/s
+my $MAX_SENSIBLE_ELE_GAIN; # maximal ascent rate in m/h
+my $MAX_SENSIBLE_ELE_LOSS; # maximal descent rate in m/h
+use constant MAX_SENSIBLE_ANGLE_DIFF =>  175; # maximal sensible turning angle
+use constant MIN_SENSIBLE_ELE        => -450; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
 
 # time correction control
 use constant TIME_CORRECTION =>
@@ -384,6 +383,12 @@ while ( $#ARGV - $i >= 0 ) {
     elsif ( $ARGV[$i] eq "-ni" ) {
         $print_info = 0;
     }
+    elsif ( $ARGV[$i] eq "-walk"  ||
+            $ARGV[$i] eq "-cycle" ||
+            $ARGV[$i] eq "-drive" ||
+            $ARGV[$i] eq "-fly" ) {
+        $activity = $ARGV[$i];
+    }
     elsif ( $ARGV[$i] eq "-o" ) {
 
      # not checking for operlap with shell-level redirection of STDOUT using '>'
@@ -403,6 +408,38 @@ while ( $#ARGV - $i >= 0 ) {
         next;                   # infile
     }
     splice @ARGV, $i, 1;        # remove from ARGV the option just handled
+}
+
+if ( $activity eq "-walk" ) {
+    $MIN_TIMEDIFF          = 4;
+    $MAX_SENSIBLE_SPEED    = 20;
+    $MAX_SENSIBLE_ACCEL    = 0.5;
+    $MAX_SENSIBLE_ELE_GAIN = 1800;
+    $MAX_SENSIBLE_ELE_LOSS = 3600;
+}
+elsif ( $activity eq "-cycle" ) {
+    $MIN_TIMEDIFF          = 2;
+    $MAX_SENSIBLE_SPEED    = 80;
+    $MAX_SENSIBLE_ACCEL    = 4;
+    $MAX_SENSIBLE_ELE_GAIN = 3000;
+    $MAX_SENSIBLE_ELE_LOSS = 9000;
+}
+elsif ( $activity eq "-fly" ) {
+    $MIN_TIMEDIFF          = 1;
+    $MAX_SENSIBLE_SPEED    = 1200;
+    $MAX_SENSIBLE_ACCEL    = 10;
+    $MAX_SENSIBLE_ELE_GAIN = 30000;
+    $MAX_SENSIBLE_ELE_LOSS = 50000;
+}
+elsif ( $activity eq "-drive" ) { # default
+    $MIN_TIMEDIFF          = 2;     # in seconds
+    $MAX_SENSIBLE_SPEED    = 200;   # maximal speed in km/h
+    $MAX_SENSIBLE_ACCEL    = 5;     # maximal acceleration m/s/s
+    $MAX_SENSIBLE_ELE_GAIN = 20000; # maximal ascent rate in m/h
+    $MAX_SENSIBLE_ELE_LOSS = 20000; # maximal descent rate in m/h
+} else {
+    print STDERR "FATAL: unknown activity: $activity\naborting\n";
+    exit 1;
 }
 
 ### main loops
@@ -814,27 +851,27 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
             ignoring_trkpt( "direction change = $Theta_diff° ("
                   . ( $theta_diff >= 0 ? "more than  " : "less than -" ) . MAX_SENSIBLE_ANGLE_DIFF . "°)" );
         }
-        elsif ( $Spd > MAX_SENSIBLE_SPEED ) {
-            ignoring_trkpt("speed = $Spd km/h more than " . MAX_SENSIBLE_SPEED);
+        elsif ( $Spd > $MAX_SENSIBLE_SPEED ) {
+            ignoring_trkpt("speed = $Spd km/h more than " . $MAX_SENSIBLE_SPEED);
         }
-        elsif ($acc ne "" && abs($acc) > MAX_SENSIBLE_ACCEL
+        elsif ($acc ne "" && abs($acc) > $MAX_SENSIBLE_ACCEL
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) )
         {
             ignoring_trkpt( "acceleration = $Acc m/s/s ("
-                  . ( $acc >= 0 ? "more than " : "less than -" ) . MAX_SENSIBLE_ACCEL . ")" );
+                  . ( $acc >= 0 ? "more than " : "less than -" ) . $MAX_SENSIBLE_ACCEL . ")" );
         }
-        elsif ( $rate ne "" && $Rate > MAX_SENSIBLE_ELE_GAIN ) {
-            ignoring_trkpt( " ascent rate = $Rate m/h (more than  " . MAX_SENSIBLE_ELE_GAIN . ")" );
+        elsif ( $rate ne "" && $Rate > $MAX_SENSIBLE_ELE_GAIN ) {
+            ignoring_trkpt( " ascent rate = $Rate m/h (more than  " . $MAX_SENSIBLE_ELE_GAIN . ")" );
         }
-        elsif ( $rate ne "" && $Rate < -MAX_SENSIBLE_ELE_LOSS ) {
-            ignoring_trkpt( "descent rate = $Rate m/h (less than -" . MAX_SENSIBLE_ELE_LOSS . ")" );
+        elsif ( $rate ne "" && $Rate < -$MAX_SENSIBLE_ELE_LOSS ) {
+            ignoring_trkpt( "descent rate = $Rate m/h (less than -" . $MAX_SENSIBLE_ELE_LOSS . ")" );
         }
-        elsif ( $timediff ne "" && $timediff < MIN_TIMEDIFF
+        elsif ( $timediff ne "" && $timediff < $MIN_TIMEDIFF
                 && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) )
         {
             my $inter = ( $FLG[$i] & INTERPOLATED_TIM ) ? "interpolated " : "";
             ignoring_trkpt( $inter . "time difference = " . int($timediff)
-                  . " sec (less than " . MIN_TIMEDIFF . ") over a distance of $Dis km" );
+                  . " sec (less than " . $MIN_TIMEDIFF . ") over a distance of $Dis km" );
         }
         else {
             $ignore = 0;

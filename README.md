@@ -18,9 +18,10 @@ Usage:
 ```
 Command-line options:
 ```
-  -nw          - do not print warnings
-  -ni          - do not print information
-  -o <outfile> - output the resulting track to <outfile>
+  -drive, -walk, -cycle, -fly  - type of recorded activity, default: drive
+  -nw                          - do not print warnings
+  -ni                          - do not print information
+  -o <outfile>                 - output the resulting track to <outfile>
 ```
 Other options can be set by changing values of the configuration variables.
 
