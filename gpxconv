@@ -602,7 +602,11 @@ while(<>) {
     $i++;
     ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_spd) = ($lat, $lon, $ele, $tim, $sec, $spd);
     $prev_avail_ele = $ele if $ele ne "";
-    $prev_avail_tim = $tim if $tim ne "";
+
+    # Commenting out $prev_avail_tim as it is currently unused, but referred to
+    # in another comment
+    # $prev_avail_tim = $tim if $tim ne "";
+
     $prev_avail_sec = $sec if $sec; # enables checking negative time difference also across missing time entries
     $state = 3; # ready to process further trkpt(s) in trkseg (or new trkseg or new track)
   }
