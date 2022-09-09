@@ -511,7 +511,7 @@ while(<>) {
         $ele_miss_length += $dis;
       }
       if (!$sec && $prev_sec && $spd ne "" && $spd > 0) {
-        $calc_sec_ = $prev_sec + $dis/$spd;  # substitute time using recorded speed and distance from previous point
+        my $calc_sec = $prev_sec + $dis/$spd;  # substitute time using recorded speed and distance from previous point
         $tim = epoch_to_str($calc_sec); # will become $TIM[$i]
         $sec = $calc_sec;               # will become $SEC[$i]
         warn_trkpt("at                ", " no time      given, filled in using time difference calculated by distance / speed");
