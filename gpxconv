@@ -18,11 +18,13 @@
 # Command-line options:
 #   -walk, -drive, -cycle, -fly  - type of recorded activity, default: drive
 #   -smooth                      - smoothen tracks
+#   -prune_wpts                  - remove waypoints
+#   -prune_exts                  - remove track, waypoint, and trackpoint extensions
 #   -nw                          - do not print warnings
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.4
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.5
 ################################################################################
 
 #use strict;
@@ -31,12 +33,12 @@
 ### configuration variables
 
 # basic output control
-use constant PRUNE_WPTS          => 0; # ignore all wayponts
-use constant PRUNE_AUTOMATIC_WPT => 1; # ignore waypoints containing <name><!\[CDATA\[\d+\]\]></name>
-use constant PRUNE_DESC          => 1; # remove any descriptions
-use constant PRUNE_LINK          => 0; # remove any links
-use constant PRUNE_EXTENSIONS    => 1; # remove any extensions
-use constant INCLUDE_CALC_SPEED  => 1; # include speed extensions with calculated speed
+use constant PRUNE_WPTS           => 0; # by default do not ignore waypoints
+use constant PRUNE_AUTOMATIC_WPTS => 1; # ignore waypoints containing <name><!\[CDATA\[\d+\]\]></name>
+use constant PRUNE_DESC           => 0; # not not remove descriptions
+use constant PRUNE_LINK           => 0; # not not remove links
+use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions in waypoints and trackpoints
+use constant INCLUDE_CALC_SPEED   => 1; # include speed extensions with calculated speed
 
 # control filling in missing elevation and/or time
 use constant CARRY_OVER_ELE    => 1; # copy elevation from last available value or begin of following segment
@@ -107,10 +109,12 @@ use constant CALCULATED_SPEED   => 1 << 6;
 
 # global variables
 
-my $smoothing      = ENABLE_SMOOTHING;
-my $print_warnings = PRINT_WARNINGS;
-my $print_info     = PRINT_INFO;
-my $out            = STDOUT;
+my $smoothing        = ENABLE_SMOOTHING;
+my $prune_wpts       = PRUNE_WPTS;
+my $prune_extensions = PRUNE_EXTENSIONS;
+my $print_warnings   = PRINT_WARNINGS;
+my $print_info       = PRINT_INFO;
+my $out              = STDOUT;
 
 ### various subprocedures
 
@@ -193,47 +197,58 @@ $lat_len = $lon_len = $ele_prec_len = $ele_full_len = $tim_len = 0;
 $min_tim = "";
 $min_sec = 0;
 
-sub parse_trkpt {
+sub parse_point {
     my $s = $_[0];
 
     #  $s =~ m#lat="(-?\d+\.?\d*)"\s*lon="(-?\d+\.?\d*)">\s*
     #  <ele>(-?\d+\.?\d*)</ele>\s*<time>(.*?T(\d\d):(\d\d):(\d\d)Z?)</time>#s
-    if ( $s =~ m#lat=\s*"(-?[\.\d]+)"\s*lon=\s*"(-?[\.\d]+)"\s*>\s*(<ele>\s*(-?[\.\d]+)\s*</ele>)?\s*(<time>\s*([-:.T\dZ]+)\s*</time>)?#s
-        || $s =~ m#lon=\s*"(-?[\.\d]+)"\s*lat=\s*"(-?[\.\d]+)"\s*>\s*(<ele>\s*(-?[\.\d]+)\s*</ele>)?\s*(<time>\s*([-:.T\dZ]+)\s*</time>)?#s
-      )
-    {
+    if ( $s =~ m#lat=\s*"(-?[\.\d]+)"\s*lon=\s*"(-?[\.\d]+)"\s*>#s ) {
         $lat     = $1;
         $lon     = $2;
-        $ele_str = $3;
-        $ele     = $4; # may be empty or 0
-        $tim     = $6; # may be empty
-        $tim =~ s/\.0+Z/Z/;
-        $lat_len = max( $lat_len, length($lat) );                  # sprintf LAT_PRECISION,
-        $lon_len = max( $lon_len, length($lon) );                  # sprintf LON_PRECISION,
+    } elsif ( $s =~ m#lon=\s*"(-?[\.\d]+)"\s*lat=\s*"(-?[\.\d]+)"\s*>#s ) {
+        $lat     = $2;
+        $lon     = $1;
+    } else {
+        print STDERR "FATAL: Cannot parse point: $/$s\naborting\n";
+        exit 1;
+    }
+    $lat_len = max( $lat_len, length($lat) ); # sprintf LAT_PRECISION,
+    $lon_len = max( $lon_len, length($lon) ); # sprintf LON_PRECISION,
+
+    $ele_str = $ele = "";
+    if ( $s =~ m#(<ele>\s*(-?[\.\d]+)\s*</ele>)#s ) {
+        $ele_str = $1;
+        $ele = $2; # may be empty or 0
         $ele_prec_len = max( $ele_prec_len, length( int($ele) ) ); # sprintf ELE_PRECISION,
         $ele_full_len = max( $ele_full_len, length($ele) );
-        $tim_len      = max( $tim_len,      length($tim) );
+        $ele = "" if !$ele_str && !$sec; # for routes generated, e.g., using Google My Maps
+    }
 
-        if ( $s =~ m#lon="-?[\.\d ]+" lat="#s ) {
-            ( $lat, $lon ) = ( $lon, $lat );
-        }
+    $tim = "";
+    $sec = 0;
+    if ( $s =~ m#(<time>\s*([-:.T\dZ]+)\s*</time>)#s ) {
+        $tim = $2;
+        $tim =~ s/\.0+Z/Z/;
+        $tim_len = max( $tim_len, length($tim) );
         $sec = str_to_epoch($tim);    # or within a day: $7+60*($6+60*$5); # may be 0
         if ( $sec && TIME_CORRECTION ) {
             $sec += TIME_CORRECTION;
             $tim = epoch_to_str($sec);
         }
-        $ele = "" if !$ele_str && !$sec; # for routes generated, e.g., using Google My Maps
-        $spd = "";
-        if ( $s =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s ) {
-            $spd       = $2 / 3.6;    # assuming speed is given in km/h
-            $max_speed = $spd if $max_speed < $spd;
-        }
         $min_tim = $tim if $sec && $sec < $min_sec || $min_tim eq "";
         $min_sec = $sec if $sec && $sec < $min_sec || $min_sec == 0;
     }
-    else {
-        print STDERR "FATAL: Cannot parse point: $/$s\naborting\n";
-        exit 1;
+
+    $spd = "";
+    if ( $s =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s ) {
+        $spd       = $2 / 3.6;    # assuming speed is given in km/h
+        $max_speed = $spd if $max_speed < $spd;
+    }
+
+    $ext = "";
+    if ( $s =~ m#(<extensions>(.*?</extensions>)+)#s ) {
+        $ext = $1;
+        $ext =~ s#\n##sg;
     }
 }
 
@@ -322,6 +337,7 @@ sub remove_trkpt {
     splice @SEC, $i, 1;
     splice @DIS, $i, 1;
     splice @SPD, $i, 1;
+    splice @EXT, $i, 1;
 }
 
 sub distance {
@@ -379,20 +395,26 @@ while ( $#ARGV - $i >= 0 ) {
 
     # not checking for duplicate options
     my $j = $i + 1;
-    if ( $ARGV[$i] eq "-nw" ) {
-        $print_warnings = 0;
-    }
-    elsif ( $ARGV[$i] eq "-ni" ) {
-        $print_info = 0;
+    if ( $ARGV[$i] eq "-walk"  ||
+         $ARGV[$i] eq "-cycle" ||
+         $ARGV[$i] eq "-drive" ||
+         $ARGV[$i] eq "-fly" ) {
+        $activity = $ARGV[$i];
     }
     elsif ( $ARGV[$i] eq "-smooth" ) {
         $smoothing = 1;
     }
-    elsif ( $ARGV[$i] eq "-walk"  ||
-            $ARGV[$i] eq "-cycle" ||
-            $ARGV[$i] eq "-drive" ||
-            $ARGV[$i] eq "-fly" ) {
-        $activity = $ARGV[$i];
+    elsif ( $ARGV[$i] eq "-prune_wpts" ) {
+        $prune_wpts = 1;
+    }
+    elsif ( $ARGV[$i] eq "-prune_exts" ) {
+        $prune_extensions = 1;
+    }
+    elsif ( $ARGV[$i] eq "-nw" ) {
+        $print_warnings = 0;
+    }
+    elsif ( $ARGV[$i] eq "-ni" ) {
+        $print_info = 0;
     }
     elsif ( $ARGV[$i] eq "-o" ) {
 
@@ -473,12 +495,12 @@ while (<>) {
     s# *<link.+?</link>\n?##sg if PRUNE_LINK;
     while (s#(<wpt .+?) *(</wpt>\n?)##s)
     {    #collect waypoints, possibly in later headers
-        $wpt = $1 . $2;
-        $wpt =~ s#<extensions>.+?</extensions>\n?##sg if PRUNE_EXTENSIONS;
+        my $wpt = $1 . $2;
+        $wpt =~ s#<extensions>(.*?</extensions>)+\n?##sg if $prune_extensions;
         $wpt =~ s#\n##sg;
-        parse_trkpt($wpt);    # collect some basic data even if pruned
-        if (!PRUNE_WPTS
-            && !( $wpt =~ m#<name><!\[CDATA\[\d+\]\]></name># && PRUNE_AUTOMATIC_WPTS )
+        parse_point($wpt); # collect some basic data even if pruned
+        if (!$prune_wpts
+            && !( $wpt =~ m#<name><!\[CDATA\[\d+\]\]></name># && PRUNE_AUTOMATIC_WPTSS )
             && !( $wpt =~ m#\[(start|end.*?)\]# )
             &&    # waypoint with statistics added previously by this tool
             !( $wpt =~
@@ -499,7 +521,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
     if ( $state == 0 ) {
 
         # processing first header (of first input file)
-        s#<extensions>.+?</extensions>\n?##sg if PRUNE_EXTENSIONS;
+        s#<extensions>(.*?</extensions>)+\n?##sg if $prune_extensions;
         if (s#\nGPXConv statistics (.*?)GPXConv statistics end\n##s)
         {    #remove any earlier statistics section
             $stats = $1;
@@ -530,7 +552,10 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
     else {
         # when $state == 1 || $state == 2: processing first trkpt in new trkseg
         # when $state == 3: processing further trkpt in trkseg
-        parse_trkpt($_);
+        m#(.*?</trkpt>)#s;
+        my $trkpt = $1;
+        $trkpt =~ s#<extensions>(.*?</extensions>)+\n?##sg if $prune_extensions;
+        parse_point($trkpt);
         $flags = 0;
         ## debug("read point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd; state = $state");
         my $diff_time = $sec && $prev_avail_sec ? $sec - $prev_avail_sec : 0;
@@ -710,6 +735,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         push @SEC, $sec;
         push @DIS, $dis;
         push @SPD, $spd;         # as recorded, else ""
+        push @EXT, $ext;
 
         # detect and report missing time and/or elevation
         $ele_solution  = "cannot calculate ascent/descent";
@@ -1017,7 +1043,7 @@ $max_spd         = 0;
 
 my $sum_energy = 0;
 
-sub energy {    # calculate energy difference between track points
+sub energy { # calculate energy difference between trackpoints
     my $t  = $_[0];                # start date and time
     my $t0 = $_[1];                # start time relative to begin of track in s
     my $t1 = $_[2];                # end   time relative to begin of track in s
@@ -1029,7 +1055,7 @@ sub energy {    # calculate energy difference between track points
     my $v0 = $_[6];                # speed before in m/s
     my $v1 = $_[7];                # speed after  in m/s
     my $v  = ( $v0 + $v1 ) / 2;    # average speed, used for air drag, assumed with no wind (i.e., calm air)
-    my $g = 9.81;    # gravity constant in m/(s^2)
+    my $g = 9.81;                  # gravity constant in m/(s^2)
 
 # values and formuls adapted from https://www.sheldonbrown.com/rinard/aero/formulas.html
     my $m = 80;     # total mass including vehicle and rider in kg         - adapt
@@ -1506,6 +1532,7 @@ for ( $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
             splice @SEC, $i, 0, $SEC[$p] + $t;
             splice @DIS, $i, 0, $dis_inc;
             splice @SPD, $i, 0, $spd;
+            splice @EXT, $i, 0, "";
             $i++;
             $t += $time_inc;
         }
@@ -1540,8 +1567,16 @@ for ( $i = 0 ; $i <= $#TIM ; $i++ ) {
     my $fix = $flags == 0 ? "": ( $FLG[$i] &
           ( INTERPOLATED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM ) == 0 ? "2d" : "none" );
     print $out "<fix>$fix</fix>" if $fix ne "";
-    print $out "<extensions>" . SPEED . spd_string($spd) . _SPEED  . "</extensions>"
-      if $spd ne "" && ( !( $FLG[$i] & CALCULATED_SPEED ) || INCLUDE_CALC_SPEED );
+    my $exts = $EXT[$i];
+    if ( $spd ne "" && ( !( $FLG[$i] & CALCULATED_SPEED ) || INCLUDE_CALC_SPEED ) ) {
+        my $spdstr = SPEED . spd_string($spd) . _SPEED;
+        if ( $exts eq "" ) {
+            $exts = "<extensions>$spdstr</extensions>";
+        } else {
+            $exts =~ s#(<extensions>)#$1$spdstr#s;
+        }
+    }
+    print $out $exts;
     print $out "</trkpt>\n";
     print $out "</trkseg>\n<trkseg>\n" if $SEG[ $i + 1 ] && $i < $#TIM;
 }
