@@ -5,7 +5,7 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
 * Reports missing data and ignores points containing non-plausible data.
 * Optionally fills in elevation and time data by interpolation within segments.
 * Optionally interpolates points in long gaps (by default, > 3600 seconds).
-* Optionally corrects elevation and sanitizes and smoothens trackpoints.
+* Optionally corrects elevation and sanitizes and smoothens tracks.
   (Orthometric height = GPS ellipsoidal height - geoid height,
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 * Produces statistics, including ascent/descent rates of climbing phases.
@@ -18,7 +18,8 @@ Usage:
 ```
 Command-line options:
 ```
-  -drive, -walk, -cycle, -fly  - type of recorded activity, default: drive
+  -walk, -cycle, -drive, -fly  - type of recorded activity, default: drive
+  -smooth                      - smoothen tracks
   -nw                          - do not print warnings
   -ni                          - do not print information
   -o <outfile>                 - output the resulting track to <outfile>

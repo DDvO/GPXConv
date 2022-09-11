@@ -6,7 +6,7 @@
 # Reports missing data and ignores points containing non-plausible data.
 # Optionally fills in elevation and time data by interpolation within segments.
 # Optionally interpolates points in long gaps (by default, > 3600 seconds).
-# Optionally corrects elevation and sanitizes and smoothens trackpoints.
+# Optionally corrects elevation and sanitizes and smoothens tracks.
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 # Produces statistics, including ascent/descent rates of climbing phases.
@@ -16,12 +16,13 @@
 # Usage:
 #   gpxconv <option(s) and infile(s)> [> <outfile>]
 # Command-line options:
-#   -drive, -walk, -cycle, -fly  - type of recorded activity, default: drive
+#   -walk, -drive, -cycle, -fly  - type of recorded activity, default: drive
+#   -smooth                      - smoothen tracks
 #   -nw                          - do not print warnings
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.3
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.4
 ################################################################################
 
 #use strict;
@@ -38,10 +39,10 @@ use constant PRUNE_EXTENSIONS    => 1; # remove any extensions
 use constant INCLUDE_CALC_SPEED  => 1; # include speed extensions with calculated speed
 
 # control filling in missing elevation and/or time
-use constant CARRY_OVER_ELE  => 1; # copy elevation from last available value or begin of following segment
-use constant CARRY_OVER_TIME => 1; # copy time from end of previous segment or begin of following segment
-use constant FILL_ELE_MISS   => 1; # interpolate missing elevation
-use constant FILL_TIME_MISS  => 1; # interpolate missing time
+use constant CARRY_OVER_ELE    => 1; # copy elevation from last available value or begin of following segment
+use constant CARRY_OVER_TIME   => 1; # copy time from end of previous segment or begin of following segment
+use constant FILL_MISSING_ELE  => 1; # interpolate missing elevation
+use constant FILL_MISSING_TIME => 1; # interpolate missing time
 
 # analysis control
 use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
@@ -50,7 +51,7 @@ use constant ELE_THRESHOLD    => 20; # threshold for detecting/accepting ascent 
                                      # should be larger than short-term elevation measurement error
 
 # smoothing control
-use constant ENABLE_SMOOTHING  =>  0; # by default set to 0 to disable smoothing
+use constant ENABLE_SMOOTHING  =>  0; # by default disable smoothing
 use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackpoint to be smoothened and its neighbors
 
 # control interpolation of points over long (time) gaps
@@ -106,6 +107,7 @@ use constant CALCULATED_SPEED   => 1 << 6;
 
 # global variables
 
+my $smoothing      = ENABLE_SMOOTHING;
 my $print_warnings = PRINT_WARNINGS;
 my $print_info     = PRINT_INFO;
 my $out            = STDOUT;
@@ -383,6 +385,9 @@ while ( $#ARGV - $i >= 0 ) {
     elsif ( $ARGV[$i] eq "-ni" ) {
         $print_info = 0;
     }
+    elsif ( $ARGV[$i] eq "-smooth" ) {
+        $smoothing = 1;
+    }
     elsif ( $ARGV[$i] eq "-walk"  ||
             $ARGV[$i] eq "-cycle" ||
             $ARGV[$i] eq "-drive" ||
@@ -499,7 +504,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         {    #remove any earlier statistics section
             $stats = $1;
             warning("smoothing apparently has already been done on input")
-              if $stats =~ m#smoothened# && ENABLE_SMOOTHING;
+              if $smoothing && $stats =~ m#smoothened#;
         }
         if (m#$/#s) {
             s#$/##s;    #remove trailing "<trkpt "
@@ -512,7 +517,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         $state = 1;         # expecting the very first trkpt
     }
     elsif (m#(<gpx )#s) {   # processing further track file, ignoring its header
-        if ( ENABLE_SMOOTHING && m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n# )
+        if ( $smoothing && m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n# )
         {
             warning("smoothing apparently has already been done on input");
         }
@@ -624,7 +629,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             }
         }
         else {    # state == 3, further (i.e., not the first) point in trkseg
-            if ( $ele eq "" && FILL_ELE_MISS && ( $ele_miss_start || $prev_ele ne "" ) )
+            if ( $ele eq "" && FILL_MISSING_ELE && ( $ele_miss_start || $prev_ele ne "" ) )
             {     # $prev_avail_ele
                 ( $ele_miss_start, $ele_miss_length ) = ( $i, 0 )
                   if !$ele_miss_start;    # $i is > 0
@@ -639,7 +644,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                            " filled in using time difference calculated by distance / speed");
                 $FLG[$i] |= SUBSTITUTED_TIM;
             }
-            if ( $tim eq "" && FILL_TIME_MISS && ( $tim_miss_start || $prev_tim ne "" ) )
+            if ( $tim eq "" && FILL_MISSING_TIME && ( $tim_miss_start || $prev_tim ne "" ) )
             {    # not $prev_avail_tim, which may be an earlier time
                 ( $tim_miss_start, $tim_miss_length ) = ( $i, 0 ) if !$tim_miss_start; # $i is > 0
                 $tim_miss_length += $dis;
@@ -877,8 +882,8 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
             $ignore = 0;
             if ( $spd ne "" && 3.6 * $spd >= MIN_SPEED_MOVING )
             {    # implies $timediff ne ""
-                $sum_timediff_mov += $timediff;    # used for smoothing
-                $num_pts_mov++;                    # used for smoothing
+                $sum_timediff_mov += $timediff; # used for smoothing
+                $num_pts_mov++;                 # used for smoothing
             }
         }
     }
@@ -894,7 +899,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     }
 }
 $average_timediff =
-  $num_pts_mov ? $sum_timediff_mov / $num_pts_mov : 0;    # used for smoothing
+  $num_pts_mov ? $sum_timediff_mov / $num_pts_mov : 0; # used for smoothing
 
 # note that $sum_timediff_mov will be re-calculated below
 
@@ -954,7 +959,7 @@ for ( $j = 0 ; $j <= $#WSEC ; $j++ ) {
 
 ## smoothen trackpoints
 
-# each point, by weightened average with (smoothened) previous point and (original) next point
+# smoothen each point, by weightened average with (smoothened) previous point and (original) next point
 sub average {
 
     sub weight {
@@ -971,28 +976,25 @@ sub average {
       ( weight($diff_time1) + 1 + weight($diff_time2) );
 }
 
-for ( $i = 0 ; $i <= $#TIM ; $i++ ) {
-    ( $lat, $lon, $ele, $tim, $sec ) =
-      ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i] );
-    if ( ENABLE_SMOOTHING && 0 < $i && $i < $#SEC && $SEC[ $i - 1 ]
-        && $sec && $SEC[ $i + 1 ] && !$SEG[$i] && !$SEG[ $i + 1 ] )
-    {
-        $diff_time1 = $sec - $SEC[ $i - 1 ];
-        $diff_time2 = $SEC[ $i + 1 ] - $sec;
-        if ( max( $diff_time1, $diff_time2 ) <= SMOOTHING_MAX_GAP ) {
-            $lat = average( $prev_lat_orig * 0 + $LAT[ $i - 1 ], $LAT[$i], $LAT[ $i + 1 ] );
-            $lon = average( $prev_lon_orig * 0 + $LON[ $i - 1 ], $LON[$i], $LON[ $i + 1 ] );
-            $ele = average( $prev_ele_orig * 0 + $ELE[ $i - 1 ], $ELE[$i], $ELE[ $i + 1 ] )
-              if $prev_ele_orig ne ""  && $ELE[ $i - 1 ] ne ""
-              && $ELE[$i] ne "" && $ELE[ $i + 1 ] ne "";
-
-          # individiual points are not marked as smoothed; this is done globally
+if ( $smoothing ) {
+    for ( $i = 0 ; $i <= $#TIM ; $i++ ) {
+        ( $tim, $sec ) = ( $TIM[$i], $SEC[$i] );
+        if ( 0 < $i && $i < $#SEC && $SEC[ $i - 1 ]
+             && $sec && $SEC[ $i + 1 ] && !$SEG[$i] && !$SEG[ $i + 1 ] )
+        {
+            $diff_time1 = $sec - $SEC[ $i - 1 ];
+            $diff_time2 = $SEC[ $i + 1 ] - $sec;
+            if ( max( $diff_time1, $diff_time2 ) <= SMOOTHING_MAX_GAP ) {
+                $LAT[$i] = average( $prev_lat * 0 + $LAT[ $i - 1 ], $LAT[$i], $LAT[ $i + 1 ] );
+                $LON[$i] = average( $prev_lon * 0 + $LON[ $i - 1 ], $LON[$i], $LON[ $i + 1 ] );
+                $ELE[$i] = average( $prev_ele * 0 + $ELE[ $i - 1 ], $ELE[$i], $ELE[ $i + 1 ] )
+                    if $prev_ele ne ""  && $ELE[ $i - 1 ] ne "" && $ELE[$i] ne "" && $ELE[ $i + 1 ] ne "";
+                # speed will be re-calculated later
+                # individiual points are not marked as smoothed; this is done globally
+            }
         }
+        ( $prev_lat, $prev_lon, $prev_ele ) = ( $LAT[$i], $LON[$i], $ELE[$i] );
     }
-    ( $prev_lat_orig, $prev_lon_orig, $prev_ele_orig ) =
-      ( $LAT[$i], $LON[$i], $ELE[$i] );
-    ( $LAT[$i], $LON[$i], $ELE[$i] ) =
-      ( $lat, $lon, $ele );    # speed will be re-calculated later
 }
 
 ## perform analysis/statistics
@@ -1416,9 +1418,8 @@ $final_text .= "average moving speed = $Avg_spd km/h\n"  if $avg_spd;
 $final_text .= "elevation ". ( GEOID_ELE_CORRECTION
     ? "corrected by " . ( $found_corr ? "last retrieved" : "assumed" )
       . " geoid height = $ele_corr m" : "not corrected" )
-  . (ENABLE_SMOOTHING ? "
-track points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened"
-    : "" );
+  . ($smoothing ? "
+within each track, points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened" : "" );
 
 $wpts .=
     wpt( -1, 0, "start" )
