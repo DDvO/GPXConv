@@ -377,7 +377,7 @@ sub calc_diffs()
     #http://forums.howwhatwhy.com/showflat.php?Cat=&Board=scigen&Number=-208125
     my $timediff = ( $sec && $prev_sec ? $sec - $prev_sec : "" );
     my $rate = $diff_ele ne "" && $timediff ne ""
-        ? ( $timediff > 0 ? 3600 * $diff_ele / $timediff : $prev_gain )
+        ? ( $timediff > 0 ? 3600 * $diff_ele / $timediff : $prev_rate )
         : "";
     my $speed = ( $timediff ne ""
                   ? ( $timediff > 0 ? $dis / $timediff : $prev_spd )
@@ -828,7 +828,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     }
 
     if ( $SEG[$i] ) { # at segment start
-        $spd = $prev_spd = $prev_acc = $prev_gain = ""; # reset speed, acceleration, etc.
+        $acc = $rate = ""; # keep any recorded speed, but reset acceleration and climb/descent rate
     }
     else {
         my $theta_diff = 0;
@@ -852,8 +852,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
             }
         }
         my $Theta_diff = sprintf "%+.0f", $theta_diff;
-        ( $diff_ele, $timediff, $rate, $dis, my $calc_spd, $acc ) =
-          calc_diffs();
+        ( $diff_ele, $timediff, $rate, $dis, my $calc_spd, $acc ) = calc_diffs();
         $spd = $calc_spd if $spd eq "";
         my $Spd      = spd_string($spd);
         my $Spd_txt  = $spd ne "" ? " at speed = $Spd km/h" : "";
@@ -916,7 +915,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     }
     else {
         ( $prev_lat, $prev_lon, $prev_ele,  $prev_tim,
-          $prev_sec, $prev_spd, $prev_gain, $prev_acc )
+          $prev_sec, $prev_spd, $prev_rate, $prev_acc )
             = ( $lat, $lon, $ele, $tim, $sec, $spd, $rate, $acc );
     }
 }
