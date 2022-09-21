@@ -21,13 +21,14 @@
 #   -phases                      - analyze ascent/descent phases
 #   -begin <time>                - ignore points before given time
 #   -end <time>                  - ignore points after given time
+#   -max <field> <limit>         - ignore points with field value above limit
 #   -prune_wpts                  - remove waypoints
 #   -prune_exts                  - remove track, waypoint, and trackpoint extensions
 #   -nw                          - do not print warnings
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.5.6
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.0
 ################################################################################
 
 use strict;
@@ -116,6 +117,8 @@ my $smoothing        = ENABLE_SMOOTHING;
 my $phases           = ANALYZE_PHASES;
 my $begin_sec        = 0;
 my $end_sec          = 0;
+my $max_field        = "";
+my $max_limit;
 my $prune_wpts       = PRUNE_WPTS;
 my $prune_extensions = PRUNE_EXTENSIONS;
 my $print_warnings   = PRINT_WARNINGS;
@@ -323,14 +326,15 @@ sub parse_point {
     }
 
     my $ext = "";
-    if ( $s =~ m#(<extensions>(.*?</extensions>)+)#s ) {
+    if ( !$prune_extensions && $s =~ m#(<extensions>(.*?</extensions>)+)#s ) {
         $ext = $1;
         $ext =~ s#\n##sg;
     }
 
     my $ignore = 0;
-    $ignore = 1 if $begin_sec && $sec && $sec < $begin_sec;
-    $ignore = 1 if $end_sec   && $sec && $end_sec < $sec;
+    $ignore = 1 if ( $begin_sec && $sec && $sec < $begin_sec ||
+                     $end_sec   && $sec && $end_sec < $sec ||
+                     $max_field ne "" && $s =~ m#<$max_field>\s*(-?[\.\d]+)\s*</$max_field>#s && $1 > $max_limit );
 
     return ( $lat, $lon, $ele, $tim, $sec, $spd, $ext, $ignore );
 }
@@ -504,6 +508,24 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
         $end_sec = $sec if $ARGV[$i] eq "-end";
         splice @ARGV, $j, 1;    # remove from ARGV the option argument
     }
+    elsif ( $ARGV[$i] eq "-max") {
+        if ( $#ARGV - $i < 1 ) {
+            printf STDERR "missing field name argument for -max option\n";
+            exit 2;
+        }
+        if ( $#ARGV - $i < 2 ) {
+            printf STDERR "missing limit argument for -max option\n";
+            exit 2;
+        }
+        $max_field = $ARGV[$j];
+        $max_limit = $ARGV[$j + 1];
+        unless ( Scalar::Util::looks_like_number($max_limit)) {
+            printf STDERR "error parsing limit argument of '$ARGV[$i] $ARGV[$j] $ARGV[$j + 1]'\n";
+            exit 2;
+        }
+        $max_limit += 0;
+        splice @ARGV, $j, 2;    # remove from ARGV the option arguments
+    }
     elsif ( $ARGV[$i] eq "-prune_wpts" ) {
         $prune_wpts = 1;
     }
@@ -596,8 +618,6 @@ for ( my $state = 0,
     while (s#(<wpt .+?) *(</wpt>\n?)##s)
     {    #collect waypoints, possibly in later headers
         my $wpt = $1 . $2;
-        $wpt =~ s#<extensions>(.*?</extensions>)+\n?##sg if $prune_extensions;
-        $wpt =~ s#\n##sg;
         ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $ext, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
         if (!$ignore && !$prune_wpts
             && !( $wpt =~ m#<name><!\[CDATA\[\d+\]\]></name># && PRUNE_AUTOMATIC_WPTS )
@@ -654,7 +674,6 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         # when $state == 3: processing further trkpt in trkseg
         m#(.*?</trkpt>)#s;
         my $trkpt = $1;
-        $trkpt =~ s#<extensions>(.*?</extensions>)+\n?##sg if $prune_extensions;
         ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $ext, my $ignore ) = parse_point($trkpt);
         next if $ignore;
 

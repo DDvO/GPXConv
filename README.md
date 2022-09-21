@@ -23,6 +23,7 @@ Command-line options:
   -phases                      - analyze ascent/descent phases
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
+  -max <field> <limit>         - ignore points with field value above limit
   -prune_wpts                  - remove waypoints
   -prune_exts                  - remove track, waypoint, and trackpoint extensions
   -nw                          - do not print warnings
