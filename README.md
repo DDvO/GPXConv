@@ -20,6 +20,7 @@ Command-line options:
 ```
   -walk, -cycle, -drive, -fly  - type of recorded activity, default: drive
   -smooth                      - smoothen tracks
+  -phases                      - analyze ascent/descent phases
   -prune_wpts                  - remove waypoints
   -prune_exts                  - remove track, waypoint, and trackpoint extensions
   -nw                          - do not print warnings

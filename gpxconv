@@ -18,6 +18,7 @@
 # Command-line options:
 #   -walk, -drive, -cycle, -fly  - type of recorded activity, default: drive
 #   -smooth                      - smoothen tracks
+#   -phases                      - analyze ascent/descent phases
 #   -prune_wpts                  - remove waypoints
 #   -prune_exts                  - remove track, waypoint, and trackpoint extensions
 #   -nw                          - do not print warnings
@@ -48,7 +49,7 @@ use constant FILL_MISSING_TIME => 1; # interpolate missing time
 
 # analysis control
 use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
-use constant ANALYZE_PHASES   =>  0; # perform analysis of ascent/descent phases
+use constant ANALYZE_PHASES   =>  0; # by default do not analyze ascent/descent phases
 use constant ELE_THRESHOLD    => 20; # threshold for detecting/accepting ascent or descent;
                                      # should be larger than short-term elevation measurement error
 
@@ -110,6 +111,7 @@ use constant CALCULATED_SPEED   => 1 << 6;
 
 my $ele_corr         = DEFAULT_ELE_CORRECTION;
 my $smoothing        = ENABLE_SMOOTHING;
+my $phases           = ANALYZE_PHASES;
 my $prune_wpts       = PRUNE_WPTS;
 my $prune_extensions = PRUNE_EXTENSIONS;
 my $print_warnings   = PRINT_WARNINGS;
@@ -476,6 +478,9 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     }
     elsif ( $ARGV[$i] eq "-smooth" ) {
         $smoothing = 1;
+    }
+    elsif ( $ARGV[$i] eq "-phases" ) {
+        $phases = 1;
     }
     elsif ( $ARGV[$i] eq "-prune_wpts" ) {
         $prune_wpts = 1;
@@ -1224,8 +1229,7 @@ for( my $rate, my $spd, my $direction,
         {    # when actually starting going down, or at end
             my $diff_ele = $local_max_ele - $prev_turn_ele;
             if ( $diff_ele >= ELE_THRESHOLD ) {
-                push_phase( $prev_turn_index, $local_max_index )
-                  if ANALYZE_PHASES;
+                push_phase( $prev_turn_index, $local_max_index ) if $phases;
                 $sum__ascent  += $diff_ele;
                 $time__ascent += $local_max_sec - $prev_turn_sec;
                 $last_gain_index = $local_max_index if $ele ne "";
@@ -1240,8 +1244,7 @@ for( my $rate, my $spd, my $direction,
         {    # when actually starting going up, or at end
             my $diff_ele = $local_min_ele - $prev_turn_ele;
             if ( -$diff_ele >= ELE_THRESHOLD ) {
-                push_phase( $prev_turn_index, $local_min_index )
-                  if ANALYZE_PHASES;
+                push_phase( $prev_turn_index, $local_min_index ) if $phases;
                 $sum_descent  += $diff_ele;
                 $time_descent += $local_min_sec - $prev_turn_sec;
                 $last_loss_index = $local_min_index if $ele ne "";
