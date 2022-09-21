@@ -19,6 +19,8 @@
 #   -walk, -drive, -cycle, -fly  - type of recorded activity, default: drive
 #   -smooth                      - smoothen tracks
 #   -phases                      - analyze ascent/descent phases
+#   -begin <time>                - ignore points before given time
+#   -end <time>                  - ignore points after given time
 #   -prune_wpts                  - remove waypoints
 #   -prune_exts                  - remove track, waypoint, and trackpoint extensions
 #   -nw                          - do not print warnings
@@ -112,6 +114,8 @@ use constant CALCULATED_SPEED   => 1 << 6;
 my $ele_corr         = DEFAULT_ELE_CORRECTION;
 my $smoothing        = ENABLE_SMOOTHING;
 my $phases           = ANALYZE_PHASES;
+my $begin_sec        = 0;
+my $end_sec          = 0;
 my $prune_wpts       = PRUNE_WPTS;
 my $prune_extensions = PRUNE_EXTENSIONS;
 my $print_warnings   = PRINT_WARNINGS;
@@ -324,7 +328,11 @@ sub parse_point {
         $ext =~ s#\n##sg;
     }
 
-    return ( $lat, $lon, $ele, $tim, $sec, $spd, $ext );
+    my $ignore = 0;
+    $ignore = 1 if $begin_sec && $sec && $sec < $begin_sec;
+    $ignore = 1 if $end_sec   && $sec && $end_sec < $sec;
+
+    return ( $lat, $lon, $ele, $tim, $sec, $spd, $ext, $ignore );
 }
 
 sub warning {
@@ -482,6 +490,20 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     elsif ( $ARGV[$i] eq "-phases" ) {
         $phases = 1;
     }
+    elsif ( $ARGV[$i] eq "-begin" || $ARGV[$i] eq "-end") {
+        if ( $#ARGV - $i < 1 ) {
+            printf STDERR "missing time argument for $ARGV[$i] option\n";
+            exit 2;
+        }
+        my $sec = str_to_epoch($ARGV[$j]);
+        unless ( $sec) {
+            printf STDERR "error parsing time argument of '$ARGV[$i] $ARGV[$j]'\n";
+            exit 2;
+        }
+        $begin_sec = $sec if $ARGV[$i] eq "-begin";
+        $end_sec = $sec if $ARGV[$i] eq "-end";
+        splice @ARGV, $j, 1;    # remove from ARGV the option argument
+    }
     elsif ( $ARGV[$i] eq "-prune_wpts" ) {
         $prune_wpts = 1;
     }
@@ -576,9 +598,8 @@ for ( my $state = 0,
         my $wpt = $1 . $2;
         $wpt =~ s#<extensions>(.*?</extensions>)+\n?##sg if $prune_extensions;
         $wpt =~ s#\n##sg;
-        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $ext ) =
-            parse_point($wpt); # collect some basic data even if pruned
-        if (!$prune_wpts
+        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $ext, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
+        if (!$ignore && !$prune_wpts
             && !( $wpt =~ m#<name><!\[CDATA\[\d+\]\]></name># && PRUNE_AUTOMATIC_WPTS )
             && !( $wpt =~ m#\[(start|end.*?)\]# )
             &&    # waypoint with statistics added previously by this tool
@@ -634,8 +655,9 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         m#(.*?</trkpt>)#s;
         my $trkpt = $1;
         $trkpt =~ s#<extensions>(.*?</extensions>)+\n?##sg if $prune_extensions;
-        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $ext ) =
-            parse_point($trkpt);
+        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $ext, my $ignore ) = parse_point($trkpt);
+        next if $ignore;
+
         my $flags = 0;
         ## debug "read point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd; state = $state";
         my $diff_time = $sec && $prev_avail_sec ? $sec - $prev_avail_sec : 0;
@@ -755,10 +777,10 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             }
         }
         if ( $ele ne "" && $ele_miss_start ) {    # fill in missing elevation
-            my $end = $i;
+            my $i_end = $i;
             if ( $state < 3 )
             {    # have been carrying over ele to end of last section
-                $end--;
+                $i_end--;
             }
             else {   # state == 3, further (i.e., not the first) point in trkseg
                 $ele_miss_length += $dis;
@@ -768,7 +790,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
               $ele_miss_length > 0
               ? ( $ele - $ele_curr ) / $ele_miss_length
               : 0;
-            for ( my $j = $ele_miss_start ; $j < $end ; $j++ ) {
+            for ( my $j = $ele_miss_start ; $j < $i_end ; $j++ ) {
                 $ele_curr += $DIS[$j] * $ele_gradient;
                 $ELE[$j] = sprintf "%.0f", $ele_curr;
 
@@ -779,10 +801,10 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             $ele_miss_start = 0;
         }
         if ( $tim ne "" && $tim_miss_start ) {    # fill in missing time
-            my $end = $i;
+            my $i_end = $i;
             if ( $state < 3 )
             {    # have been carrying over time to end of last section
-                $end--;
+                $i_end--;
             }
             else {   # state == 3, further (i.e., not the first) point in trkseg
                 $tim_miss_length += $dis;
@@ -794,7 +816,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
               ? ( $sec - $sec_curr ) / $tim_miss_length
               : 0;
             ## debug("over ".($tim_miss_length/1000)." km, secdiff = ".($sec - $sec_curr));
-            for ( my $j = $tim_miss_start ; $j < $end ; $j++ ) {
+            for ( my $j = $tim_miss_start ; $j < $i_end ; $j++ ) {
                 $sec_curr += $DIS[$j] * $sec_gradient;
                 $SEC[$j] = $sec_curr;
                 $TIM[$j] = epoch_to_str($sec_curr);
@@ -1582,7 +1604,7 @@ for ( my $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
         # by interpolation every ". (sprintf SEC_PRECISION, $time_inc) ." seconds");
         my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after interpolated points
         my $start = $seg ? 0 : 1;
-        my $end   = $n_spans - ( $seg ? 0 : 1 );
+        my $n_end = $n_spans - ( $seg ? 0 : 1 );
         my $flags = $FLG[$i];
 
         # move info on previous ignored points over to first interpolated point
@@ -1594,7 +1616,7 @@ for ( my $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
 # plus in case of new segment: an extra trkpt that equals the end of the previous segment and and one the equals the start of the next segment
         my $p = $i - 1;                 # previous index
         my $t = $seg ? 0 : $time_inc;
-        for ( my $n = $start ; $n <= $end ; $n++ ) {
+        for ( my $n = $start ; $n <= $n_end ; $n++ ) {
             splice @IGN, $i, 0, $n == $start ? $ign : 0;
 
 # if $n == 0, here is a new segment start, with contents duplicated from segment end just before interpolation
