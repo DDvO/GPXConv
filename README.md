@@ -4,7 +4,8 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
 
 * Reports missing data and ignores points containing non-plausible data.
 * Optionally filters out points before or after given time limits.
-* Optionally filters out points with a field value below or above given limits.
+* Optionally filters out points with an element value below or above given limits.
+* Optionally prunes all extensions or elements with value below or above given limits.
 * Optionally fills in elevation and time data by interpolation within segments.
 * Optionally interpolates points in long gaps (by default, > 3600 seconds).
 * Optionally corrects elevation and sanitizes and smoothens tracks.
@@ -25,8 +26,10 @@ Command-line options:
   -phases                      - analyze ascent/descent phases
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
-  -max <field> <limit>         - ignore points with field value above limit
-  -min <field> <limit>         - ignore points with field value below limit
+  -max <name> <limit>          - ignore points with element value above limit
+  -min <name> <limit>          - ignore points with element value below limit
+  -max_ext <name> <limit>      - prune extension elements with value above limit
+  -min_ext <name> <limit>      - prune extension elements with value below limit
   -prune_wpts                  - remove waypoints
   -prune_exts                  - remove track, waypoint, and trackpoint extensions
   -nw                          - do not print warnings

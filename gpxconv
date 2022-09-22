@@ -5,7 +5,8 @@
 # Concatenates multiple tracks/routes preserving segments, collecting waypoints.
 # Reports missing data and ignores points containing non-plausible data.
 # Optionally filters out points before or after given time limits.
-# Optionally filters out points with a field value below or above given limits.
+# Optionally filters out points with an element value below or above given limits.
+# Optionally prunes all extensions or elements with value below or above given limits.
 # Optionally fills in elevation and time data by interpolation within segments.
 # Optionally interpolates points in long gaps (by default, > 3600 seconds).
 # Optionally corrects elevation and sanitizes and smoothens tracks.
@@ -23,15 +24,17 @@
 #   -phases                      - analyze ascent/descent phases
 #   -begin <time>                - ignore points before given time
 #   -end <time>                  - ignore points after given time
-#   -max <field> <limit>         - ignore points with field value above limit
-#   -min <field> <limit>         - ignore points with field value below limit
+#   -max <name> <limit>          - ignore points with element value above limit
+#   -min <name> <limit>          - ignore points with element value below limit
+#   -max_ext <name> <limit>      - prune extension elements with value above limit
+#   -min_ext <name> <limit>      - prune extension elements with value below limit
 #   -prune_wpts                  - remove waypoints
 #   -prune_exts                  - remove track, waypoint, and trackpoint extensions
 #   -nw                          - do not print warnings
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.1
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.2
 ################################################################################
 
 use strict;
@@ -119,12 +122,18 @@ my $begin_sec          = 0;
 my $num_ignored_before = 0;
 my $end_sec            = 0;
 my $num_ignored_after  = 0;
-my $max_field;
-my $max_limit;
-my $num_ignored_above  = 0;
-my $min_field;
-my $min_limit;
-my $num_ignored_below  = 0;
+my $max_elem;
+my $max_elem_limit;
+my $num_elem_above  = 0;
+my $min_elem;
+my $min_elem_limit;
+my $num_elem_below  = 0;
+my $max_ext;
+my $max_ext_limit;
+my $num_ext_above  = 0;
+my $min_ext;
+my $min_ext_limit;
+my $num_ext_below  = 0;
 my $ele_corr           = DEFAULT_ELE_CORRECTION;
 my $smoothing          = ENABLE_SMOOTHING;
 my $phases             = ANALYZE_PHASES;
@@ -338,15 +347,20 @@ sub parse_point {
     if ( !$prune_extensions && $s =~ m#(<extensions>(.*?</extensions>)+)#s ) {
         $ext = $1;
         $ext =~ s#\n##sg;
+        $ext =~ s#>[ \t]+<#><#sg;
     }
 
     my $ignore = 0;
     $ignore = 1 if
         ( $begin_sec && $sec && $sec < $begin_sec && ++$num_ignored_before ||
           $end_sec   && $sec && $end_sec < $sec   && ++$num_ignored_after  ||
-          $max_field && $s =~ m#<$max_field>\s*(-?[\.\d]+)\s*</$max_field>#s && $1 > $max_limit && ++$num_ignored_above ||
-          $min_field && $s =~ m#<$min_field>\s*(-?[\.\d]+)\s*</$min_field>#s && $1 < $min_limit && ++$num_ignored_below
+          $max_elem  && $s =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
+          $min_elem  && $s =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below
         );
+    $ext     =~ s#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>##s if $max_ext &&
+        $ext =~ m#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>#s && $1 > $max_ext_limit && ++$num_ext_above;
+    $ext     =~ s#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>##s if $min_ext &&
+        $ext =~ m#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>#s && $1 < $min_ext_limit && ++$num_ext_below;
 
     return ( $lat, $lon, $ele, $tim, $sec, $spd, $ext, $ignore );
 }
@@ -524,21 +538,36 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     }
     elsif ( $opt eq "-max" || $opt eq "-min" ) {
         if ( $#ARGV - $i < 1 ) {
-            printf STDERR "missing field name argument for $opt option\n";
+            printf STDERR "missing element name argument for $opt option\n";
             exit 2;
         }
         if ( $#ARGV - $i < 2 ) {
             printf STDERR "missing limit argument for -$opt option\n";
             exit 2;
         }
-        my $field = $arg1;
-        my $limit = $arg2;
-        unless ( Scalar::Util::looks_like_number($limit)) {
+        unless ( Scalar::Util::looks_like_number($arg2)) {
             printf STDERR "cannt parse limit argument of '$opt $arg1 $arg2'\n";
             exit 2;
         }
-        ( $max_field, $max_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max";;
-        ( $min_field, $min_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min";;
+        ( $max_elem, $max_elem_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max";;
+        ( $min_elem, $min_elem_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min";;
+        splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
+    }
+    elsif ( $opt eq "-max_ext" || $opt eq "-min_ext" ) {
+        if ( $#ARGV - $i < 1 ) {
+            printf STDERR "missing extension name argument for $opt option\n";
+            exit 2;
+        }
+        if ( $#ARGV - $i < 2 ) {
+            printf STDERR "missing limit argument for -$opt option\n";
+            exit 2;
+        }
+        unless ( Scalar::Util::looks_like_number($arg2)) {
+            printf STDERR "cannt parse limit argument of '$opt $arg1 $arg2'\n";
+            exit 2;
+        }
+        ( $max_ext, $max_ext_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max_ext";
+        ( $min_ext, $min_ext_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min_ext";
         splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
     }
     elsif ( $opt eq "-prune_wpts" ) {
@@ -656,7 +685,14 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
     if ( $state == 0 ) {
 
         # processing first header (of first input file)
-        s#<extensions>(.*?</extensions>)+\n?##sg if $prune_extensions;
+        if ( $prune_extensions ) {
+            s#<extensions>(.*?</extensions>)+\n?##sg;
+        } else {
+            s#[ \t]*<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>\n?##s if $max_ext
+               && m#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>#s && $1 > $max_ext_limit && ++$num_ext_above;
+            s#[ \t]*<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>\n?##s if $min_ext
+               && m#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>#s && $1 < $min_ext_limit && ++$num_ext_below;
+        }
         if (s#\nGPXConv statistics (.*?)GPXConv statistics end\n##s)
         {    #remove any earlier statistics section
             my $stats = $1;
@@ -1470,7 +1506,7 @@ if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # TODO insert metadata if not pres
     $HEAD =~ s|(\r?\n?[ \t]*</metadata>)|$indent$bounds$1|s; # add new bounds
 }
 #$speed_extension = '<xsd:element name="speed" type="xsd:decimal" minOccurs="0"><xsd:annotation><xsd:documentation>The current speed relative to the previous point, in meters per second</xsd:documentation></xsd:annotation></xsd:element>';
-#$HEAD =~ s|(( )*</metadata>)|$2$2<extensions>$speed_extension</extensions>\n$1|s if $speed_extensoin ne ""; # add declaration for speed extension
+#$HEAD =~ s|(( )*</metadata>)|$2$2<extensions>$speed_extension</extensions>\n$1|s if $speed_extension ne ""; # add declaration for speed extension
 $HEAD =~ s/\n?\n *(<trk>)/\n$1/g; # remove any double empty line (after metadata) before trk
 $HEAD =~ s/ *$//;
 
@@ -1579,10 +1615,12 @@ $final_text .= "total distance       = $Sum_dis km\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n" if $sum_timediff_mov;
 $final_text .= "total biking energy  = $Sum_energy kJ\n"    if $sum_timediff_mov;
 $final_text .= "average moving speed = $Avg_spd km/h\n"     if $avg_spd;
-$final_text .= "$num_ignored_before points with time before " . epoch_to_str($begin_sec) . " were filtered out\n" if $begin_sec;
-$final_text .=  "$num_ignored_after points with time after  " . epoch_to_str($end_sec  ) . " were filtered out\n" if $end_sec;
-$final_text .=  "$num_ignored_above points with $max_field above " . $max_limit          . " were filtered out\n" if $max_field;
-$final_text .=  "$num_ignored_below points with $min_field below " . $min_limit          . " were filtered out\n" if $min_field;
+$final_text .= "$num_ignored_before points with time before "  . epoch_to_str($begin_sec)  . " were filtered out\n" if $begin_sec;
+$final_text .=  "$num_ignored_after points with time after  "  . epoch_to_str($end_sec  )  . " were filtered out\n" if $end_sec;
+$final_text .=  "$num_elem_above points with $max_elem above " . $max_elem_limit           . " were filtered out\n" if $max_elem;
+$final_text .=  "$num_elem_below points with $min_elem below " . $min_elem_limit           . " were filtered out\n" if $min_elem;
+$final_text .=  "$num_ext_above extensions with name '$min_ext' and value above $max_ext_limit were pruned\n" if $max_ext;
+$final_text .=  "$num_ext_below extensions with name '$min_ext' and value below $min_ext_limit were pruned\n" if $min_ext;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
 $final_text .= ($smoothing ? "within each track, points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened\n" : "" );
