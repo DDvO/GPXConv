@@ -4,6 +4,8 @@
 # GPX converter: post-process routes and tracks typically produced by GPS loggers.
 # Concatenates multiple tracks/routes preserving segments, collecting waypoints.
 # Reports missing data and ignores points containing non-plausible data.
+# Optionally filters out points before or after given time limits.
+# Optionally filters out points with a field value below or above given limits.
 # Optionally fills in elevation and time data by interpolation within segments.
 # Optionally interpolates points in long gaps (by default, > 3600 seconds).
 # Optionally corrects elevation and sanitizes and smoothens tracks.
@@ -22,13 +24,14 @@
 #   -begin <time>                - ignore points before given time
 #   -end <time>                  - ignore points after given time
 #   -max <field> <limit>         - ignore points with field value above limit
+#   -min <field> <limit>         - ignore points with field value below limit
 #   -prune_wpts                  - remove waypoints
 #   -prune_exts                  - remove track, waypoint, and trackpoint extensions
 #   -nw                          - do not print warnings
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.0
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.1
 ################################################################################
 
 use strict;
@@ -112,13 +115,19 @@ use constant CALCULATED_SPEED   => 1 << 6;
 
 # global option variables
 
-my $ele_corr         = DEFAULT_ELE_CORRECTION;
-my $smoothing        = ENABLE_SMOOTHING;
-my $phases           = ANALYZE_PHASES;
-my $begin_sec        = 0;
-my $end_sec          = 0;
-my $max_field        = "";
+my $begin_sec          = 0;
+my $num_ignored_before = 0;
+my $end_sec            = 0;
+my $num_ignored_after  = 0;
+my $max_field;
 my $max_limit;
+my $num_ignored_above  = 0;
+my $min_field;
+my $min_limit;
+my $num_ignored_below  = 0;
+my $ele_corr           = DEFAULT_ELE_CORRECTION;
+my $smoothing          = ENABLE_SMOOTHING;
+my $phases             = ANALYZE_PHASES;
 my $prune_wpts       = PRUNE_WPTS;
 my $prune_extensions = PRUNE_EXTENSIONS;
 my $print_warnings   = PRINT_WARNINGS;
@@ -332,9 +341,12 @@ sub parse_point {
     }
 
     my $ignore = 0;
-    $ignore = 1 if ( $begin_sec && $sec && $sec < $begin_sec ||
-                     $end_sec   && $sec && $end_sec < $sec ||
-                     $max_field ne "" && $s =~ m#<$max_field>\s*(-?[\.\d]+)\s*</$max_field>#s && $1 > $max_limit );
+    $ignore = 1 if
+        ( $begin_sec && $sec && $sec < $begin_sec && ++$num_ignored_before ||
+          $end_sec   && $sec && $end_sec < $sec   && ++$num_ignored_after  ||
+          $max_field && $s =~ m#<$max_field>\s*(-?[\.\d]+)\s*</$max_field>#s && $1 > $max_limit && ++$num_ignored_above ||
+          $min_field && $s =~ m#<$min_field>\s*(-?[\.\d]+)\s*</$min_field>#s && $1 < $min_limit && ++$num_ignored_below
+        );
 
     return ( $lat, $lon, $ele, $tim, $sec, $spd, $ext, $ignore );
 }
@@ -479,77 +491,80 @@ sub calc_diffs()
 ### parse command line
 
 for (my $i = 0; $#ARGV - $i >= 0; ) {
+    my $opt  = $ARGV[$i];
+    my $arg1 = $ARGV[$i + 1];
+    my $arg2 = $ARGV[$i + 2];
 
     # not checking for duplicate options
-    my $j = $i + 1;
-    if ( $ARGV[$i] eq "-walk"  ||
-         $ARGV[$i] eq "-cycle" ||
-         $ARGV[$i] eq "-drive" ||
-         $ARGV[$i] eq "-fly" ) {
-        $activity = $ARGV[$i];
+    if ( $opt eq "-walk"  ||
+         $opt eq "-cycle" ||
+         $opt eq "-drive" ||
+         $opt eq "-fly" ) {
+        $activity = $opt;
     }
-    elsif ( $ARGV[$i] eq "-smooth" ) {
+    elsif ( $opt eq "-smooth" ) {
         $smoothing = 1;
     }
-    elsif ( $ARGV[$i] eq "-phases" ) {
+    elsif ( $opt eq "-phases" ) {
         $phases = 1;
     }
-    elsif ( $ARGV[$i] eq "-begin" || $ARGV[$i] eq "-end") {
+    elsif ( $opt eq "-begin" || $opt eq "-end") {
         if ( $#ARGV - $i < 1 ) {
-            printf STDERR "missing time argument for $ARGV[$i] option\n";
+            printf STDERR "missing time argument for $opt option\n";
             exit 2;
         }
-        my $sec = str_to_epoch($ARGV[$j]);
+        my $sec = str_to_epoch($arg1);
         unless ( $sec) {
-            printf STDERR "error parsing time argument of '$ARGV[$i] $ARGV[$j]'\n";
+            printf STDERR "cannot parse time argument of '$opt $arg1'\n";
             exit 2;
         }
-        $begin_sec = $sec if $ARGV[$i] eq "-begin";
-        $end_sec = $sec if $ARGV[$i] eq "-end";
-        splice @ARGV, $j, 1;    # remove from ARGV the option argument
+        $begin_sec = $sec if $opt eq "-begin";
+        $end_sec   = $sec if $opt eq "-end";
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
-    elsif ( $ARGV[$i] eq "-max") {
+    elsif ( $opt eq "-max" || $opt eq "-min" ) {
         if ( $#ARGV - $i < 1 ) {
-            printf STDERR "missing field name argument for -max option\n";
+            printf STDERR "missing field name argument for $opt option\n";
             exit 2;
         }
         if ( $#ARGV - $i < 2 ) {
-            printf STDERR "missing limit argument for -max option\n";
+            printf STDERR "missing limit argument for -$opt option\n";
             exit 2;
         }
-        $max_field = $ARGV[$j];
-        $max_limit = $ARGV[$j + 1];
-        unless ( Scalar::Util::looks_like_number($max_limit)) {
-            printf STDERR "error parsing limit argument of '$ARGV[$i] $ARGV[$j] $ARGV[$j + 1]'\n";
+        my $field = $arg1;
+        my $limit = $arg2;
+        unless ( Scalar::Util::looks_like_number($limit)) {
+            printf STDERR "cannt parse limit argument of '$opt $arg1 $arg2'\n";
             exit 2;
         }
-        $max_limit += 0;
-        splice @ARGV, $j, 2;    # remove from ARGV the option arguments
+        ( $max_field, $max_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max";;
+        ( $min_field, $min_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min";;
+        splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
     }
-    elsif ( $ARGV[$i] eq "-prune_wpts" ) {
+    elsif ( $opt eq "-prune_wpts" ) {
         $prune_wpts = 1;
     }
-    elsif ( $ARGV[$i] eq "-prune_exts" ) {
+    elsif ( $opt eq "-prune_exts" ) {
         $prune_extensions = 1;
     }
-    elsif ( $ARGV[$i] eq "-nw" ) {
+    elsif ( $opt eq "-nw" ) {
         $print_warnings = 0;
     }
-    elsif ( $ARGV[$i] eq "-ni" ) {
+    elsif ( $opt eq "-ni" ) {
         $print_info = 0;
     }
-    elsif ( $ARGV[$i] eq "-o" ) {
+    elsif ( $opt eq "-o" ) {
 
      # not checking for operlap with shell-level redirection of STDOUT using '>'
         if ( $#ARGV - $i < 1 ) {
             printf STDERR "missing outfile argument for -o option\n";
             exit 2;
         }
-        open( $out, "> $ARGV[$j]" );
-        splice @ARGV, $j, 1;    # remove from ARGV the option argument
+        open( $out, "> $arg1" );
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
-    elsif ( $ARGV[$i] =~ m/^-/ ) {
-        printf STDERR "unknown option: $ARGV[$i]\n";
+    elsif ( $opt =~ m/^-/ ) {
+        printf STDERR "unknown option: $opt\n";
         exit 2;
     }
     else {
@@ -1564,6 +1579,10 @@ $final_text .= "total distance       = $Sum_dis km\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n" if $sum_timediff_mov;
 $final_text .= "total biking energy  = $Sum_energy kJ\n"    if $sum_timediff_mov;
 $final_text .= "average moving speed = $Avg_spd km/h\n"     if $avg_spd;
+$final_text .= "$num_ignored_before points with time before " . epoch_to_str($begin_sec) . " were filtered out\n" if $begin_sec;
+$final_text .=  "$num_ignored_after points with time after  " . epoch_to_str($end_sec  ) . " were filtered out\n" if $end_sec;
+$final_text .=  "$num_ignored_above points with $max_field above " . $max_limit          . " were filtered out\n" if $max_field;
+$final_text .=  "$num_ignored_below points with $min_field below " . $min_limit          . " were filtered out\n" if $min_field;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
 $final_text .= ($smoothing ? "within each track, points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened\n" : "" );
