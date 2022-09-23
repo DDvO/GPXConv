@@ -11,7 +11,8 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
 * Optionally corrects elevation and sanitizes and smoothens tracks.
   (Orthometric height = GPS ellipsoidal height - geoid height,
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
-* Produces statistics, including ascent/descent rates of climbing phases.
+* Produces statistics, optionally including ascent/descent rates of climbing phases.
+* Can combine multiple tracks and multiple files, using the header of the first track.
 * Reads from file(s) given as argument (or STDIN) and writes to STDOUT.
 * Prints information (if enabled), any warnings (if enabled), an errors to STDERR.
 

@@ -12,7 +12,8 @@
 # Optionally corrects elevation and sanitizes and smoothens tracks.
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
-# Produces statistics, including ascent/descent rates of climbing phases.
+# Produces statistics, optionally including ascent/descent rates of climbing phases.
+# Can combine multiple tracks and multiple files, using the header of the first track.
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT.
 # Prints information (if enabled), any warnings (if enabled), an errors to STDERR.
 #
@@ -34,7 +35,7 @@
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.2
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.3
 ################################################################################
 
 use strict;
@@ -45,8 +46,8 @@ use warnings;
 # basic output control
 use constant PRUNE_WPTS           => 0; # by default do not ignore waypoints
 use constant PRUNE_AUTOMATIC_WPTS => 1; # ignore waypoints containing <name><!\[CDATA\[\d+\]\]></name>
-use constant PRUNE_DESC           => 0; # not not remove descriptions
-use constant PRUNE_LINK           => 0; # not not remove links
+use constant PRUNE_DESCS          => 0; # not not remove descriptions
+use constant PRUNE_LINKS          => 0; # not not remove links
 use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions in waypoints and trackpoints
 use constant INCLUDE_CALC_SPEED   => 1; # include speed extensions with calculated speed
 
@@ -118,6 +119,7 @@ use constant CALCULATED_SPEED   => 1 << 6;
 
 # global option variables
 
+my $num_ignored_hdrs   = 0;
 my $begin_sec          = 0;
 my $num_ignored_before = 0;
 my $end_sec            = 0;
@@ -134,11 +136,16 @@ my $num_ext_above  = 0;
 my $min_ext;
 my $min_ext_limit;
 my $num_ext_below  = 0;
-my $ele_corr           = DEFAULT_ELE_CORRECTION;
-my $smoothing          = ENABLE_SMOOTHING;
-my $phases             = ANALYZE_PHASES;
+my $ele_corr         = DEFAULT_ELE_CORRECTION;
+my $smoothing        = ENABLE_SMOOTHING;
+my $phases           = ANALYZE_PHASES;
 my $prune_wpts       = PRUNE_WPTS;
-my $prune_extensions = PRUNE_EXTENSIONS;
+my $num_pruned_wpts  = 0;
+my $num_auto_wpts    = 0;
+my $num_pruned_descs = 0;
+my $num_pruned_links = 0;
+my $prune_exts       = PRUNE_EXTENSIONS;
+my $num_pruned_exts  = 0;
 my $print_warnings   = PRINT_WARNINGS;
 my $print_info       = PRINT_INFO;
 
@@ -163,8 +170,8 @@ my @WLON;
 my @WELE;
 my @WTIM;
 my @WSEC;
-my @WTXT;
-my @WSTR;
+my @WTXT; # inner waypoint text after </time>
+my @WSTR; # full original waypoint text
 
 # ascent/descent phase data
 
@@ -296,26 +303,25 @@ sub spd_string {
 
 my $lat_len = my $lon_len = my $ele_prec_len = my $ele_full_len = my $tim_len = 0;   # used only for formatting
 sub parse_point {
-    my $s = $_[0];
+    my $str = $_[0];
 
     my $lat, my $lon;
-    #  $s =~ m#lat="(-?\d+\.?\d*)"\s*lon="(-?\d+\.?\d*)">\s*
+    #  $str =~ m#lat="(-?\d+\.?\d*)"\s*lon="(-?\d+\.?\d*)">\s*
     #  <ele>(-?\d+\.?\d*)</ele>\s*<time>(.*?T(\d\d):(\d\d):(\d\d)Z?)</time>#s
-    if ( $s =~ m#lat=\s*"(-?[\.\d]+)"\s*lon=\s*"(-?[\.\d]+)"\s*>#s ) {
+    if ( $str =~ s#lat=\s*"(-?[\.\d]+)"\s*lon=\s*"(-?[\.\d]+)"\s*>##s ) {
         $lat     = $1;
         $lon     = $2;
-    } elsif ( $s =~ m#lon=\s*"(-?[\.\d]+)"\s*lat=\s*"(-?[\.\d]+)"\s*>#s ) {
+    } elsif ( $str =~ s#lon=\s*"(-?[\.\d]+)"\s*lat=\s*"(-?[\.\d]+)"\s*>##s ) {
         $lat     = $2;
         $lon     = $1;
     } else {
-        print STDERR "FATAL: Cannot parse point: $/$s\naborting\n";
-        exit 1;
+        abort("FATAL: Cannot parse point: $str\n");
     }
     $lat_len = max( $lat_len, length($lat) ); # sprintf LAT_PRECISION,
     $lon_len = max( $lon_len, length($lon) ); # sprintf LON_PRECISION,
 
     my $ele_str = my $ele = "";
-    if ( $s =~ m#(<ele>\s*(-?[\.\d]+)\s*</ele>)#s ) {
+    if ( $str =~ s#[ \t]*(<ele>\s*(-?[\.\d]+)\s*</ele>)\n?##s ) {
         $ele_str = $1;
         $ele = $2; # may be empty or 0
         $ele_prec_len = max( $ele_prec_len, length( int($ele) ) ); # sprintf ELE_PRECISION,
@@ -324,7 +330,7 @@ sub parse_point {
     }
 
     my $tim = "", my $sec = 0;
-    if ( $s =~ m#(<time>\s*([-:.T\dZ]+)\s*</time>)#s ) {
+    if ( $str =~ s#[ \t]*(<time>\s*([-:.T\dZ]+)\s*</time>)\n?##s ) {
         $tim = $2;
         $tim =~ s/\.0+Z/Z/;
         $tim_len = max( $tim_len, length($tim) );
@@ -338,43 +344,60 @@ sub parse_point {
     }
 
     my $spd = "";
-    if ( $s =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s ) {
+    if ( $str =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s ) {
         $spd       = $2 / 3.6;    # assuming speed is given in km/h
         $max_speed = $spd if $max_speed < $spd;
     }
 
     my $ext = "";
-    if ( !$prune_extensions && $s =~ m#(<extensions>(.*?</extensions>)+)#s ) {
-        $ext = $1;
-        $ext =~ s#\n##sg;
-        $ext =~ s#>[ \t]+<#><#sg;
+    if ( $str =~ s#[ \t]*(<extensions>(.*?</extensions>)+)\n?##s ) {
+        if ( $prune_exts ) {
+            ++$num_pruned_exts;
+        } else {
+            $ext = $1;
+            $ext =~ s#\n##sg;
+            $ext =~ s#>[ \t]+<#><#sg;
+        }
     }
+
+    my $rest = $str;
+    $rest =~ s#\n##sg;
+    $rest =~ s#>[ \t]+<#><#sg;
 
     my $ignore = 0;
     $ignore = 1 if
         ( $begin_sec && $sec && $sec < $begin_sec && ++$num_ignored_before ||
           $end_sec   && $sec && $end_sec < $sec   && ++$num_ignored_after  ||
-          $max_elem  && $s =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
-          $min_elem  && $s =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below
+          $max_elem  && $str =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
+          $min_elem  && $str =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below
         );
     $ext     =~ s#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>##s if $max_ext &&
         $ext =~ m#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>#s && $1 > $max_ext_limit && ++$num_ext_above;
     $ext     =~ s#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>##s if $min_ext &&
         $ext =~ m#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>#s && $1 < $min_ext_limit && ++$num_ext_below;
+    $ext =~ s#<gpxtpx:TrackPointExtension></gpxtpx:TrackPointExtension>##sg;
+    $ext =~ s#<extensions></extensions>##sg;
 
-    return ( $lat, $lon, $ele, $tim, $sec, $spd, $ext, $ignore );
+    return ( $lat, $lon, $ele, $tim, $sec, $spd, $rest, $ext, $ignore );
 }
 
+sub print_line { print STDERR "$_[0]\n"; }
+
 sub warning {
-    print STDERR "WARNING: $_[0]\n" if $print_warnings;
+    print_line("WARNING: $_[0]") if $print_warnings;
 }
 
 sub info {
-    print STDERR "INFO   : $_[0]\n" if $print_info;
+    print_line("INFO   : $_[0]") if $print_info;
+}
+
+sub abort {
+    print_line("$_[0]aborting");
+    exit 1;
 }
 
 sub debug {
-    print STDERR "### DEBUG: $_[0]\n";
+    print_line("### DEBUG: $_[0]");
 }
 
 sub info_trkpt  { info_trkpt_i( -1, $_[0], $_[1] ); }
@@ -409,20 +432,18 @@ sub print_trkpt_i {
     elsif ( $ele_full_len > $ele_prec_len ) {
         my $decimals = -1;
         $decimals = length($1) if $elev =~ m/\.(\d+)/;
-        $elev .= ' ' x ( $ele_full_len - $ele_prec_len - $decimals - 1 );
+        my $n_spaces = $ele_full_len - $ele_prec_len - $decimals - 1;
+        $elev .= ' ' x $n_spaces if $n_spaces > 0;
     }
     my $time = $t ne "" ? $t : "NONE";
-    print STDERR "$head "
+    print_line("$head "
       . "<trkpt"
       . ' lat="' . ( $lati . '"' . ( ' ' x max( 0, $lat_len - length($lati) ) ) )
       . ' lon="' . ( $long . '"' . ( ' ' x max( 0, $lon_len - length($long) ) ) )
       . " <ele>" . ele_string( $ele_full_len, $elev )
       . ( $t ne "NO" ? " <time>" . ( $time . ( " " x max( 0, $tim_len - length($time) ) ) ) : "" )
-      . "$tail\n";
-    if ( $head =~ "^FATAL:" ) {
-        print STDERR "aborting\n";
-        exit 1;
-    }
+      . "$tail");
+    abort("") if ( $head =~ "^FATAL:" );
 }
 
 sub ignoring_trkpt { ignoring_trkpt_i( -1, $_[0] , $_[1] ); }
@@ -523,49 +544,25 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
         $phases = 1;
     }
     elsif ( $opt eq "-begin" || $opt eq "-end") {
-        if ( $#ARGV - $i < 1 ) {
-            printf STDERR "missing time argument for $opt option\n";
-            exit 2;
-        }
+        abort("missing time argument for $opt option\n") if $#ARGV - $i < 1;
         my $sec = str_to_epoch($arg1);
-        unless ( $sec) {
-            printf STDERR "cannot parse time argument of '$opt $arg1'\n";
-            exit 2;
-        }
+        abort("cannot parse time argument of '$opt $arg1'\n") unless $sec;
         $begin_sec = $sec if $opt eq "-begin";
         $end_sec   = $sec if $opt eq "-end";
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ( $opt eq "-max" || $opt eq "-min" ) {
-        if ( $#ARGV - $i < 1 ) {
-            printf STDERR "missing element name argument for $opt option\n";
-            exit 2;
-        }
-        if ( $#ARGV - $i < 2 ) {
-            printf STDERR "missing limit argument for -$opt option\n";
-            exit 2;
-        }
-        unless ( Scalar::Util::looks_like_number($arg2)) {
-            printf STDERR "cannt parse limit argument of '$opt $arg1 $arg2'\n";
-            exit 2;
-        }
+        abort("missing element name argument for $opt option\n") if  $#ARGV - $i < 1;
+        abort("missing limit argument for -$opt option\n") if $#ARGV - $i < 2;
+        abort("cannt parse limit argument of '$opt $arg1 $arg2'\n") unless Scalar::Util::looks_like_number($arg2);
         ( $max_elem, $max_elem_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max";;
         ( $min_elem, $min_elem_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min";;
         splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
     }
     elsif ( $opt eq "-max_ext" || $opt eq "-min_ext" ) {
-        if ( $#ARGV - $i < 1 ) {
-            printf STDERR "missing extension name argument for $opt option\n";
-            exit 2;
-        }
-        if ( $#ARGV - $i < 2 ) {
-            printf STDERR "missing limit argument for -$opt option\n";
-            exit 2;
-        }
-        unless ( Scalar::Util::looks_like_number($arg2)) {
-            printf STDERR "cannt parse limit argument of '$opt $arg1 $arg2'\n";
-            exit 2;
-        }
+        abort("missing extension name argument for $opt option\n") if $#ARGV - $i < 1;
+        abort("missing limit argument for -$opt option\n") if $#ARGV - $i < 2;
+        abort("cannt parse limit argument of '$opt $arg1 $arg2'\n") unless Scalar::Util::looks_like_number($arg2);
         ( $max_ext, $max_ext_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max_ext";
         ( $min_ext, $min_ext_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min_ext";
         splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
@@ -574,7 +571,7 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
         $prune_wpts = 1;
     }
     elsif ( $opt eq "-prune_exts" ) {
-        $prune_extensions = 1;
+        $prune_exts = 1;
     }
     elsif ( $opt eq "-nw" ) {
         $print_warnings = 0;
@@ -585,22 +582,22 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     elsif ( $opt eq "-o" ) {
 
      # not checking for operlap with shell-level redirection of STDOUT using '>'
-        if ( $#ARGV - $i < 1 ) {
-            printf STDERR "missing outfile argument for -o option\n";
-            exit 2;
-        }
+        abort("missing outfile argument for -o option\n") if $#ARGV - $i < 1;
         open( $out, "> $arg1" );
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ( $opt =~ m/^-/ ) {
-        printf STDERR "unknown option: $opt\n";
-        exit 2;
+        abort("unknown option: $opt\n");
     }
     else {
         $i++;
         next;                   # infile
     }
     splice @ARGV, $i, 1;        # remove from ARGV the option just handled
+}
+if ( $prune_exts ) {
+    warning("-max_ext option has little effect since -prune_exts is given") if $max_ext;
+    warning("-min_ext option has little effect since -prune_exts is given") if $min_ext;
 }
 
 if ( $activity eq "-walk" ) {
@@ -631,8 +628,7 @@ elsif ( $activity eq "-drive" ) { # default
     $MAX_SENSIBLE_ELE_GAIN = 20000; # maximal ascent rate in m/h
     $MAX_SENSIBLE_ELE_LOSS = 20000; # maximal descent rate in m/h
 } else {
-    print STDERR "FATAL: unknown activity: $activity\naborting\n";
-    exit 1;
+    abort("unknown activity: $activity\naborting\n");
 }
 
 ### main loops
@@ -657,42 +653,44 @@ for ( my $state = 0,
       my $prev_avail_sec  = 0, my $prev_avail_ele  = "",
       my $ele_miss_length = 0, my $tim_miss_length = 0,
       my $i = 0; <>; ) {
-    s#<desc>.+?</desc>\n?##sg  if PRUNE_DESC;
-    s# *<link.+?</link>\n?##sg if PRUNE_LINK;
-    while (s#(<wpt .+?) *(</wpt>\n?)##s)
+    ++$num_pruned_descs if PRUNE_DESCS && s#[ \t]*<desc>.+?</desc>\n?##sg;
+    ++$num_pruned_links if PRUNE_LINKS && s#[ \t]*<link>.+?</link>\n?##sg;
+    while ( s#(<wpt .+?)(</wpt>)\n?##s )
     {    #collect waypoints, possibly in later headers
         my $wpt = $1 . $2;
-        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $ext, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
+        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $rest, my $exts, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
+        $rest =~ s#^<wpt[ \t]*##;
+        $rest =~ s#</wpt>$##;
+        ++$num_pruned_wpts if $prune_wpts;
         if (!$ignore && !$prune_wpts
-            && !( $wpt =~ m#<name><!\[CDATA\[\d+\]\]></name># && PRUNE_AUTOMATIC_WPTS )
-            && !( $wpt =~ m#\[(start|end.*?)\]# )
-            &&    # waypoint with statistics added previously by this tool
-            !( $wpt =~
+            && !( PRUNE_AUTOMATIC_WPTS &&
+                  $rest =~ m#<name><!\[CDATA\[\d+\]\]></name># && ++$num_auto_wpts )
+            && !( $rest =~ m#\[(start|end.*?)\]# )
+            && # waypoint with statistics added previously by this tool:
+            !( $rest =~
 m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+[+-]?[\d\.]+ k?m(\/h)?( at -?[\d\.]+ km/h|;\s+avg\s+rate\s+=\s+[+-]?[\d.]+ m/h)?\]# ))
         {
-            $wpt =~ m#(<name>.*?)</wpt>#;
             push @WLAT, $lat;
             push @WLON, $lon;
             push @WELE, $ele;
             push @WTIM, $tim;
             push @WSEC, $sec;
-            push @WTXT, $1;
+            push @WTXT, $rest . $exts;
             push @WSTR, $wpt;
-
-            # $WPTS.= "$wpt\n";
         }
     }
     if ( $state == 0 ) {
-
         # processing first header (of first input file)
-        if ( $prune_extensions ) {
-            s#<extensions>(.*?</extensions>)+\n?##sg;
-        } else {
-            s#[ \t]*<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>\n?##s if $max_ext
-               && m#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>#s && $1 > $max_ext_limit && ++$num_ext_above;
-            s#[ \t]*<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>\n?##s if $min_ext
-               && m#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>#s && $1 < $min_ext_limit && ++$num_ext_below;
+
+        if ( $prune_exts ) {
+            ++$num_pruned_exts if s#<extensions>(.*?</extensions>)+\n?##sg;
         }
+        # well, the following extension pruning may affect also header elements outside extensions
+        s#[ \t]*<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>\n?##s if $max_ext
+           && m#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>#s && $1 > $max_ext_limit && ++$num_ext_above;
+        s#[ \t]*<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>\n?##s if $min_ext
+           && m#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>#s && $1 < $min_ext_limit && ++$num_ext_below;
+
         if (s#\nGPXConv statistics (.*?)GPXConv statistics end\n##s)
         {    #remove any earlier statistics section
             my $stats = $1;
@@ -709,12 +707,13 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         $HEAD  = $_;
         $state = 1;         # expecting the very first trkpt
     }
-    elsif (m#(<gpx )#s) {   # processing further track file, ignoring its header
+    elsif (m#(<gpx )#s) {   # processing further track file
+        ++$num_ignored_hdrs;
         if ( $smoothing && m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n# )
         {
             warning("smoothing apparently has already been done on input");
         }
-        if ( $#TIM >= 0 ) {    # typically, new file
+        if ( $#TIM >= 0 ) { # typically, new file
             info_trkpt_i( $i - 1, "end of segment at", "" ) if $i > 0;
             info("further track, from file $ARGV");
         }
@@ -725,7 +724,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         # when $state == 3: processing further trkpt in trkseg
         m#(.*?</trkpt>)#s;
         my $trkpt = $1;
-        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $ext, my $ignore ) = parse_point($trkpt);
+        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $rest_unused, my $exts, my $ignore ) = parse_point("<trkpt $trkpt");
         next if $ignore;
 
         my $flags = 0;
@@ -906,7 +905,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         push @SEC, $sec;
         push @DIS, $dis;
         push @SPD, $spd;         # as recorded, else ""
-        push @EXT, $ext;
+        push @EXT, $exts;
 
         # detect and report missing time and/or elevation
         my $ele_solution  = "cannot calculate ascent/descent";
@@ -963,8 +962,10 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         # reset intra-segment values
         $prev_spd = "";
     }
-    info("further track, again from file $ARGV")
-      if $i > 0 && !(m#(<gpx )#s) && m#<trk>#;
+    if ($i > 0 && m#<trk># ) { # further track
+        ++$num_ignored_hdrs;
+        info("further track, again from file $ARGV") unless m#<gpx #s;
+    }
 }
 my $Len = sprintf "%4" . DIS_PRECISION, $ele_gap_length / 1000; # TODO restrict scope
 warn_trkpt_i($#TIM, "no elevation up to",
@@ -1097,10 +1098,7 @@ $avg_timediff = $num_pts_mov ? $sum_timediff_mov0 / $num_pts_mov : 0; # used for
 # $sum_timediff_mov will be re-calculated thereafter, since points may have been ignored or smoothened
 } # end TODO re-format
 
-if ( $#TIM < 0 ) {
-    print STDERR "FATAL: No trackpoint (possibly after ignoring some)\naborting\n";
-    exit 1;
-}
+abort("FATAL: No trackpoint (possibly after ignoring some)\n") if $#TIM < 0;
 
 ## check waypoints
 
@@ -1525,12 +1523,12 @@ sub wpt {
       : ( $LAT[$i], $LON[$i], $TIM[$i] );
     $tim =~ s/(:\d\d)(\.\d+)/$1/;    # strip fractional seconds
     my $ele  = correct_ele( $j, $i );
-    my $name = $j >= 0 ? $WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
+    my $name_or_orig_text = $j >= 0 ? $WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
     return '<wpt lat="' . ( sprintf LAT_PRECISION, $lat ) .
          '" ' . 'lon="' . ( sprintf LON_PRECISION, $lon ) . '">'
         . ( $ele eq "" ? "" : "<ele>" . ele_string( $ele_prec_len, int($ele) ) . "</ele>" )
       . ( $tim eq "" ? "" : "<time>$tim</time>" )
-      . $name . "</wpt>\n";
+      . $name_or_orig_text . "</wpt>\n";
 }
 
 sub point {
@@ -1613,14 +1611,20 @@ my $max_loss_text    = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h";
 my $final_text = "\n";
 $final_text .= "total distance       = $Sum_dis km\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n" if $sum_timediff_mov;
-$final_text .= "total biking energy  = $Sum_energy kJ\n"    if $sum_timediff_mov;
-$final_text .= "average moving speed = $Avg_spd km/h\n"     if $avg_spd;
-$final_text .= "$num_ignored_before points with time before "  . epoch_to_str($begin_sec)  . " were filtered out\n" if $begin_sec;
-$final_text .=  "$num_ignored_after points with time after  "  . epoch_to_str($end_sec  )  . " were filtered out\n" if $end_sec;
-$final_text .=  "$num_elem_above points with $max_elem above " . $max_elem_limit           . " were filtered out\n" if $max_elem;
-$final_text .=  "$num_elem_below points with $min_elem below " . $min_elem_limit           . " were filtered out\n" if $min_elem;
-$final_text .=  "$num_ext_above extensions with name '$min_ext' and value above $max_ext_limit were pruned\n" if $max_ext;
-$final_text .=  "$num_ext_below extensions with name '$min_ext' and value below $min_ext_limit were pruned\n" if $min_ext;
+$final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov;
+$final_text .= "average moving speed = $Avg_spd km/h\n"      if $avg_spd;
+$final_text .= "$num_pruned_wpts waypoints"    . " pruned\n" if $num_pruned_wpts;
+$final_text .= "$num_auto_wpts automatic waypoints pruned\n" if $num_auto_wpts;
+$final_text .= "$num_ignored_hdrs track headers"." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
+$final_text .= "$num_pruned_exts extensions"   . " pruned\n" if $num_pruned_exts;    # not counting nested ones
+$final_text .= "$num_pruned_descs descriptions". " pruned\n" if $num_pruned_descs;   # not counting nested ones
+$final_text .= "$num_pruned_links links"       . " pruned\n" if $num_pruned_links;   # not counting nested ones
+$final_text .= "$num_ignored_before points with time before " . epoch_to_str($begin_sec)  . " filtered out\n" if $begin_sec;
+$final_text .= "$num_ignored_after points with time after  "  . epoch_to_str($end_sec  )  . " filtered out\n" if $end_sec;
+$final_text .= "$num_elem_above points with $max_elem above " . $max_elem_limit           . " filtered out\n" if $max_elem;
+$final_text .= "$num_elem_below points with $min_elem below " . $min_elem_limit           . " filtered out\n" if $min_elem;
+$final_text .= "$num_ext_above extensions with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
+$final_text .= "$num_ext_below extensions with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
 $final_text .= ($smoothing ? "within each track, points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened\n" : "" );
@@ -1652,6 +1656,7 @@ my $stats = "GPXConv statistics (not including sanitized trackpoints nor periods
     . substr( $final_text, 1 ) .
 "GPXConv statistics end";
 
+print_line(""); # empty line
 info($stats);
 $HEAD =~
   s|(<trk>\s*(<name>.*?</name>)?)|$1\n<cmt></cmt>|s # add preliminarily empty comment in track
@@ -1729,7 +1734,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     print $out "<ele>" . ele_string( $ele_prec_len, int( correct_ele( -1, $i ) ) ) . "</ele>"
       if $ELE[$i] ne "";
     print $out "<time>$tim</time>" if $tim;
-    print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? " was" : "s were" ) . " ignored</cmt>"
+    print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>"
       if $IGN[$i];
     my $src = "";
     $src = "time gap interpolated from points before and after"   if $FLG[$i] & INTERPOLATED_POINT;
@@ -1745,7 +1750,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     }
     my $exts = $EXT[$i];
     if ( $spd ne "" && ( !( $FLG[$i] & CALCULATED_SPEED ) || INCLUDE_CALC_SPEED ) ) {
-        my $spdstr = SPEED . spd_string($spd) . _SPEED;
+        my $spdstr = SPEED . ( sprintf SPD_PRECISION, 3.6 * $spd ) . _SPEED;
         if ( $exts eq "" ) {
             $exts = "<extensions>$spdstr</extensions>";
         } else {
