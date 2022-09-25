@@ -2,6 +2,9 @@
 
 GPX track converter: post-process routes and tracks typically produced by GPS loggers.
 
+* Reads from file(s) given as argument (or STDIN) and writes to STDOUT or a file.
+* Can combine multiple tracks and multiple files, using the header of the first track.
+* Concatenates all given tracks (or routes) preserving segments, collecting waypoints.
 * Reports missing data and ignores points containing non-plausible data.
 * Optionally filters out points before or after given time limits.
 * Optionally filters out points with an element value below or above given limits.
@@ -12,9 +15,8 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
   (Orthometric height = GPS ellipsoidal height - geoid height,
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 * Produces statistics, optionally including ascent/descent rates of climbing phases.
-* Can combine multiple tracks and multiple files, using the header of the first track.
-* Reads from file(s) given as argument (or STDIN) and writes to STDOUT.
-* Prints information (if enabled), any warnings (if enabled), an errors to STDERR.
+* Optionally computes approx. total energy spent by biking along the resulting track.
+* Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
 
 Usage:
 ```
@@ -25,6 +27,7 @@ Command-line options:
   -walk, -cycle, -drive, -fly  - type of recorded activity, default: drive
   -smooth                      - smoothen tracks
   -phases                      - analyze ascent/descent phases
+  -weight <value>              - compute biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
   -max <name> <limit>          - ignore points with element value above limit

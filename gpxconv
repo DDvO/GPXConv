@@ -2,7 +2,10 @@
 
 ################################################################################
 # GPX converter: post-process routes and tracks typically produced by GPS loggers.
-# Concatenates multiple tracks/routes preserving segments, collecting waypoints.
+#
+# Reads from file(s) given as argument (or STDIN) and writes to STDOUT or a file.
+# Can combine multiple tracks and multiple files, using the header of the first track.
+# Concatenates all given tracks (or routes) preserving segments, collecting waypoints.
 # Reports missing data and ignores points containing non-plausible data.
 # Optionally filters out points before or after given time limits.
 # Optionally filters out points with an element value below or above given limits.
@@ -13,9 +16,8 @@
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 # Produces statistics, optionally including ascent/descent rates of climbing phases.
-# Can combine multiple tracks and multiple files, using the header of the first track.
-# Reads from file(s) given as argument (or STDIN) and writes to STDOUT.
-# Prints information (if enabled), any warnings (if enabled), an errors to STDERR.
+# Optionally computes approx. total energy spent by biking along the resulting track.
+# Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
 #
 # Usage:
 #   gpxconv <option(s) and infile(s)> [> <outfile>]
@@ -23,6 +25,7 @@
 #   -walk, -drive, -cycle, -fly  - type of recorded activity, default: drive
 #   -smooth                      - smoothen tracks
 #   -phases                      - analyze ascent/descent phases
+#   -weight <value>              - compute biking energy for given weight in kg
 #   -begin <time>                - ignore points before given time
 #   -end <time>                  - ignore points after given time
 #   -max <name> <limit>          - ignore points with element value above limit
@@ -35,7 +38,7 @@
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.3
+# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.4
 ################################################################################
 
 use strict;
@@ -139,6 +142,7 @@ my $num_ext_below  = 0;
 my $ele_corr         = DEFAULT_ELE_CORRECTION;
 my $smoothing        = ENABLE_SMOOTHING;
 my $phases           = ANALYZE_PHASES;
+my $weight;
 my $prune_wpts       = PRUNE_WPTS;
 my $num_pruned_wpts  = 0;
 my $num_auto_wpts    = 0;
@@ -241,6 +245,8 @@ use Time::ParseDate ();
 
 # use Time::PrintDate;
 use Time::gmtime qw( gmtime );
+
+use Scalar::Util qw( looks_like_number );
 
 # str_to_epoch("1970-01-01T00:00:00Z") = 0
 sub str_to_epoch {
@@ -546,18 +552,24 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     elsif ( $opt eq "-phases" ) {
         $phases = 1;
     }
+    elsif ( $opt eq "-weight" ) {
+        abort("missing value argument for -$opt option\n") if $#ARGV - $i < 1;
+        abort("cannot parse value argument in '$opt $arg1'\n") unless looks_like_number($arg1);
+        $weight = $arg1 + 0;
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+    }
     elsif ( $opt eq "-begin" || $opt eq "-end") {
         abort("missing time argument for $opt option\n") if $#ARGV - $i < 1;
         my $sec = str_to_epoch($arg1);
-        abort("cannot parse time argument of '$opt $arg1'\n") unless $sec;
+        abort("cannot parse time argument in '$opt $arg1'\n") unless $sec;
         $begin_sec = $sec if $opt eq "-begin";
         $end_sec   = $sec if $opt eq "-end";
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ( $opt eq "-max" || $opt eq "-min" ) {
-        abort("missing element name argument for $opt option\n") if  $#ARGV - $i < 1;
+        abort("missing element name argument for $opt option\n") if $#ARGV - $i < 1;
         abort("missing limit argument for -$opt option\n") if $#ARGV - $i < 2;
-        abort("cannt parse limit argument of '$opt $arg1 $arg2'\n") unless Scalar::Util::looks_like_number($arg2);
+        abort("cannot parse limit argument in '$opt $arg1 $arg2'\n") unless looks_like_number($arg2);
         ( $max_elem, $max_elem_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max";;
         ( $min_elem, $min_elem_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min";;
         splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
@@ -565,7 +577,7 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     elsif ( $opt eq "-max_ext" || $opt eq "-min_ext" ) {
         abort("missing extension name argument for $opt option\n") if $#ARGV - $i < 1;
         abort("missing limit argument for -$opt option\n") if $#ARGV - $i < 2;
-        abort("cannt parse limit argument of '$opt $arg1 $arg2'\n") unless Scalar::Util::looks_like_number($arg2);
+        abort("cannt parse limit argument in '$opt $arg1 $arg2'\n") unless looks_like_number($arg2);
         ( $max_ext, $max_ext_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max_ext";
         ( $min_ext, $min_ext_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min_ext";
         splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
@@ -1230,8 +1242,8 @@ sub energy { # calculate energy difference between trackpoints  # TODO simplify 
     my $v  = ( $v0 + $v1 ) / 2;    # average speed, used for air drag, assumed with no wind (i.e., calm air)
     my $g = 9.81;                  # gravity constant in m/(s^2)
 
-# values and formuls adapted from https://www.sheldonbrown.com/rinard/aero/formulas.html
-    my $m = 80;                    # total mass including vehicle and rider in kg         - adapt
+# values and formulas adapted from https://www.sheldonbrown.com/rinard/aero/formulas.html
+    my $m = $weight;               # total mass including vehicle and rider in kg
     my $cr = 0.003;                # coefficient of rolling friction for racing bike      - adapt
     my $cdA = 0.39;                # coefficient of wind resistance * frontal area in m^2 - adapt
     my $r = 1.2;                   # air density on average weather (20 °C) at sea level in kg/(m^3)
@@ -1615,8 +1627,8 @@ my $max_loss_text    = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h";
 
 my $final_text = "\n";
 $final_text .= "total distance       = $Sum_dis km\n";
-$final_text .= "total moving time    = $Sum_timediff_mov\n" if $sum_timediff_mov;
-$final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov;
+$final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mov;
+$final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov && $weight;
 $final_text .= "average moving speed = $Avg_spd km/h\n"      if $avg_spd;
 $final_text .= "$num_pruned_wpts waypoints"    . " pruned\n" if $num_pruned_wpts;
 $final_text .= "$num_auto_wpts automatic waypoints pruned\n" if $num_auto_wpts;
