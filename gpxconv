@@ -362,7 +362,10 @@ sub parse_point {
 
     my $rest = $str;
     $rest =~ s#\n##sg;
-    $rest =~ s#>[ \t]+<#><#sg;
+    $rest =~ s#>[ \t]+<#><#g;
+    # clean up potential errors in input:
+    $rest =~ s#<ele></ele>##;
+    $rest =~ s#<time></time>##;
 
     my $ignore = 0;
     $ignore = 1 if
@@ -1526,8 +1529,10 @@ sub wpt {
     my $name_or_orig_text = $j >= 0 ? $WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
     return '<wpt lat="' . ( sprintf LAT_PRECISION, $lat ) .
          '" ' . 'lon="' . ( sprintf LON_PRECISION, $lon ) . '">'
-        . ( $ele eq "" ? "" : "<ele>" . ele_string( $ele_prec_len, int($ele) ) . "</ele>" )
-      . ( $tim eq "" ? "" : "<time>$tim</time>" )
+        . ( $ele eq "" ? "     " . (" " x $ele_prec_len ) . "      "
+            : "<ele>" . ele_string( $ele_prec_len, int($ele) ) . "</ele>" )
+        . ( $tim eq "" ? "      " . "                    " . "       "
+            : "<time>$tim</time>" )
       . $name_or_orig_text . "</wpt>\n";
 }
 
@@ -1750,7 +1755,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     }
     my $exts = $EXT[$i];
     if ( $spd ne "" && ( !( $FLG[$i] & CALCULATED_SPEED ) || INCLUDE_CALC_SPEED ) ) {
-        my $spdstr = SPEED . ( sprintf SPD_PRECISION, 3.6 * $spd ) . _SPEED;
+        my $spdstr = SPEED . spd_string($spd) . _SPEED;
         if ( $exts eq "" ) {
             $exts = "<extensions>$spdstr</extensions>";
         } else {
