@@ -22,7 +22,7 @@
 # Usage:
 #   gpxconv <option(s) and infile(s)> [> <outfile>]
 # Command-line options:
-#   -walk, -drive, -cycle, -fly  - type of recorded activity, default: drive
+#   -walk, -drive, -cycle, -fly, -swim - type of recorded activity, default: drive
 #   -smooth                      - smoothen tracks
 #   -phases                      - analyze ascent/descent phases
 #   -weight <value>              - compute biking energy for given weight in kg
@@ -543,7 +543,8 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     if ( $opt eq "-walk"  ||
          $opt eq "-cycle" ||
          $opt eq "-drive" ||
-         $opt eq "-fly" ) {
+         $opt eq "-fly" ||
+         $opt eq "-swim" ) {
         $activity = $opt;
     }
     elsif ( $opt eq "-smooth" ) {
@@ -635,6 +636,13 @@ elsif ( $activity eq "-fly" ) {
     $MAX_SENSIBLE_ACCEL    = 10;
     $MAX_SENSIBLE_ELE_GAIN = 30000;
     $MAX_SENSIBLE_ELE_LOSS = 50000;
+}
+elsif ( $activity eq "-swim" ) {
+    $MIN_TIMEDIFF          = 1;
+    $MAX_SENSIBLE_SPEED    = 6;
+    $MAX_SENSIBLE_ACCEL    = 1;
+    $MAX_SENSIBLE_ELE_GAIN = 1;
+    $MAX_SENSIBLE_ELE_LOSS = 1;
 }
 elsif ( $activity eq "-drive" ) { # default
     $MIN_TIMEDIFF          = 2;     # in seconds
