@@ -543,7 +543,7 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     if ( $opt eq "-walk"  ||
          $opt eq "-cycle" ||
          $opt eq "-drive" ||
-         $opt eq "-fly" ||
+         $opt eq "-fly"   ||
          $opt eq "-swim" ) {
         $activity = $opt;
     }
@@ -639,7 +639,7 @@ elsif ( $activity eq "-fly" ) {
 }
 elsif ( $activity eq "-swim" ) {
     $MIN_TIMEDIFF          = 1;
-    $MAX_SENSIBLE_SPEED    = 6;
+    $MAX_SENSIBLE_SPEED    = 2;
     $MAX_SENSIBLE_ACCEL    = 1;
     $MAX_SENSIBLE_ELE_GAIN = 1;
     $MAX_SENSIBLE_ELE_LOSS = 1;
