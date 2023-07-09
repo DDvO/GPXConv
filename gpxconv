@@ -1384,7 +1384,7 @@ for( my $rate, my $spd, my $direction,
         if ( $spd ne "" && $timediff ne "" && 3.6 * $spd >= MIN_SPEED_MOVING ) {
             $sum_timediff_mov += $timediff;
         }
-        unless ( $SEG[$i] ) {   # not at segment start
+        if ( $weight && !$SEG[$i] ) { # not at segment start
             my $tim_start = $TIM[ $i - 1 ];
             $tim_start = "<unknown time>" if $tim_start eq ""; # TODO improve, using index
             $tim_start =~ s/(:\d\d)(\.\d+)/$1/;    # strip fractional seconds
@@ -1499,7 +1499,7 @@ my $Avg__ascent_rate = sprintf RAT_PRECISION, $avg__ascent_rate;
 my $Avg_descent_rate = sprintf RAT_PRECISION, $avg_descent_rate;
 $Avg_descent_rate =~ s/\+/-/ if !$avg_descent_rate;
 my $Sum_dis    = sprintf "%" . DIS_PRECISION, $sum_dis / 1000;
-my $Sum_energy = sprintf "%.0f", $sum_energy / 1000;
+my $Sum_energy = sprintf "%.0f", $sum_energy / 1000 if $weight;
 my $Avg_spd    = spd_string($avg_spd);
    $Avg_spd =~ s/^\s+//;
 my $Sum_timediff_mov = timediff_string($sum_timediff_mov);
