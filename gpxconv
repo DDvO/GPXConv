@@ -38,7 +38,7 @@
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2022 David von Oheimb - License: MIT - Version 2.6.4
+# (c) 2012-2023 David von Oheimb - License: MIT - Version 2.6.5
 ################################################################################
 
 use strict;
@@ -639,7 +639,7 @@ elsif ( $activity eq "-fly" ) {
 }
 elsif ( $activity eq "-swim" ) {
     $MIN_TIMEDIFF          = 1;
-    $MAX_SENSIBLE_SPEED    = 2;
+    $MAX_SENSIBLE_SPEED    = 7;
     $MAX_SENSIBLE_ACCEL    = 1;
     $MAX_SENSIBLE_ELE_GAIN = 1;
     $MAX_SENSIBLE_ELE_LOSS = 1;
