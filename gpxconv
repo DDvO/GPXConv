@@ -89,7 +89,8 @@ my $MAX_SENSIBLE_SPEED   ; # maximal speed in km/h
 my $MAX_SENSIBLE_ACCEL   ; # maximal acceleration m/s/s
 my $MAX_SENSIBLE_ELE_GAIN; # maximal ascent rate in m/h
 my $MAX_SENSIBLE_ELE_LOSS; # maximal descent rate in m/h
-use constant MAX_SENSIBLE_ANGLE_DIFF =>  175; # maximal sensible turning angle
+use constant MAX_SENSIBLE_ANGLE_DIFF =>  170; # maximal sensible turning angle above speed threshold
+use constant MAX_SENSIBLE_ANGLE_SPD_THRESHOLD => 2; # speed threshold for maximal sensible turning angle: 7.2 km/h
 use constant MIN_SENSIBLE_ELE        => -450; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
 
 # time correction control
@@ -1036,9 +1037,13 @@ for ( my $acc, my $rate,
     }
     else {
         my $theta_diff = 0;
-        if ( $i >= 2 && !$SEG[ $i - 1 ] )
-        {        # also previous point not at segment start
-                 # turning angle calculation for spike detection
+        my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
+        my $spd2 = $timediff2 <= 0 || $spd_before eq "" || $spd eq "" ? "" :
+            ($spd_before * $timediff_before + $spd * $timediff) / $timediff2;
+        if ( $i >= 2 && !$SEG[ $i - 1 ] # previous point not at segment start
+             && $spd2 ne "" && $spd2 > MAX_SENSIBLE_ANGLE_SPD_THRESHOLD) # average speed between last two points
+        {
+            # turning angle calculation for spike detection
             my $prev_lon_diff =
               nearest( .00001, $prev_lon ) - nearest( .00001, $LON[ $i - 2 ] );
             my $prev_lat_diff =
@@ -1079,10 +1084,8 @@ for ( my $acc, my $rate,
 
         $ignore = 1; # the current point
         if ( MAX_SENSIBLE_ANGLE_DIFF < abs($theta_diff) ) {
-            my $Spd2 = $spd_before eq "" || $spd eq "" || $timediff_before + $timediff <= 0 ? "" :
-                spd_string(($spd_before * $timediff_before + $spd * $timediff) / ($timediff_before + $timediff));
             $ignore = -1; # the point before
-            ignoring_trkpt_i( $i - 1, $Spd2, "direction change = $Theta_diff° ("
+            ignoring_trkpt_i( $i - 1, spd_string($spd2), "direction change = $Theta_diff° ("
                   . ( $theta_diff >= 0 ? "more than  " : "less than -" ) . MAX_SENSIBLE_ANGLE_DIFF . "°)" );
         }
         elsif ( $rate ne "" && $Rate > $MAX_SENSIBLE_ELE_GAIN ) {
