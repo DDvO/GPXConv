@@ -1012,8 +1012,14 @@ warn_trkpt( "                at",
 { # TODO re-format
 my $sum_timediff_mov0 = 0;
 my $num_pts_mov       = 0;
+my $timediff_before;
+my $timediff = "";
+my $spd_before;
+$spd = "";
 for ( my $acc, my $rate,
       my $i = 0 ; $i <= $#TIM ; $i++ ) {
+    $timediff_before = $timediff;
+    $spd_before = $spd;
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[ $i + 0 ] );
 
@@ -1050,7 +1056,7 @@ for ( my $acc, my $rate,
             }
         }
         my $Theta_diff = sprintf "%+.0f", $theta_diff;
-        ( my $diff_ele, my $timediff, $rate, my $dis, my $calc_spd, $acc ) = calc_diffs();
+        ( my $diff_ele, $timediff, $rate, my $dis, my $calc_spd, $acc ) = calc_diffs();
         $spd = $calc_spd if $spd eq "";
         my $Spd      = $spd ne "" ? spd_string("$spd") : "";
         my $Spd_txt  = $spd ne "" ? " at speed = $Spd km/h" : "";
@@ -1071,9 +1077,12 @@ for ( my $acc, my $rate,
             ) if $spd_diff > MAX_SPEED_DEVIATION;
         }
 
-        $ignore = 1;
+        $ignore = 1; # the current point
         if ( MAX_SENSIBLE_ANGLE_DIFF < abs($theta_diff) ) {
-            ignoring_trkpt( $Spd, "direction change = $Theta_diff° ("
+            my $Spd2 = $spd_before eq "" || $spd eq "" || $timediff_before + $timediff <= 0 ? "" :
+                spd_string(($spd_before * $timediff_before + $spd * $timediff) / ($timediff_before + $timediff));
+            $ignore = -1; # the point before
+            ignoring_trkpt_i( $i - 1, $Spd2, "direction change = $Theta_diff° ("
                   . ( $theta_diff >= 0 ? "more than  " : "less than -" ) . MAX_SENSIBLE_ANGLE_DIFF . "°)" );
         }
         elsif ( $rate ne "" && $Rate > $MAX_SENSIBLE_ELE_GAIN ) {
@@ -1107,8 +1116,8 @@ for ( my $acc, my $rate,
             }
         }
     }
-    if ($ignore) {
-        remove_trkpt( $i-- );
+    if ($ignore != 0) {
+        remove_trkpt( $ignore == -1 ? --$i : $i-- );
         # will re-calculate speed etc. relative to same previous point as before
     }
     else {
