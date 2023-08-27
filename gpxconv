@@ -468,10 +468,8 @@ sub remove_trkpt {
     my $i = $_[0];
     $IGN[ $i + 1 ] = $IGN[$i] + 1; # indicate that previous point has been ignored, in addition to any previous ignores
     $SEG[ $i + 1 ] = 1 if $SEG[$i] && $i < $#SEG;  # take over any segment start
-    $DIS[ $i + 1 ] = distance(
-        $LAT[ $i + 1 ], $LON[ $i + 1 ], $ELE[ $i + 1 ],
-        $LAT[ $i - 1 ], $LON[ $i - 1 ], $ELE[ $i - 1 ]
-    ) if $i > 0;
+    $DIS[ $i + 1 ] = distance($LAT[ $i + 1 ], $LON[ $i + 1 ], $ELE[ $i + 1 ],
+                              $LAT[ $i - 1 ], $LON[ $i - 1 ], $ELE[ $i - 1 ]) if $i > 0;
     splice @IGN, $i, 1;
     splice @SEG, $i, 1;
     splice @FLG, $i, 1;
@@ -993,19 +991,15 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
 }
 my $Len = sprintf "%4" . DIS_PRECISION, $ele_gap_length / 1000; # TODO restrict scope
 warn_trkpt_i($#TIM, "no elevation up to",
-    " for " . $num_no_ele . " points over a distance of $Len km"
-) if $num_no_ele > 1;
+             " for " . $num_no_ele . " points over a distance of $Len km") if $num_no_ele > 1;
 $Len = sprintf "%4" . DIS_PRECISION, $time_gap_length / 1000;
 warn_trkpt_i($#TIM, "no time      up to",
-    " for " . $num_no_time . " points over a distance of $Len km"
-) if $num_no_time > 1;
-info_trkpt( "last   segment end", "" ) if $#TIM >= 0;
-warn_trkpt( "                at",
-    " was unable to interpolate missing elevation by end of last segment" )
-  if $ele_miss_start;
-warn_trkpt( "                at",
-    " was unable to interpolate missing time by end of last segment" )
-  if $tim_miss_start;
+             " for " . $num_no_time . " points over a distance of $Len km") if $num_no_time > 1;
+info_trkpt("last   segment end", "") if $#TIM >= 0;
+warn_trkpt("                at",
+           " was unable to interpolate missing elevation by end of last segment") if $ele_miss_start;
+warn_trkpt("                at",
+           " was unable to interpolate missing time by end of last segment") if $tim_miss_start;
 } # end TODO re-format
 
 ## sanitize trackpoints
@@ -1040,18 +1034,14 @@ for ( my $acc, my $rate,
         my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
         my $spd2 = $timediff2 <= 0 || $spd_before eq "" || $spd eq "" ? "" :
             ($spd_before * $timediff_before + $spd * $timediff) / $timediff2;
-        if ( $i >= 2 && !$SEG[ $i - 1 ] # previous point not at segment start
-             && $spd2 ne "" && $spd2 > MAX_SENSIBLE_ANGLE_SPD_THRESHOLD) # average speed between last two points
+        if ($i >= 2 && !$SEG[ $i - 1 ] # previous point not at segment start
+            && $spd2 ne "" && $spd2 > MAX_SENSIBLE_ANGLE_SPD_THRESHOLD) # average speed between last two points
         {
             # turning angle calculation for spike detection
-            my $prev_lon_diff =
-              nearest( .00001, $prev_lon ) - nearest( .00001, $LON[ $i - 2 ] );
-            my $prev_lat_diff =
-              nearest( .00001, $prev_lat ) - nearest( .00001, $LAT[ $i - 2 ] );
-            my $curr_lon_diff =
-              nearest( .00001, $lon ) - nearest( .00001, $prev_lon );
-            my $curr_lat_diff =
-              nearest( .00001, $lat ) - nearest( .00001, $prev_lat );
+            my $prev_lon_diff = nearest( .00001, $prev_lon ) - nearest( .00001, $LON[ $i - 2 ] );
+            my $prev_lat_diff = nearest( .00001, $prev_lat ) - nearest( .00001, $LAT[ $i - 2 ] );
+            my $curr_lon_diff = nearest( .00001, $lon ) - nearest( .00001, $prev_lon );
+            my $curr_lat_diff = nearest( .00001, $lat ) - nearest( .00001, $prev_lat );
             if ( $prev_lon_diff && $prev_lat_diff && $curr_lon_diff && $curr_lat_diff )
             {
                 my $theta1 = atan2( $prev_lon_diff, $prev_lat_diff ) * 360 / pi2;
@@ -1069,8 +1059,8 @@ for ( my $acc, my $rate,
         my $Warn_dis = sprintf "%" . DIS_PRECISION,  WARNING_TPT_DIST / 1000;
         my $Rate     = $rate ne "" ? sprintf RAT_PRECISION, $rate : "";
         my $Acc      = $acc ne "" ? sprintf ACC_PRECISION, $acc : "";
-        warn_trkpt("before  ", "$Spd_txt distance between points = $Dis km (more than $Warn_dis)"
-        ) if $dis > WARNING_TPT_DIST;
+        warn_trkpt("before  ", "$Spd_txt distance between points = $Dis km (more than $Warn_dis)")
+            if $dis > WARNING_TPT_DIST;
 
         if ( !$ignore && $spd ne "" && $SPD[$i] ne "" )
         {    # $ignore means: last trkpt has been ignored
@@ -1078,8 +1068,7 @@ for ( my $acc, my $rate,
             warn_trkpt("before  ",
                        "$Spd_txt calculated speed is " . spd_string($calc_spd) . " km/h " .
                        "deviation is " . spd_string( $spd_diff / 3.6 ) . " km/h" .
-                       " (more than " . ( MAX_SPEED_DEVIATION - 1 ) . ")"
-            ) if $spd_diff > MAX_SPEED_DEVIATION;
+                       " (more than " . ( MAX_SPEED_DEVIATION - 1 ) . ")") if $spd_diff > MAX_SPEED_DEVIATION;
         }
 
         $ignore = 1; # the current point
@@ -1462,8 +1451,7 @@ sub linear_ele_correction {
     my $sec  = $_[0];
     my $sec1 = 1296543617;                      #start time
     my $sec2 = 1296569335;                      #end   time
-    return 0
-      if !( $sec1 <= $sec && $sec <= $sec2 );   # linear correction not in scope
+    return 0 unless ( $sec1 <= $sec && $sec <= $sec2 );   # linear correction not in scope
     my $ele1 = 4720 - 4677;                     #actual and wanted start value
     my $ele2 = 1925 - 1635;                     #actual and wanted end   value
     return
@@ -1768,11 +1756,9 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     $tim =~ s/(:\d\d)(\.\d+)/$1/;     # strip fractional seconds
     print $out '<trkpt lat="' . ( sprintf LAT_PRECISION, $LAT[$i] )
       . '" lon="' . ( sprintf LON_PRECISION, $LON[$i] ) . '">';
-    print $out "<ele>" . ele_string( $ele_prec_len, int( correct_ele( -1, $i ) ) ) . "</ele>"
-      if $ELE[$i] ne "";
+    print $out "<ele>" . ele_string( $ele_prec_len, int( correct_ele( -1, $i ) ) ) . "</ele>" if $ELE[$i] ne "";
     print $out "<time>$tim</time>" if $tim;
-    print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>"
-      if $IGN[$i];
+    print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>" if $IGN[$i];
     my $src = "";
     $src = "time gap interpolated from points before and after"   if $FLG[$i] & INTERPOLATED_POINT;
     $src .= ( $src eq "" ? "" : "; " ) . "interpolated elevation" if $FLG[$i] & INTERPOLATED_ELE;
