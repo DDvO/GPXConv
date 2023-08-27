@@ -638,7 +638,7 @@ elsif ( $activity eq "-fly" ) {
     $MAX_SENSIBLE_ELE_LOSS = 50000;
 }
 elsif ( $activity eq "-swim" ) {
-    $MIN_TIMEDIFF          = 1;
+    $MIN_TIMEDIFF          = 4;
     $MAX_SENSIBLE_SPEED    = 7;
     $MAX_SENSIBLE_ACCEL    = 1;
     $MAX_SENSIBLE_ELE_GAIN = 1;
