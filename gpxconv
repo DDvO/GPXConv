@@ -38,7 +38,7 @@
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2023 David von Oheimb - License: MIT - Version 2.6.5
+# (c) 2012-2023 David von Oheimb - License: MIT - Version 2.6.6
 ################################################################################
 
 use strict;
@@ -1244,8 +1244,8 @@ sub energy { # calculate energy difference between trackpoints  # TODO simplify 
     my $default_spd = 0;           # default speed in m/s assumed for calculating acceleration and air drag
     if ($v0 eq "" || $v1 eq "") {
         $v0 = $v1 = $default_spd;
-        warning("missing speed information for computing energy, at least at $t") unless $energy_missing_spd;
-        $energy_missing_spd = 1;
+        warning("missing speed information for computing energy, at least at $t") if $energy_missing_spd < 2;
+        $energy_missing_spd++;
     }
     my $v  = ( $v0 + $v1 ) / 2;    # average speed, used for air drag, assumed with no wind (i.e., calm air)
     my $g = 9.81;                  # gravity constant in m/(s^2)
