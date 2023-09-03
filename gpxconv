@@ -49,7 +49,7 @@ use warnings;
 
 # basic output control
 use constant PRUNE_WPTS           => 0; # by default do not ignore waypoints
-use constant PRUNE_AUTOMATIC_WPTS => 1; # ignore waypoints containing <name><!\[CDATA\[\d+\]\]></name>
+use constant PRUNE_AUTOMATIC_WPTS => 1; # ignore waypoints containing <name><!\[CDATA\[\d*\]\]></name>
 use constant PRUNE_DESCS          => 0; # not not remove descriptions
 use constant PRUNE_LINKS          => 0; # not not remove links
 use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions in waypoints and trackpoints
@@ -740,7 +740,7 @@ for ( my $state = 0,
         ++$num_pruned_wpts if $prune_wpts;
         if (!$ignore && !$prune_wpts
             && !( PRUNE_AUTOMATIC_WPTS &&
-                  $rest =~ m#<name><!\[CDATA\[\d+\]\]></name># && ++$num_auto_wpts )
+                  $rest =~ m#<name><!\[CDATA\[\d*\]\]></name># && ++$num_auto_wpts )
             && !( $rest =~ m#\[(start|end.*?)\]# )
             && # waypoint with statistics added previously by this tool:
             !( $rest =~
