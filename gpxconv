@@ -1100,7 +1100,7 @@ for ( my $acc, my $rate,
         {
             my $inter = ( $FLG[$i] & INTERPOLATED_TIM ) ? "interpolated " : "";
             ignoring_trkpt( $Spd, $inter . "time difference = " . int($timediff)
-                  . " sec (less than " . $MIN_TIMEDIFF . ") over a distance of $Dis km" );
+                  . " sec (less than " . $MIN_TIMEDIFF . ") over a distance of $Dis km" ) if $timediff > 1.001;
         }
         else {
             $ignore = 0;
