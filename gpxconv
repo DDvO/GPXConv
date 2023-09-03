@@ -179,7 +179,7 @@ my @WELE;
 my @WTIM;
 my @WSEC;
 my @WTXT; # inner waypoint text after </time>
-my @WSTR; # full original waypoint text
+my @WSTR; # full original (but indented) waypoint text
 
 # ascent/descent phase data
 
@@ -743,6 +743,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             push @WTIM, $tim;
             push @WSEC, $sec;
             push @WTXT, $rest . $exts;
+            $wpt =~ s/(^|\n)/\n  /sg;
             push @WSTR, $wpt;
         }
     }
@@ -1209,11 +1210,11 @@ abort("FATAL: No trackpoint (possibly after ignoring some)\n") if $#TIM < 0;
 for ( my $j = 0 ; $j <= $#WSEC ; $j++ ) {
     $sec = $WSEC[$j];
     unless ($sec) {
-        warning("waypoint '$WSTR[$j]' does not have time information; skipping proximity check");
+        warning("waypoint '$WSTR[$j]\n' does not have time information; skipping proximity check");
         next;
     }
     if ( $j > 0 && $WSEC[ $j - 1 ] && $sec - $WSEC[ $j - 1 ] < 0 ) {
-        warning("waypoint '$WSTR[$j]' is before previous waypoint: $WSTR[$j-1]");
+        warning("waypoint '$WSTR[$j]\n' is before previous waypoint: $WSTR[$j-1]");
     }
     if ( $#TIM < 0 ) { # can not happen due to above check
         warning("no trackpoint found for checking waypoints");
@@ -1237,7 +1238,7 @@ for ( my $j = 0 ; $j <= $#WSEC ; $j++ ) {
           && $LON[$i2] == $WLON[$j]
           && $ELE[$i2] == $WELE[$j];    # early starting point
         if ( $i2 > $#TIM ) {
-            warning("no trackpoint found at same time or later than waypoint '$WSTR[$j]';" .
+            warning("no trackpoint found at same time or later than waypoint '$WSTR[$j]\n';" .
                     " will extrapolate distance from the one before"
             );
         }
@@ -1251,7 +1252,7 @@ for ( my $j = 0 ; $j <= $#WSEC ; $j++ ) {
         my $dis = distance_curr( $WLAT[$j], $WLON[$j], $WELE[$j] );
         $tim = "NO"; # do not print time for interpolated point, since done already for wpt
         my $Dis = sprintf "%.0f", $dis;
-        warn_trkpt("according to its time information, waypoint '$WSTR[$j]' appears not close to track "
+        warn_trkpt("according to its time information, waypoint '$WSTR[$j]\n' appears not close to track "
               . "(interpolated distance = $Dis m > " . WARNING_WPT_DIST . "); "
               . "it should be approximately at", "")
           if $dis > WARNING_WPT_DIST;
