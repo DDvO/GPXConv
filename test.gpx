@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx creator="" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata>
+<name><![CDATA[GPXconv test data]]></name>
+<link href="https://github.com/DDvO/GPXConv">
+<text>GPXconv test data</text>
+</link>
+<time>2019-08-22T05:44:24Z</time><bounds maxlat="44.3221102" maxlon="9.7122333" minlat="43.7960135" minlon="7.7181358"/>
+</metadata>
+
+<wpt lat="43.8135040" lon="7.7715837"><ele>1.21</ele><time>2019-08-23T00:00:00Z</time>
+<name><![CDATA[0001496]]></name><desc><![CDATA[<p><br /><h3>Name: Segment: 4</h3>]]></desc><sym>Waypoint</sym><type>Finishing Point</type>
+<extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
+</wpt>
+<wpt lat="43.8135855" lon="7.7715481"><ele>7.12</ele><time>2019-08-23T15:11:36Z</time>
+<name><![CDATA[0001497]]></name><desc><![CDATA[<p><br /><h3>Name: Segment: 4</h3>]]></desc><sym>Waypoint</sym><type>Finishing Point</type>
+<extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
+</wpt>
+
+
+<trk>
+<name><![CDATA[2019-08-22_Vernazza-Chiavari-Sanremo]]></name>
+<desc><![CDATA[<p>Start time: 08/22/2019 07:44<br/>Finish time: 08/23/2019 22:56<br/>Distance: 98.4 km (71:37)]]></desc>
+<type>Driving</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="TYPE" subtype="0">17</om:ext>
+<om:ext type="DIFFICULTY">0</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+  <trkseg>
+    <trkpt lat="44.327535" lon="2.28069999"><cmt>lat should be rounded up to 44.32754; initially no elevation and time</cmt></trkpt>
+    <trkpt lat="44.338684" lon="2.25583222"><ele>70.00</ele></trkpt>
+    <trkpt lat="44.000" lon="2.008"><ele>50.00</ele><time>2019-08-23T08:00:00Z</time></trkpt>
+  </trkseg>
+
+  <trkseg>
+    <trkpt lat="44.000" lon="2.0008"><cmt>ele=50.00 and time=2019-08-23T08:00:00Z to be carried over from previous segment</cmt></trkpt>
+    <trkpt lat="44.001" lon="2.0006"><cmt>elevation and time to be interpolated</cmt></trkpt>
+    <trkpt lat="44.002" lon="2.0004"><time>2019-08-23T10:00:00Z</time><cmt>elevation to be interpolated; time gap to be filled with one new point</cmt></trkpt>
+    <trkpt lat="44.004" lon="2.0000"><cmt>ele=10.00 and time=2019-08-23T12:00:00Z to be carried over from next segment</cmt></trkpt>
+  </trkseg>
+</trk>
+
+
+<trk>
+ <trkseg>
+  <trkpt lat="45.50" lon="3.50"><ele>10</ele><time>2019-08-23T12:00:00Z</time></trkpt>
+  <trkpt lat="45.60" lon="3.52"><cmt>no possibility to take over elevation or time</cmt></trkpt>
+ </trkseg>
+
+ <trkseg>
+  <trkpt lat="45.70" lon="4.10"><cmt>can take over elevation, but no possibility to take over time</cmt></trkpt>
+  <trkpt lat="45.80" lon="4.20"><cmt>can iterpolate elevation, no time</cmt></trkpt>
+  <trkpt lat="44.90" lon="4.30"><ele>90</ele><time>2019-08-23T15:00:00Z</time></trkpt>
+ </trkseg>
+
+ <trkseg>
+  <trkpt lat="43.81391" lon="8.0"><ele>505</ele><time>2019-08-23T18:00:00Z</time><cmt>3 hours time gap before</cmt></trkpt>
+  <trkpt lat="43.81391" lon="8.1"><ele>510</ele><time>2019-08-23T19:00:01Z</time><cmt> a bit more than 1 hour time gap before</cmt></trkpt>
+  <trkpt lat="43.81391" lon="8.2"><cmt>at the end no elevation and time</cmt></trkpt>
+ </trkseg>
+</trk>
+
+</gpx>
