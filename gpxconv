@@ -722,9 +722,18 @@ for ( my $state = 0,
     ) {
     ++$num_pruned_descs if PRUNE_DESCS && s#[ \t]*<desc>.+?</desc>\n?##sg;
     ++$num_pruned_links if PRUNE_LINKS && s#[ \t]*<link>.+?</link>\n?##sg;
+
+    #collect waypoints, possibly in later infile(s) headers
+    my $prev_wpt_time_stripped = "";
     while (!$in_merge && s#(<wpt .+?)(</wpt>)\n?##s)
-    {    #collect waypoints, possibly in later headers
+    {
         my $wpt = $1 . $2;
+        # workaround for OurxMaps partly duplicating waypoints of <type>Finishing Point</type> when manually starting new segment
+        my $wpt_time_stripped = $wpt;
+        $wpt_time_stripped =~ s#<time>.*</time>##;
+        next if $wpt_time_stripped eq $prev_wpt_time_stripped;
+        $prev_wpt_time_stripped = $wpt_time_stripped;
+
         ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $rest, my $exts, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
         $rest =~ s#^<wpt[ \t]*##;
         $rest =~ s#</wpt>$##;
@@ -747,6 +756,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             push @WSTR, $wpt;
         }
     }
+
     if ( $state == 0 ) {
         # processing first header (of first input file)
 
