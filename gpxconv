@@ -761,21 +761,15 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             info_trkpt( "first   segment at", "" );
         }
         else {
-            if ( $diff_time < 0 ) {    # this implies $sec && $prev_sec
-                 # warn_trkpt("time difference = ".timediff_string($diff_time)." negative at",
-                 # "; waypoint checking may not work correctly");
-                print_trkpt("FATAL: before", " negative time difference (-" .
-                            timediff_string( -$diff_time ) . ")");
-            }
-            if ( $sec && $prev_sec && $diff_time == 0
-                && ( $lat != $prev_lat || $lon != $prev_lon ) )
-            {
+            print_trkpt("FATAL: before", " negative time difference (-".timediff_string(-$diff_time).")")
+                if $diff_time < 0; # this implies $sec && $prev_sec
+            if ($sec && $prev_sec && $diff_time == 0) {
                 print_trkpt("FATAL: point before",
-                            " has same time ($prev_tim) but different position ($prev_lat, $prev_lon)");
-            }
-            if ( $sec && $prev_sec && $diff_time == 0 && $ele != $prev_ele ) {
+                            " has same time ($prev_tim) but different position ($prev_lat, $prev_lon)")
+                    if $lat != $prev_lat || $lon != $prev_lon;
                 print_trkpt("FATAL: point before",
-                            " has same time ($prev_tim) but different elevation ($prev_ele m)");
+                            " has same time ($prev_tim) but different elevation ($prev_ele m)")
+                    if $ele != $prev_ele;
             }
         }
 
