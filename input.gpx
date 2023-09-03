@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx creator="manual">
+<metadata>
+<name><![CDATA[GPXconv test data for basic input]]></name>
+<link href="https://github.com/DDvO/GPXConv">
+<text>GPXconv test data for basic input</text>
+</link>
+<time>2023-09-03T14:00:00Z</time>
+</metadata>
+
+<trk>
+  <trkseg>
+    <trkpt lat="10.000" lon="20.000"><ele>30</ele><time>2023-09-03T12:00:01Z</time></trkpt>
+    <trkpt lat="10.001" lon="20.000"><ele>40</ele><time>2023-09-03T12:01:00Z</time></trkpt>
+    <trkpt lat="10.002" lon="20.000"><ele>50</ele><time>2023-09-03T12:02:00Z</time></trkpt>
+    <trkpt lat="10.003" lon="20.000"><ele>60</ele><time>2023-09-03T12:02:59Z</time></trkpt>
+  </trkseg>
+</trk>
+
+</gpx>

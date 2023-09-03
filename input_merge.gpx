@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" version="1.1" creator="manual">
+<metadata>
+<name><![CDATA[GPXconv test data for basic input]]></name>
+<link href="https://github.com/DDvO/GPXConv">
+<text>GPXconv test data for basic input</text>
+</link>
+	<time>2023-09-03T11:59:00Z</time>
+	<bounds minlat="10.00000" minlon="20.00000" maxlat="10.00400" maxlon="20.00200"/>
+</metadata>
+<wpt lat="10.00000" lon="20.00000"><ele>28</ele><time>2023-09-03T11:59:00Z</time><name>[start]</name></wpt>
+<wpt lat="10.00200" lon="20.00000"><ele>50</ele><time>2023-09-03T12:02:00Z</time><name>[max speed = 44 km/h]</name></wpt>
+<wpt lat="10.00000" lon="20.00000"><ele>28</ele><time>2023-09-03T11:59:00Z</time><name>[min altitude = 28 m]</name></wpt>
+<wpt lat="10.00400" lon="20.00000"><ele>64</ele><time>2023-09-03T12:04:00Z</time><name>[max altitude = 64 m]</name></wpt>
+<wpt lat="10.00400" lon="20.00000"><ele>64</ele><time>2023-09-03T12:04:00Z</time><name>[total ascent = +36 m; avg rate = +432 m/h]</name></wpt>
+<wpt lat="10.00000" lon="20.00000"><ele>28</ele><time>2023-09-03T11:59:00Z</time><name>[total descent = -0 m; avg rate = -0 m/h]</name></wpt>
+<wpt lat="10.00300" lon="20.00000"><ele>63</ele><time>2023-09-03T12:03:01Z</time><name>[max ascent rate = +5400 m/h at 5 km/h]</name></wpt>
+<wpt lat="10.00400" lon="20.00000"><ele>64</ele><time>2023-09-03T12:04:00Z</time><name>[end; total distance = 0.80 km; total moving time = 0:04:01 h; average moving speed = 12 km/h; elevation not corrected]</name></wpt>
+<trk>
+  
+<cmt>
+GPXConv statistics (not including sanitized trackpoints nor periods between segments)
+At lat,lon,ele = 10.00000,20.00000,28 time = 2023-09-03T11:59:00Z: start
+At lat,lon,ele = 10.00200,20.00000,50 time = 2023-09-03T12:02:00Z: max speed        =    44 km/h
+At lat,lon,ele = 10.00000,20.00000,28 time = 2023-09-03T11:59:00Z: min altitude     =    28 m
+At lat,lon,ele = 10.00400,20.00000,64 time = 2023-09-03T12:04:00Z: max altitude     =    64 m
+At lat,lon,ele = 10.00400,20.00000,64 time = 2023-09-03T12:04:00Z: total  ascent    =   +36 m; avg rate  =  +432 m/h
+At lat,lon,ele = 10.00000,20.00000,28 time = 2023-09-03T11:59:00Z: total descent    =    -0 m; avg rate  =    -0 m/h
+At lat,lon,ele = 10.00300,20.00000,63 time = 2023-09-03T12:03:01Z: max  ascent rate = +5400 m/h at 5 km/h
+At lat,lon,ele = 10.00400,20.00000,64 time = 2023-09-03T12:04:00Z: end
+total distance       = 0.80 km
+total moving time    = 0:04:01 h
+average moving speed = 12 km/h
+elevation not corrected
+GPXConv statistics end
+</cmt><trkseg>
+<trkpt lat="10.00000" lon="20.00000"><ele>28</ele><time>2023-09-03T11:59:00Z</time><src>calculated speed</src></trkpt>
+<trkpt lat="10.00000" lon="20.00000"><ele>29</ele><time>2023-09-03T11:59:59Z</time><src>calculated speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="10.00000" lon="20.00000"><ele>30</ele><time>2023-09-03T12:00:01Z</time><src>calculated speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="10.00100" lon="20.00000"><ele>40</ele><time>2023-09-03T12:01:00Z</time><src>calculated speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="10.00100" lon="20.00100"><ele>42</ele><time>2023-09-03T12:01:20Z</time><src>calculated speed</src><extensions><speed>20</speed></extensions></trkpt>
+<trkpt lat="10.00100" lon="20.00200"><ele>43</ele><time>2023-09-03T12:01:40Z</time><src>calculated speed</src><extensions><speed>20</speed></extensions></trkpt>
+<trkpt lat="10.00200" lon="20.00000"><ele>50</ele><time>2023-09-03T12:02:00Z</time><src>calculated speed</src><extensions><speed>44</speed></extensions></trkpt>
+<trkpt lat="10.00300" lon="20.00000"><ele>60</ele><time>2023-09-03T12:02:59Z</time><src>calculated speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="10.00300" lon="20.00000"><ele>63</ele><time>2023-09-03T12:03:01Z</time><src>calculated speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="10.00400" lon="20.00000"><ele>64</ele><time>2023-09-03T12:04:00Z</time><src>calculated speed</src><extensions><speed> 7</speed></extensions></trkpt>
+</trkseg>
+</trk>
+</gpx>

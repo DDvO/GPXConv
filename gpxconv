@@ -25,6 +25,7 @@
 #   -walk, -drive, -cycle, -fly, -swim - type of recorded activity, default: drive
 #   -smooth                      - smoothen tracks
 #   -phases                      - analyze ascent/descent phases
+#   -merge <file>                - complete gaps in infile(s) by data from given GPX file
 #   -weight <value>              - compute biking energy for given weight in kg
 #   -begin <time>                - ignore points before given time
 #   -end <time>                  - ignore points after given time
@@ -38,7 +39,7 @@
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2023 David von Oheimb - License: MIT - Version 2.6.6
+# (c) 2012-2023 David von Oheimb - License: MIT - Version 2.7
 ################################################################################
 
 use strict;
@@ -67,6 +68,7 @@ use constant ELE_THRESHOLD    => 20; # threshold for detecting/accepting ascent 
                                      # should be larger than short-term elevation measurement error
 
 # smoothing control
+use constant MERGE_FILL_GAP    => 60; # minimum gap length in seconds to be filled by merging
 use constant ENABLE_SMOOTHING  =>  0; # by default disable smoothing
 use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackpoint to be smoothened and its neighbors
 
@@ -123,6 +125,7 @@ use constant CALCULATED_SPEED   => 1 << 6;
 
 # global option variables
 
+my $merge;
 my $num_ignored_hdrs   = 0;
 my $begin_sec          = 0;
 my $num_ignored_before = 0;
@@ -535,6 +538,7 @@ sub calc_diffs()
 }
 
 ### parse command line
+# TODO clean up use of ARGV
 
 for (my $i = 0; $#ARGV - $i >= 0; ) {
     my $opt  = $ARGV[$i];
@@ -554,6 +558,11 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     }
     elsif ( $opt eq "-phases" ) {
         $phases = 1;
+    }
+    elsif ( $opt eq "-merge" ) {
+        abort("missing file argument for -$opt option\n") if $#ARGV - $i < 1;
+        $merge = $arg1;
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ( $opt eq "-weight" ) {
         abort("missing value argument for -$opt option\n") if $#ARGV - $i < 1;
@@ -669,18 +678,51 @@ my $num_no_time     = 0;
 my $time_gap_length = 0;
 my $prev_tim        = "";
 my $prev_sec        = 0;
-
 # $prev_avail_tim = "";
 push @DIST, 0;
 push @RATE, 0;
+
 $/ = "<trkpt ";
+if ($merge) {
+    open M, $merge || abort("FATAL: Cannot open alternative GPX source file $merge: $.\n") if $#TIM < 0;
+    <M>; # first item is before "<trktpt"
+}
+my ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $exts1) if $merge; # current end of gap to be merged
+my ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $exts2) if $merge; # current trkpt from alternative input
+sub next_trkpt2() {
+    my $trkpt2;
+    my $ignore2 = 1;
+    while ($ignore2 && defined($trkpt2 = <M>)) {
+        $trkpt2 =~ m#(.*?</trkpt>)#s;
+        $trkpt2 = $1;
+        ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
+    }
+    my $Spd_ = defined($spd2) && $spd2 ne "" ? spd_string($spd2) : "";
+    ## debug "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=$sec2 spd=$Spd_" if $trkpt2;
+    return $trkpt2;
+}
+my $in_merge = 0; # if set, using trkpt from $merge
+if ($merge && !next_trkpt2()) {
+    abort("FATAL: no trkpt found in alternative input $merge\n");
+    $merge = 0;
+    close M;
+}
+
+# TODO before further complicating input handling, split file reading and parsing from any further processing
 for ( my $state = 0,
       my $prev_avail_sec  = 0, my $prev_avail_ele  = "",
       my $ele_miss_length = 0, my $tim_miss_length = 0,
-      my $i = 0; <>; ) {
+      my $i = 0;
+      $in_merge ? (next_trkpt2() ? 1
+                   : ($in_merge = -$in_merge, $in_merge != -2 && defined($_ = <>))) # EOF in $merge
+                : (defined($_ = <>) ||
+                   # EOF in infile(s)
+                   ($merge && (info("infile(s) ended before alternative input"), 1)
+                       ? ($in_merge = 2, 1) : 0));
+    ) {
     ++$num_pruned_descs if PRUNE_DESCS && s#[ \t]*<desc>.+?</desc>\n?##sg;
     ++$num_pruned_links if PRUNE_LINKS && s#[ \t]*<link>.+?</link>\n?##sg;
-    while ( s#(<wpt .+?)(</wpt>)\n?##s )
+    while (!$in_merge && s#(<wpt .+?)(</wpt>)\n?##s)
     {    #collect waypoints, possibly in later headers
         my $wpt = $1 . $2;
         ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $rest, my $exts, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
@@ -732,7 +774,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         $HEAD  = $_;
         $state = 1;         # expecting the very first trkpt
     }
-    elsif (m#(<gpx )#s) {   # processing further track file
+    elsif (!$in_merge && m#(<gpx )#s) { # processing further track file
         ++$num_ignored_hdrs;
         if ( $smoothing && m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n# )
         {
@@ -747,15 +789,51 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
     else {
         # when $state == 1 || $state == 2: processing first trkpt in new trkseg
         # when $state == 3: processing further trkpt in trkseg
-        m#(.*?</trkpt>)#s;
-        my $trkpt = $1;
-        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $rest_unused, my $exts, my $ignore ) = parse_point("<trkpt $trkpt");
-        next if $ignore;
-
-        my $flags = 0;
-        ## debug "read point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd; state = $state";
+        my ($sec, $spd, $exts);
+        if (!$in_merge) {
+            m#(.*?</trkpt>)#s;
+            my $trkpt = $1;
+            ( $lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $exts, my $ignore ) = parse_point("<trkpt $trkpt");
+            next if $ignore;
+            my $Spd_ = $spd ne "" ? spd_string($spd) : "";
+            ## debug "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$Spd_; state = $state";
+        } elsif ($merge) {
+            ( $lat, $lon, $ele, $tim, $sec, $spd, $exts) =
+                $in_merge == -1 ? ( $lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $exts1 ) # EOF in $merge during infile(s)
+                                : ( $lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $exts2 );
+        }
         my $diff_time = $sec && $prev_avail_sec ? $sec - $prev_avail_sec : 0;
 
+        if ($merge) {
+            if (!$in_merge) {
+                if (($diff_time >= MERGE_FILL_GAP || $state == 1)
+                        && $sec && $sec2 && $sec2 < $sec) { # $merge currently is before infiles(s)
+                    $in_merge = 1;
+                    if ($state == 1) {
+                        info("alternative input starts before infile(s)");
+                    } else { # certainly $i > 0
+                        info_trkpt_i( $i - 1, "start using alternative input on ".timediff_string($diff_time)." gap after", "" );
+                    }
+                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $exts1)
+                        = ($lat, $lon, $ele, $tim, $sec, $spd, $exts);
+                    ($lat, $lon, $ele, $tim, $sec, $spd, $exts) =
+                        ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $exts2);
+                } else {
+                    while ($merge && $sec && $sec2 && $sec2 <= $sec) {
+                        # advance $merge as far as possible to catch up with infile(s)
+                        ($merge = 0, close M) unless next_trkpt2();
+                    }
+                }
+            } else { # $in_merge != 0
+                if ($sec && $in_merge != 2 && $sec1 && $sec1 <= $sec) { # $merge is not before infiles(s)
+                    ( $lat, $lon, $ele, $tim, $sec, $spd, $exts) =
+                        ( $lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $exts1 );
+                    $in_merge = 0;
+                    info_trkpt_i( $i - 1, "end using alternative input at", "" );
+                }
+            }
+            $diff_time = $sec && $prev_avail_sec ? $sec - $prev_avail_sec : 0; # re-calculate
+        }
         if ( $state == 1 ) {
             info("initial track, from file $ARGV");
             info_trkpt( "first   segment at", "" );
@@ -773,6 +851,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             }
         }
 
+        my $flags = 0;
         my $dis = $state == 1 ? 0 : distance_curr( $prev_lat, $prev_lon, $prev_ele );
         if ( $state < 3 ) {    # the first point in trkseg
             if ( CARRY_OVER_ELE && $ele ne "" ) {
@@ -975,15 +1054,19 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         $prev_avail_sec = $sec if $sec; # enables checking negative time difference also across missing time entries
         $state = 3; # ready to process further trkpt(s) in trkseg (or new trkseg or new track)
     }
-    if (m#</trkseg>.*<trkseg>#s) {
+    if (!$in_merge && m#</trkseg>.*<trkseg>#s) {
         info_trkpt_i( $i - 1, "end of  segment at", "" ) if $i > 0;
-        $state    = 2;    # starting new trkseg
+        $state = 2; # starting new trkseg
         # reset intra-segment values
         $prev_spd = "";
     }
-    if ($i > 0 && m#<trk># ) { # further track
+    if ($i > 0 && !$in_merge && m#<trk>#) { # further track
         ++$num_ignored_hdrs;
         info("further track, again from file $ARGV") unless m#<gpx #s;
+    }
+    if ($in_merge < 0) {
+        $in_merge = $merge = 0;
+        close M;
     }
 }
 my $Len = sprintf "%4" . DIS_PRECISION, $ele_gap_length / 1000; # TODO restrict scope
