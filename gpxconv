@@ -54,6 +54,7 @@ use constant PRUNE_DESCS          => 0; # not not remove descriptions
 use constant PRUNE_LINKS          => 0; # not not remove links
 use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions in waypoints and trackpoints
 use constant INCLUDE_CALC_SPEED   => 1; # include speed extensions with calculated speed
+use constant DISABLE_TRKPT_CMT    => 0; # do not add 'cmt' entries to trackpoints, e.g., comments on ignored points
 
 # control filling in missing elevation and/or time
 use constant CARRY_OVER_ELE    => 1; # copy elevation from last available value or begin of following segment
@@ -1852,7 +1853,8 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
       . '" lon="' . ( sprintf LON_PRECISION, $LON[$i] ) . '">';
     print $out "<ele>" . ele_string( $ele_prec_len, int( correct_ele( -1, $i ) ) ) . "</ele>" if $ELE[$i] ne "";
     print $out "<time>$tim</time>" if $tim;
-    print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>" if $IGN[$i];
+    print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>"
+        if $IGN[$i] && !DISABLE_TRKPT_CMT;
     my $src = "";
     $src = "time gap interpolated from points before and after"   if $FLG[$i] & INTERPOLATED_POINT;
     $src .= ( $src eq "" ? "" : "; " ) . "interpolated elevation" if $FLG[$i] & INTERPOLATED_ELE;
