@@ -31,21 +31,21 @@
   <trkseg>
     <trkpt lat="44.327535" lon="2.28069999"><cmt>lat should be rounded up to 44.32754; initially no elevation and time</cmt></trkpt>
     <trkpt lat="44.338684" lon="2.25583222"><ele>70.00</ele></trkpt>
-    <trkpt lat="44.000" lon="2.008"><ele>50.00</ele><time>2019-08-23T08:00:00Z</time></trkpt>
+    <trkpt lat="44.000" lon="2.008"><ele>50.00</ele><time>2019-08-23T08Z</time></trkpt>
   </trkseg>
 
   <trkseg>
     <trkpt lat="44.000" lon="2.0008"><cmt>ele=50.00 and time=2019-08-23T08:00:00Z to be carried over from previous segment</cmt></trkpt>
     <trkpt lat="44.001" lon="2.0006"><cmt>elevation and time to be interpolated</cmt></trkpt>
     <trkpt lat="44.002" lon="2.0004"><time>2019-08-23T10:00:00Z</time><cmt>elevation to be interpolated; time gap to be filled with one new point</cmt></trkpt>
-    <trkpt lat="44.004" lon="2.0000"><cmt>ele=10.00 and time=2019-08-23T12:00:00Z to be carried over from next segment</cmt></trkpt>
+    <trkpt lat="44.004" lon="2.0000"><cmt>ele=10.00 and time=2019-08-23T12:01:00Z to be carried over from next segment</cmt></trkpt>
   </trkseg>
 </trk>
 
 
 <trk>
  <trkseg>
-  <trkpt lat="45.50" lon="3.50"><ele>10</ele><time>2019-08-23T12:00:00Z</time></trkpt>
+  <trkpt lat="45.50" lon="3.50"><ele>10</ele><time>2019-08-23T12:01Z</time></trkpt>
   <trkpt lat="45.60" lon="3.52"><cmt>no possibility to take over elevation or time</cmt></trkpt>
  </trkseg>
 

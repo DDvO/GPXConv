@@ -348,6 +348,9 @@ sub parse_point {
         if ( $sec && TIME_CORRECTION ) {
             $sec += TIME_CORRECTION;
             $tim = epoch_to_str($sec);
+        } else {
+            $tim =~ s/(T\d\d)Z/$1:00Z/;
+            $tim =~ s/(T\d\d:\d\d)Z/$1:00Z/;
         }
         $min_tim = $tim if $sec && $sec < $min_sec || $min_tim eq "";
         $min_sec = $sec if $sec && $sec < $min_sec || $min_sec == 0;
