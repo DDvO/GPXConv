@@ -55,6 +55,8 @@ use constant PRUNE_LINKS          => 0; # not not remove links
 use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions in waypoints and trackpoints
 use constant INCLUDE_CALC_SPEED   => 1; # include speed extensions with calculated speed
 use constant DISABLE_TRKPT_CMT    => 0; # do not add 'cmt' entries to trackpoints, e.g., comments on ignored points
+use constant DISABLE_TRKPT_SRC    => 0; # do not add 'src' entries to trackpoints, e.g., on time gaps and interpolated data
+use constant DISABLE_TRKPT_FIX    => 0; # do not add 'fix' entries to trackpoints, e.g., on points added by interpolation
 
 # control filling in missing elevation and/or time
 use constant CARRY_OVER_ELE    => 1; # copy elevation from last available value or begin of following segment
@@ -1855,15 +1857,18 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     print $out "<time>$tim</time>" if $tim;
     print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>"
         if $IGN[$i] && !DISABLE_TRKPT_CMT;
-    my $src = "";
-    $src = "time gap interpolated from points before and after"   if $FLG[$i] & INTERPOLATED_POINT;
-    $src .= ( $src eq "" ? "" : "; " ) . "interpolated elevation" if $FLG[$i] & INTERPOLATED_ELE;
-    $src .= ( $src eq "" ? "" : "; " ) . "interpolated time"      if $FLG[$i] & INTERPOLATED_TIM;
-    $src .= ( $src eq "" ? "" : "; " ) . "substituted elevation"  if $FLG[$i] & SUBSTITUTED_ELE;
-    $src .= ( $src eq "" ? "" : "; " ) . "substituted time"       if $FLG[$i] & SUBSTITUTED_TIM;
-    $src .= ( $src eq "" ? "" : "; " ) . "calculated speed"       if $FLG[$i] & CALCULATED_SPEED && INCLUDE_CALC_SPEED;
-    print $out "<src>$src</src>" if $src ne "";
-    if ( ( $FLG[$i] & INTERPOLATED_POINT ) != 0 ) { my $fix = "none";   # TODO check
+    if (!DISABLE_TRKPT_SRC) {
+        my $src = "";
+        $src = "time gap interpolated from points before and after"   if $FLG[$i] & INTERPOLATED_POINT;
+        $src .= ( $src eq "" ? "" : "; " ) . "interpolated elevation" if $FLG[$i] & INTERPOLATED_ELE;
+        $src .= ( $src eq "" ? "" : "; " ) . "interpolated time"      if $FLG[$i] & INTERPOLATED_TIM;
+        $src .= ( $src eq "" ? "" : "; " ) . "substituted elevation"  if $FLG[$i] & SUBSTITUTED_ELE;
+        $src .= ( $src eq "" ? "" : "; " ) . "substituted time"       if $FLG[$i] & SUBSTITUTED_TIM;
+        $src .= ( $src eq "" ? "" : "; " ) . "calculated speed"       if $FLG[$i] & CALCULATED_SPEED && INCLUDE_CALC_SPEED;
+        print $out "<src>$src</src>" if $src ne "";
+    }
+    if ( ( $FLG[$i] & INTERPOLATED_POINT ) != 0 && !DISABLE_TRKPT_FIX) {
+        my $fix = "none";   # TODO check
         # was before: my $fix = $flags == 0 ? "": ( $FLG[$i] & ( INTERPOLATED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM ) == 0 ? "2d" : "none" );
         print $out "<fix>$fix</fix>";
     }
