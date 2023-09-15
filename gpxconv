@@ -1174,20 +1174,19 @@ for ( my $acc, my $rate,
             ignoring_trkpt_i( $i - 1, spd_string($spd2), "direction change = $Theta_diff° ("
                   . ( $theta_diff >= 0 ? "more than  " : "less than -" ) . MAX_SENSIBLE_ANGLE_DIFF . "°)" );
         }
+        elsif ( $spd ne "" && $Spd > $MAX_SENSIBLE_SPEED ) {
+            ignoring_trkpt( $Spd, "speed = $Spd km/h more than " . $MAX_SENSIBLE_SPEED);
+        }
+        elsif ($acc ne "" && abs($acc) > $MAX_SENSIBLE_ACCEL
+            && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
+            ignoring_trkpt( $Spd, "acceleration = $Acc m/s/s ("
+                  . ( $acc >= 0 ? "more than " : "less than -" ) . $MAX_SENSIBLE_ACCEL . ")" );
+        }
         elsif ( $rate ne "" && $Rate > $MAX_SENSIBLE_ELE_GAIN ) {
             ignoring_trkpt( $Spd, " ascent rate = $Rate m/h (more than  " . $MAX_SENSIBLE_ELE_GAIN . ")" );
         }
         elsif ( $rate ne "" && $Rate < -$MAX_SENSIBLE_ELE_LOSS ) {
             ignoring_trkpt( $Spd, "descent rate = $Rate m/h (less than -" . $MAX_SENSIBLE_ELE_LOSS . ")" );
-        }
-        elsif ( $spd ne "" && $Spd > $MAX_SENSIBLE_SPEED ) {
-            ignoring_trkpt( $Spd, "speed = $Spd km/h more than " . $MAX_SENSIBLE_SPEED);
-        }
-        elsif ($acc ne "" && abs($acc) > $MAX_SENSIBLE_ACCEL
-            && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) )
-        {
-            ignoring_trkpt( $Spd, "acceleration = $Acc m/s/s ("
-                  . ( $acc >= 0 ? "more than " : "less than -" ) . $MAX_SENSIBLE_ACCEL . ")" );
         }
         elsif ( $timediff ne "" && $timediff < $MIN_TIMEDIFF
                 && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) )
