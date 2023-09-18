@@ -1489,8 +1489,8 @@ for( my $rate, my $spd, my $direction,
         ( my $diff_ele_unused, my $timediff, $rate, my $dis, $spd, my $acc_unused ) =
           $SEG[$i] ? ( "", "", "", 0, "", "" ) : calc_diffs();
         $sum_dis += $dis;
-        if ( $SPD[$i] eq "" )
-        {    # set calculated speed if recorded speed is not available
+        if ( $SPD[$i] eq "" && $spd ne "") # set calculated speed if recorded speed is not available
+        {
             $SPD[$i] = $spd;
             $FLG[$i] |= CALCULATED_SPEED;
         }
