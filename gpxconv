@@ -796,6 +796,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             s#(^.*</type>).*#$1\n<trkseg>\n#s; #ignore rest of (header-only) file having no trkpt
         }
         s#[\s]+\n$#\n#s;    #remove any trailing spaces on line before
+        s#[ \t]*(<trkseg>)#$1#s;
         $HEAD  = $_;
         $state = 1;         # expecting the very first trkpt
     }
