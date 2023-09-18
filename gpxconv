@@ -687,8 +687,8 @@ elsif ( $activity eq "-fly" ) {
 ## read all trackpoints from all track segments, optionally completing them
 
 { # TODO re-format
-my $ele_miss_start  = 0; # TODO restrict scope
-my $tim_miss_start  = 0; # TODO restrict scope
+my $ele_miss_start  = 0; # first index of recent stretch with missing ele ; TODO restrict scope
+my $tim_miss_start  = 0; # first index of recent stretch with missing time; TODO restrict scope
 my $num_no_ele      = 0;
 my $ele_gap_length  = 0;
 my $num_no_time     = 0;
@@ -919,11 +919,11 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
 
             my $resolution;
             if ( $ele eq "" ) {
-                if ( $prev_avail_ele eq "" ) {    # $prev_ele
+                if ( $prev_avail_ele eq "" ) { # $prev_ele
                     $resolution = " and no previous value available";
                 }
                 elsif (CARRY_OVER_ELE) {
-                    $ele = $prev_avail_ele;  # $prev_ele; # will become $ELE[$i]
+                    $ele = $prev_avail_ele; # $prev_ele; # will become $ELE[$i]
                     $resolution = "; using previous available value";
                     $flags |= SUBSTITUTED_ELE;
                 }
@@ -951,10 +951,9 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             }
         }
         else {    # state == 3, further (i.e., not the first) point in trkseg
-            if ( $ele eq "" && FILL_MISSING_ELE && ( $ele_miss_start || $prev_ele ne "" ) )
-            {     # $prev_avail_ele
+            if ($ele eq "" && FILL_MISSING_ELE && ($ele_miss_start || $prev_ele ne "")) { # $prev_avail_ele
                 ( $ele_miss_start, $ele_miss_length ) = ( $i, 0 )
-                  if !$ele_miss_start;    # $i is > 0
+                  if !$ele_miss_start; # $i is > 0
                 $ele_miss_length += $dis;
             }
             if ( !$sec && $prev_sec && $spd ne "" && $spd > 0 ) {
@@ -966,13 +965,14 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                            " filled in using time difference calculated by distance / speed");
                 $FLG[$i] |= SUBSTITUTED_TIM;
             }
-            if ( $tim eq "" && FILL_MISSING_TIME && ( $tim_miss_start || $prev_tim ne "" ) )
-            {    # not $prev_avail_tim, which may be an earlier time
-                ( $tim_miss_start, $tim_miss_length ) = ( $i, 0 ) if !$tim_miss_start; # $i is > 0
+            if ($tim eq "" && FILL_MISSING_TIME && ($tim_miss_start ||
+                                                    $prev_tim ne "")) # not $prev_avail_tim, which may be an earlier time
+            {
+                ($tim_miss_start, $tim_miss_length) = ($i, 0) if $tim_miss_start == 0; # $i is > 0
                 $tim_miss_length += $dis;
             }
         }
-        if ( $ele ne "" && $ele_miss_start ) {    # fill in missing elevation
+        if ( $ele ne "" && $ele_miss_start ) { # fill in missing elevation
             my $i_end = $i;
             if ( $state < 3 )
             {    # have been carrying over ele to end of last section
@@ -981,7 +981,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             else {   # state == 3, further (i.e., not the first) point in trkseg
                 $ele_miss_length += $dis;
             }
-            my $ele_curr = $ELE[ $ele_miss_start - 1 ];    # $prev_avail_ele
+            my $ele_curr = $ELE[ $ele_miss_start - 1 ]; # $prev_avail_ele
             my $ele_gradient =
               $ele_miss_length > 0
               ? ( $ele - $ele_curr ) / $ele_miss_length
@@ -996,7 +996,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             }
             $ele_miss_start = 0;
         }
-        if ( $tim ne "" && $tim_miss_start ) {    # fill in missing time
+        if ($tim ne "" && $tim_miss_start) {    # fill in missing time by interpolation
             my $i_end = $i;
             if ( $state < 3 )
             {    # have been carrying over time to end of last section
@@ -1005,13 +1005,10 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             else {   # state == 3, further (i.e., not the first) point in trkseg
                 $tim_miss_length += $dis;
             }
-            my $sec_curr =
-              $SEC[ $tim_miss_start - 1 ];    # corresponds to $prev_tim
-            my $sec_gradient =
-              $tim_miss_length > 0
-              ? ( $sec - $sec_curr ) / $tim_miss_length
-              : 0;
-            ## debug("over ".($tim_miss_length/1000)." km, secdiff = ".($sec - $sec_curr));
+            my $sec_curr = $SEC[ $tim_miss_start - 1 ]; # corresponds to $prev_tim
+            my $sec_diff = $sec - $sec_curr;
+            my $sec_gradient = $tim_miss_length > 0 ? $sec_diff / $tim_miss_length : 0;
+            ## debug("over ".($tim_miss_length / 1000)." km, sec_diff = $sec_diff);
             for ( my $j = $tim_miss_start ; $j < $i_end ; $j++ ) {
                 $sec_curr += $DIS[$j] * $sec_gradient;
                 $SEC[$j] = $sec_curr;
@@ -1054,7 +1051,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             $num_no_ele     = 0;
             $ele_gap_length = 0;
         }
-        if ( !$sec ) {
+        if (!$sec) {
             $num_no_time++;
             $time_gap_length += $dis;
             warn_trkpt( "no time      at   ", "; $time_solution" ) if $num_no_time == 1;
