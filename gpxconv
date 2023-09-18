@@ -22,7 +22,7 @@
 # Usage:
 #   gpxconv <option(s) and infile(s)> [> <outfile>]
 # Command-line options:
-#   -walk, -drive, -cycle, -fly, -swim - type of recorded activity, default: drive
+#   -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
 #   -smooth                      - smoothen tracks
 #   -phases                      - analyze ascent/descent phases
 #   -merge <file>                - complete gaps in infile(s) by data from given GPX file
@@ -46,6 +46,8 @@ use strict;
 use warnings;
 
 ### configuration variables
+
+my $activity = "-drive"; # default
 
 # basic output control
 use constant PRUNE_WPTS           => 0; # by default do not ignore waypoints
@@ -88,7 +90,6 @@ use constant WARNING_WPT_DIST    =>  100; # threshold for waypoint distance warn
 use constant MAX_SPEED_DEVIATION =>    2; # threshold for speed measuring deviation warning (in km/h)
 
 # pruning control
-my $activity = "-drive"; # default
 my $MIN_TIMEDIFF         ; # in seconds
 my $MAX_SENSIBLE_SPEED   ; # maximal speed in km/h
 my $MAX_SENSIBLE_ACCEL   ; # maximal acceleration m/s/s
@@ -552,11 +553,11 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     my $arg2 = $ARGV[$i + 2];
 
     # not checking for duplicate options
-    if ( $opt eq "-walk"  ||
-         $opt eq "-cycle" ||
-         $opt eq "-drive" ||
-         $opt eq "-fly"   ||
-         $opt eq "-swim" ) {
+    if ($opt eq "-swim"  ||
+        $opt eq "-walk"  ||
+        $opt eq "-cycle" ||
+        $opt eq "-drive" ||
+        $opt eq "-fly" ) {
         $activity = $opt;
     }
     elsif ( $opt eq "-smooth" ) {
@@ -633,7 +634,14 @@ if ( $prune_exts ) {
     warning("-min_ext option has little effect since -prune_exts is given") if $min_ext;
 }
 
-if ( $activity eq "-walk" ) {
+if ( $activity eq "-swim" ) {
+    $MIN_TIMEDIFF          = 4;
+    $MAX_SENSIBLE_SPEED    = 7;
+    $MAX_SENSIBLE_ACCEL    = 1;
+    $MAX_SENSIBLE_ELE_GAIN = 1;
+    $MAX_SENSIBLE_ELE_LOSS = 1;
+}
+elsif ( $activity eq "-walk" ) {
     $MIN_TIMEDIFF          = 4;
     $MAX_SENSIBLE_SPEED    = 20;
     $MAX_SENSIBLE_ACCEL    = 0.5;
@@ -647,26 +655,19 @@ elsif ( $activity eq "-cycle" ) {
     $MAX_SENSIBLE_ELE_GAIN = 3000;
     $MAX_SENSIBLE_ELE_LOSS = 9000;
 }
-elsif ( $activity eq "-fly" ) {
-    $MIN_TIMEDIFF          = 1;
-    $MAX_SENSIBLE_SPEED    = 1200;
-    $MAX_SENSIBLE_ACCEL    = 10;
-    $MAX_SENSIBLE_ELE_GAIN = 30000;
-    $MAX_SENSIBLE_ELE_LOSS = 50000;
-}
-elsif ( $activity eq "-swim" ) {
-    $MIN_TIMEDIFF          = 4;
-    $MAX_SENSIBLE_SPEED    = 7;
-    $MAX_SENSIBLE_ACCEL    = 1;
-    $MAX_SENSIBLE_ELE_GAIN = 1;
-    $MAX_SENSIBLE_ELE_LOSS = 1;
-}
 elsif ( $activity eq "-drive" ) { # default
     $MIN_TIMEDIFF          = 2;     # in seconds
     $MAX_SENSIBLE_SPEED    = 200;   # maximal speed in km/h
     $MAX_SENSIBLE_ACCEL    = 5;     # maximal acceleration m/s/s
     $MAX_SENSIBLE_ELE_GAIN = 20000; # maximal ascent rate in m/h
     $MAX_SENSIBLE_ELE_LOSS = 20000; # maximal descent rate in m/h
+}
+elsif ( $activity eq "-fly" ) {
+    $MIN_TIMEDIFF          = 1;
+    $MAX_SENSIBLE_SPEED    = 1200;
+    $MAX_SENSIBLE_ACCEL    = 10;
+    $MAX_SENSIBLE_ELE_GAIN = 30000;
+    $MAX_SENSIBLE_ELE_LOSS = 50000;
 } else {
     abort("unknown activity: $activity\naborting\n");
 }
