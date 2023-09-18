@@ -39,7 +39,7 @@
 #   -ni                          - do not print information
 #   -o <outfile>                 - output the resulting track to <outfile>
 # Other options can be set by changing values of the configuration variables.
-# (c) 2012-2023 David von Oheimb - License: MIT - Version 2.7
+# (c) 2012-2023 David von Oheimb - License: MIT - Version 2.7.1
 ################################################################################
 
 use strict;
@@ -69,7 +69,7 @@ use constant FILL_MISSING_TIME => 1; # interpolate missing time
 # analysis control
 use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
 use constant ANALYZE_PHASES   =>  0; # by default do not analyze ascent/descent phases
-use constant ELE_THRESHOLD    => 20; # threshold for detecting/accepting ascent or descent (in m);
+use constant ELE_THRESHOLD    => 25; # threshold for detecting/accepting ascent or descent (in m);
                                      # should be larger than short-term elevation measurement error
 my $PHASES_REPORT_THRESHOLD = ELE_THRESHOLD; # default
 
