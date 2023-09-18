@@ -1430,7 +1430,6 @@ for( my $rate, my $spd, my $direction,
     if ( $SEG[$i] )
     { # (re-)start climb phase recognition on track segment start (including: at $i == 0)
         $direction       = 0;
-        $last_gain_index = $last_loss_index = 0 if $ele ne "";
         $prev_turn_ele   = $local_max_ele   = $local_min_ele = "";
     }
     if ($ele ne "") {
