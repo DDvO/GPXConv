@@ -74,7 +74,7 @@ use constant ELE_THRESHOLD    => 20; # threshold for detecting/accepting ascent 
 my $PHASES_REPORT_THRESHOLD = ELE_THRESHOLD; # default
 
 # smoothing control
-use constant MERGE_FILL_GAP    => 60; # minimum gap length in seconds to be filled by merging
+use constant MERGE_FILL_GAP    => 60; # minimum gap duration in seconds to be filled by merging
 use constant ENABLE_SMOOTHING  =>  0; # by default disable smoothing
 use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackpoint to be smoothened and its neighbors
 
@@ -188,6 +188,7 @@ my @WSTR; # full original (but indented) waypoint text
 
 # ascent/descent phase data
 
+my @PHASE_DURATION;
 my @PHASE_DIFF;
 my @PHASE_DIST;
 my @PHASE_SPD;
@@ -1379,6 +1380,7 @@ sub push_phase {
     my $end_index      = $_[1];
     my $sec1           = $SEC[$start_index];
     my $sec2           = $SEC[$end_index];
+    my $duration       = -1;
     my $diff_ele       = $ELE[$end_index] - $ELE[$start_index];
     my $dist           = 0;
     my $rate           = 0;
@@ -1398,9 +1400,11 @@ sub push_phase {
     my $avg_spd  = 0;
     my $avg_rate = 0;
     if ( $sec1 && $sec2 && $sec2 > $sec1 ) {
-        $avg_spd  = $dist / ( $sec2 - $sec1 );
-        $avg_rate = 3600 * $diff_ele / ( $sec2 - $sec1 );
+        $duration = $sec2 - $sec1;
+        $avg_spd  = $dist / $duration;
+        $avg_rate = 3600 * $diff_ele / $duration;
     }
+    push @PHASE_DURATION,      $duration;
     push @PHASE_DIFF,          $diff_ele;
     push @PHASE_DIST,          $dist;
     push @PHASE_SPD,           $avg_spd;
@@ -1702,10 +1706,12 @@ for ( my $j = 0 ; $j <= $#WTIM ; $j++ ) {
 my $phase_wpts   = "";
 my $phase_points = "";
 for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
-    my $AscDesc = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
-    my $Dist = phase_text($i) . "$AscDesc   = " . ( sprintf DIF_PRECISION, $PHASE_DIFF[$i] ) . "  m;   "
+    my $type = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
+    my $Len = phase_text($i) . "$type   = " . ( sprintf DIF_PRECISION, $PHASE_DIFF[$i] ) . "  m;   "
       . "distance   =" . ( $PHASE_DIST[$i] / 1000 >= 10 ? "" : " " )
-      . ( sprintf "%" . DIS_PRECISION, $PHASE_DIST[$i] / 1000 ) . " km  ";
+      . ( sprintf "%" . DIS_PRECISION, $PHASE_DIST[$i] / 1000 ) . " km";
+    my $duration = $PHASE_DURATION[$i];
+    $Len .= "; duration = " . timediff_string($duration) if $duration >= 0;
     my $Spd = phase_text($i) . "max speed =   "
       . spd_string( $SPD[ $PHASE_MAXSPD_INDEX[$i] ] ) . " km/h; "
       . "avg speed  =  ".spd_string( $PHASE_SPD[$i] ) . " km/h";
@@ -1713,11 +1719,11 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
       . ( sprintf RAT_PRECISION, $RATE[ $PHASE_MAXRATE_INDEX[$i]]) . "  m/h; "
       . "avg rate   =". ( sprintf RAT_PRECISION, $PHASE_RATE[$i] ) . "  m/h";
     $phase_wpts .=
-        wpt(-1, $PHASE_END_INDEX    [$i], $Dist)
+        wpt(-1, $PHASE_END_INDEX    [$i], $Len)
       . wpt(-1, $PHASE_MAXSPD_INDEX [$i], $Spd)
       . wpt(-1, $PHASE_MAXRATE_INDEX[$i], $Rate);
     $phase_points .=
-        point($PHASE_END_INDEX    [$i], $Dist)
+        point($PHASE_END_INDEX    [$i], $Len)
       . point($PHASE_MAXSPD_INDEX [$i], $Spd)
       . point($PHASE_MAXRATE_INDEX[$i], $Rate);
 }
