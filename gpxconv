@@ -115,9 +115,11 @@ use constant LON_PRECISION =>   "%.5f"; # longitude resolution = 0.00001° (<= 1
 use constant ELE_PRECISION =>  "%5.0f"; # elevation resolution = 1 meters
 use constant DIF_PRECISION => "%+5.0f"; # elevation difference resolution = 1 meters
 use constant RAT_PRECISION => "%+5.0f"; # elevation ascent/descent rate resolution = 1 meters
+use constant RAT_PRECISION2=> "%+6.0f"; # elevation ascent/descent rate resolution = 1 meters
 use constant DIS_PRECISION =>    ".2f"; # distance resolution = 0.01 km
 use constant SEC_PRECISION =>   "%.0f"; # seconds resolution = 1 second
 use constant SPD_PRECISION =>   "%.0f"; # speed resolution = 1 km/h
+use constant SPD_PRECISION2=>  "%4.0f"; # speed resolution = 1 km/h
 use constant ACC_PRECISION =>   "%.1f"; # acceleration resolution = 0.1 m/s/s
 
 # trkpt flags
@@ -886,7 +888,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                     $FLG[ $i - 1 ] |= SUBSTITUTED_ELE;
                     $ELE[ $i - 1 ] = $ele;
                     warn_trkpt_i($i - 1, "at segment end    ",
-                                 " no elevation given; using value from begin of next segment");
+                                 " no elevation was given; using value from begin of next segment");
                 }
             }
             elsif ($ele_miss_start) {
@@ -900,7 +902,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                     $TIM[ $i - 1 ] = $tim;
                     $SEC[ $i - 1 ] = $sec;
                     warn_trkpt_i($i - 1, "at segment end    ",
-                                 " no time      given; using value from begin of next segment");
+                                 " no time      was given; using value from begin of next segment");
                 }
             }
             elsif ($tim_miss_start) {
@@ -929,7 +931,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                     $resolution = " and carrying over previous available value is disabled";
                 }
                 warn_trkpt( "at segment start  ",
-                    " no elevation given$resolution" );
+                    " no elevation ".($resolution =~ / using / ? "was " : "")."given$resolution" );
             }
             if ( $tim eq "" ) {
                 if ( $prev_tim eq "" ) {
@@ -945,7 +947,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                     $resolution = " and carrying over previous value is disabled";
                 }
                 warn_trkpt( "at segment start  ",
-                    " no time      given$resolution" );
+                    " no time      ".($resolution =~ / using / ? "was " : "")."given$resolution" );
             }
         }
         else {    # state == 3, further (i.e., not the first) point in trkseg
@@ -1719,12 +1721,12 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
     $Len .= "; duration = " . timediff_string($duration) if $duration >= 0;
     my $max_spd_index = $PHASE_MAXSPD_INDEX[$i];
     my $Spd = phase_text($i)
-        . "max speed =   " . spd_string($SPD[$max_spd_index]) . " km/h; "
-        . "avg speed  =  " . spd_string($PHASE_SPD[$i]      ) . " km/h"
+        . "max speed =  " . (sprintf SPD_PRECISION2, 3.6 * $SPD[$max_spd_index]) . " km/h; "
+        . "avg speed  = " . (sprintf SPD_PRECISION2, 3.6 * $PHASE_SPD[$i]      ) . " km/h"
         if $max_spd_index;
     my $max_rate_index = $PHASE_MAXRATE_INDEX[$i];
     my $Rate = phase_text($i)
-        . "max rate  = " . (sprintf RAT_PRECISION, $RATE[$max_rate_index]) . "  m/h; "
+        . "max rate  =" . (sprintf RAT_PRECISION2, $RATE[$max_rate_index]) . "  m/h; "
         . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE[$i]       ) . "  m/h"
         if $max_rate_index;
     $phase_wpts .= wpt(-1, $PHASE_END_INDEX    [$i], $Len );
