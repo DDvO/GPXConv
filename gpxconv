@@ -1714,20 +1714,22 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
       . ( sprintf "%" . DIS_PRECISION, $PHASE_DIST[$i] / 1000 ) . " km";
     my $duration = $PHASE_DURATION[$i];
     $Len .= "; duration = " . timediff_string($duration) if $duration >= 0;
-    my $Spd = phase_text($i) . "max speed =   "
-      . spd_string( $SPD[ $PHASE_MAXSPD_INDEX[$i] ] ) . " km/h; "
-      . "avg speed  =  ".spd_string( $PHASE_SPD[$i] ) . " km/h";
-    my $Rate = phase_text($i) . "max rate  = "
-      . ( sprintf RAT_PRECISION, $RATE[ $PHASE_MAXRATE_INDEX[$i]]) . "  m/h; "
-      . "avg rate   =". ( sprintf RAT_PRECISION, $PHASE_RATE[$i] ) . "  m/h";
-    $phase_wpts .=
-        wpt(-1, $PHASE_END_INDEX    [$i], $Len)
-      . wpt(-1, $PHASE_MAXSPD_INDEX [$i], $Spd)
-      . wpt(-1, $PHASE_MAXRATE_INDEX[$i], $Rate);
-    $phase_points .=
-        point($PHASE_END_INDEX    [$i], $Len)
-      . point($PHASE_MAXSPD_INDEX [$i], $Spd)
-      . point($PHASE_MAXRATE_INDEX[$i], $Rate);
+    my $max_spd_index = $PHASE_MAXSPD_INDEX[$i];
+    my $Spd = phase_text($i)
+        . "max speed =   " . spd_string($SPD[$max_spd_index]) . " km/h; "
+        . "avg speed  =  " . spd_string($PHASE_SPD[$i]      ) . " km/h"
+        if $max_spd_index;
+    my $max_rate_index = $PHASE_MAXRATE_INDEX[$i];
+    my $Rate = phase_text($i)
+        . "max rate  = " . (sprintf RAT_PRECISION, $RATE[$max_rate_index]) . "  m/h; "
+        . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE[$i]       ) . "  m/h"
+        if $max_rate_index;
+    $phase_wpts .= wpt(-1, $PHASE_END_INDEX    [$i], $Len );
+    $phase_wpts .= wpt(-1, $PHASE_MAXSPD_INDEX [$i], $Spd ) if $max_spd_index;
+    $phase_wpts .= wpt(-1, $PHASE_MAXRATE_INDEX[$i], $Rate) if $max_rate_index;
+    $phase_points .= point($PHASE_END_INDEX    [$i], $Len );
+    $phase_points .= point($PHASE_MAXSPD_INDEX [$i], $Spd ) if $max_spd_index;
+    $phase_points .= point($PHASE_MAXRATE_INDEX[$i], $Rate) if $max_rate_index;
 }
 my $Max_spd      = spd_string( $SPD[$max_spd_index] );
 my $Max_gain_spd = sprintf SPD_PRECISION, 3.6 * $SPD[$max_gain_index];
