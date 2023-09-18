@@ -69,8 +69,9 @@ use constant FILL_MISSING_TIME => 1; # interpolate missing time
 # analysis control
 use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
 use constant ANALYZE_PHASES   =>  0; # by default do not analyze ascent/descent phases
-use constant ELE_THRESHOLD    => 20; # threshold for detecting/accepting ascent or descent;
+use constant ELE_THRESHOLD    => 20; # threshold for detecting/accepting ascent or descent (in m);
                                      # should be larger than short-term elevation measurement error
+my $PHASES_REPORT_THRESHOLD = ELE_THRESHOLD; # default
 
 # smoothing control
 use constant MERGE_FILL_GAP    => 60; # minimum gap length in seconds to be filled by merging
@@ -196,6 +197,8 @@ my @PHASE_MAXRATE_INDEX;
 my @PHASE_END_INDEX;
 my @DIST;
 my @RATE;
+my $ascent__phases_suppressed = 0;
+my $descent_phases_suppressed = 0;
 
 # global state variables
 
@@ -661,6 +664,7 @@ elsif ( $activity eq "-drive" ) { # default
     $MAX_SENSIBLE_ACCEL    = 5;     # maximal acceleration m/s/s
     $MAX_SENSIBLE_ELE_GAIN = 20000; # maximal ascent rate in m/h
     $MAX_SENSIBLE_ELE_LOSS = 20000; # maximal descent rate in m/h
+    $PHASES_REPORT_THRESHOLD = 100;
 }
 elsif ( $activity eq "-fly" ) {
     $MIN_TIMEDIFF          = 1;
@@ -668,6 +672,7 @@ elsif ( $activity eq "-fly" ) {
     $MAX_SENSIBLE_ACCEL    = 10;
     $MAX_SENSIBLE_ELE_GAIN = 30000;
     $MAX_SENSIBLE_ELE_LOSS = 50000;
+    $PHASES_REPORT_THRESHOLD = 100;
 } else {
     abort("unknown activity: $activity\naborting\n");
 }
@@ -1440,7 +1445,11 @@ for( my $rate, my $spd, my $direction,
         {    # when actually starting going down, or at end
             my $diff_ele = $local_max_ele - $prev_turn_ele;
             if ( $diff_ele >= ELE_THRESHOLD ) {
-                push_phase( $prev_turn_index, $local_max_index ) if $phases;
+                if ($phases && $diff_ele >= $PHASES_REPORT_THRESHOLD) {
+                    push_phase($prev_turn_index, $local_max_index);
+                } else {
+                    $ascent__phases_suppressed++;
+                }
                 $sum__ascent  += $diff_ele;
                 $time__ascent += $local_max_sec - $prev_turn_sec;
                 $last_gain_index = $local_max_index if $ele ne "";
@@ -1455,7 +1464,11 @@ for( my $rate, my $spd, my $direction,
         {    # when actually starting going up, or at end
             my $diff_ele = $local_min_ele - $prev_turn_ele;
             if ( -$diff_ele >= ELE_THRESHOLD ) {
-                push_phase( $prev_turn_index, $local_min_index ) if $phases;
+                if ($phases && -$diff_ele >= $PHASES_REPORT_THRESHOLD) {
+                    push_phase($prev_turn_index, $local_min_index);
+                } else {
+                    $descent_phases_suppressed++;
+                }
                 $sum_descent  += $diff_ele;
                 $time_descent += $local_min_sec - $prev_turn_sec;
                 $last_loss_index = $local_min_index if $ele ne "";
@@ -1775,6 +1788,9 @@ my $stats = "GPXConv statistics (not including sanitized trackpoints nor periods
   . point( $max_loss_index,  $max_loss_text )
   . $phase_points
   . point( $#TIM, "end" )
+  .($phases && $PHASES_REPORT_THRESHOLD > ELE_THRESHOLD ?
+    "$ascent__phases_suppressed ascent phases and $descent_phases_suppressed descent phases " .
+    "not reported because they are below the threshold of +/-$PHASES_REPORT_THRESHOLD m\n" : "")
     . substr( $final_text, 1 ) .
 "GPXConv statistics end";
 
