@@ -29,7 +29,7 @@
 </om:oruxmapsextensions>
 </extensions>
   <trkseg>
-    <trkpt lat="44.327535" lon="2.28069999"><cmt>lat should be rounded up to 44.32754; initially no elevation and time</cmt></trkpt>
+    <trkpt lat="44.327535" lon="2.280705"><cmt>for some reason, lat gets rounded down to 44.32753, lon upwards to 2.28071; initially no elevation and time</cmt></trkpt>
     <trkpt lat="44.338684" lon="2.25583222"><ele>70.00</ele></trkpt>
     <trkpt lat="44.000" lon="2.008"><ele>50.00</ele><time>2019-08-23T08Z</time></trkpt>
   </trkseg>
