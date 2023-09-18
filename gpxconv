@@ -1433,11 +1433,13 @@ for( my $rate, my $spd, my $direction,
         $last_gain_index = $last_loss_index = 0 if $ele ne "";
         $prev_turn_ele   = $local_max_ele   = $local_min_ele = "";
     }
-    ( $prev_turn_ele, $prev_turn_index ) = ( $ele, $i ) if ( $prev_turn_ele eq "" );
-    ( $local_max_ele, $local_max_index ) = ( $ele, $i ) if $direction >= 0
-        && ( $local_max_ele eq "" || $ele > $local_max_ele );
-    ( $local_min_ele, $local_min_index ) = ( $ele, $i ) if $direction <= 0
-        && ( $local_min_ele eq "" || $ele < $local_min_ele );
+    if ($ele ne "") {
+        ( $prev_turn_ele, $prev_turn_index ) = ( $ele, $i ) if ( $prev_turn_ele eq "" );
+        ( $local_max_ele, $local_max_index ) = ( $ele, $i ) if $direction >= 0
+            && ( $local_max_ele eq "" || $ele > $local_max_ele );
+        ( $local_min_ele, $local_min_index ) = ( $ele, $i ) if $direction <= 0
+            && ( $local_min_ele eq "" || $ele < $local_min_ele );
+    }
     if ( !$SEG[$i] && $ele ne "" ) {    # not at segment start
       check_next:
         $prev_turn_sec = $SEC[$prev_turn_index];
