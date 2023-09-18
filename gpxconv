@@ -1702,24 +1702,24 @@ for ( my $j = 0 ; $j <= $#WTIM ; $j++ ) {
 my $phase_wpts   = "";
 my $phase_points = "";
 for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
-    my $Spd = phase_text($i) . "max speed =   "
-      . spd_string( $SPD[ $PHASE_MAXSPD_INDEX[$i] ] ) . " km/h; "
-      . "avg speed  =  " . spd_string( $PHASE_SPD[$i] ) . " km/h";
-    my $Rate = phase_text($i) . "max rate  = "
-      . ( sprintf RAT_PRECISION, $RATE[ $PHASE_MAXRATE_INDEX[$i] ] ) . "  m/h; "
-      . "avg rate   =" . ( sprintf RAT_PRECISION, $PHASE_RATE[$i] ) . "  m/h";
     my $AscDesc = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
     my $Dist = phase_text($i) . "$AscDesc   = " . ( sprintf DIF_PRECISION, $PHASE_DIFF[$i] ) . "  m;   "
       . "distance   =" . ( $PHASE_DIST[$i] / 1000 >= 10 ? "" : " " )
       . ( sprintf "%" . DIS_PRECISION, $PHASE_DIST[$i] / 1000 ) . " km  ";
+    my $Spd = phase_text($i) . "max speed =   "
+      . spd_string( $SPD[ $PHASE_MAXSPD_INDEX[$i] ] ) . " km/h; "
+      . "avg speed  =  ".spd_string( $PHASE_SPD[$i] ) . " km/h";
+    my $Rate = phase_text($i) . "max rate  = "
+      . ( sprintf RAT_PRECISION, $RATE[ $PHASE_MAXRATE_INDEX[$i]]) . "  m/h; "
+      . "avg rate   =". ( sprintf RAT_PRECISION, $PHASE_RATE[$i] ) . "  m/h";
     $phase_wpts .=
-        wpt( -1, $PHASE_MAXSPD_INDEX[$i], $Spd )
-      . wpt( -1, $PHASE_MAXRATE_INDEX[$i], $Rate )
-      . wpt( -1, $PHASE_END_INDEX[$i],     $Dist );
+        wpt(-1, $PHASE_END_INDEX    [$i], $Dist)
+      . wpt(-1, $PHASE_MAXSPD_INDEX [$i], $Spd)
+      . wpt(-1, $PHASE_MAXRATE_INDEX[$i], $Rate);
     $phase_points .=
-        point( $PHASE_MAXSPD_INDEX[$i], $Spd )
-      . point( $PHASE_MAXRATE_INDEX[$i], $Rate )
-      . point( $PHASE_END_INDEX[$i],     $Dist );
+        point($PHASE_END_INDEX    [$i], $Dist)
+      . point($PHASE_MAXSPD_INDEX [$i], $Spd)
+      . point($PHASE_MAXRATE_INDEX[$i], $Rate);
 }
 my $Max_spd      = spd_string( $SPD[$max_spd_index] );
 my $Max_gain_spd = sprintf SPD_PRECISION, 3.6 * $SPD[$max_gain_index];
