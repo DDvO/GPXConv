@@ -4,8 +4,10 @@
 # GPX converter: post-process routes and tracks typically produced by GPS loggers.
 #
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT or a file.
-# Can combine multiple tracks and multiple files, using the header of the first track.
+# Can append segments from multiple tracks and files (sequential composition), using the metadata of the first track.
+# Can complete gaps in input file(s) by merging data from an alternative GPX file (parallel composition).
 # Concatenates all given tracks (or routes) preserving segments, collecting waypoints.
+# The metadata (header) of the first input track is used for the output track.
 # Reports missing data and ignores points containing non-plausible data.
 # Optionally filters out points before or after given time limits.
 # Optionally filters out points with an element value below or above given limits.
