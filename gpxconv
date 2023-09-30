@@ -21,27 +21,29 @@
 # Optionally computes approx. total energy spent by biking along the resulting track.
 # Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
 #
-# Usage:
-#   gpxconv <option(s) and infile(s)> [> <outfile>]
-# Command-line options:
-#   -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
-#   -smooth                      - smoothen tracks
-#   -phases                      - analyze ascent/descent phases
-#   -merge <file>                - complete gaps in infile(s) by data from given GPX file
-#   -weight <value>              - compute biking energy for given weight in kg
-#   -begin <time>                - ignore points before given time
-#   -end <time>                  - ignore points after given time
-#   -max <name> <limit>          - ignore points with element value above limit
-#   -min <name> <limit>          - ignore points with element value below limit
-#   -max_ext <name> <limit>      - prune extension elements with value above limit
-#   -min_ext <name> <limit>      - prune extension elements with value below limit
-#   -prune_wpts                  - remove waypoints
-#   -prune_exts                  - remove track, waypoint, and trackpoint extensions
-#   -nw                          - do not print warnings
-#   -ni                          - do not print information
-#   -o <outfile>                 - output the resulting track to <outfile>
-# Other options can be set by changing values of the configuration variables.
-# (c) 2012-2023 David von Oheimb - License: MIT - Version 2.7.1
+my $usage =
+"Usage:  gpxconv <option(s) and infile(s)> [> <outfile>]
+
+Command-line options:
+  -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
+  -smooth                      - smoothen tracks
+  -phases                      - analyze ascent/descent phases
+  -merge <file>                - complete gaps in infile(s) by data from given GPX file
+  -weight <value>              - compute biking energy for given weight in kg
+  -begin <time>                - ignore points before given time
+  -end <time>                  - ignore points after given time
+  -max <name> <limit>          - ignore points with element value above limit
+  -min <name> <limit>          - ignore points with element value below limit
+  -max_ext <name> <limit>      - prune extension elements with value above limit
+  -min_ext <name> <limit>      - prune extension elements with value below limit
+  -prune_wpts                  - remove waypoints
+  -prune_exts                  - remove track, waypoint, and trackpoint extensions
+  -nw                          - do not print warnings
+  -ni                          - do not print information
+  -o <outfile>                 - output the resulting track to <outfile>
+Other options can be set by changing values of the configuration variables.
+
+(c) 2012-2023 David von Oheimb - License: MIT - Version 2.7.1";
 ################################################################################
 
 use strict;
@@ -563,7 +565,11 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     my $arg2 = $ARGV[$i + 2];
 
     # not checking for duplicate options
-    if ($opt eq "-swim"  ||
+
+    if ($opt eq "-h" || $opt =~ /^-*help$/) {
+        print_line($usage);
+        exit 0;
+    } elsif ($opt eq "-swim"  ||
         $opt eq "-walk"  ||
         $opt eq "-cycle" ||
         $opt eq "-drive" ||
