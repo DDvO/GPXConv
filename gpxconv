@@ -58,7 +58,7 @@ use constant PRUNE_WPTS           => 0; # by default do not ignore waypoints
 use constant PRUNE_AUTOMATIC_WPTS => 1; # ignore waypoints containing <name><!\[CDATA\[\d*\]\]></name>
 use constant PRUNE_DESCS          => 0; # not not remove descriptions
 use constant PRUNE_LINKS          => 0; # not not remove links
-use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions in waypoints and trackpoints
+use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions in tracks, waypoints, and trackpoints
 use constant INCLUDE_CALC_SPEED   => 1; # include speed extensions with calculated speed
 use constant DISABLE_TRKPT_CMT    => 0; # do not add 'cmt' entries to trackpoints, e.g., comments on ignored points
 use constant DISABLE_TRKPT_SRC    => 0; # do not add 'src' entries to trackpoints, e.g., on time gaps and interpolated data
@@ -1894,7 +1894,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     print $out "<ele>" . ele_string( $ele_prec_len, int( correct_ele( -1, $i ) ) ) . "</ele>" if $ELE[$i] ne "";
     print $out "<time>$tim</time>" if $tim;
     print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>"
-        if $IGN[$i] && !DISABLE_TRKPT_CMT;
+        if !DISABLE_TRKPT_CMT && $IGN[$i];
     if (!DISABLE_TRKPT_SRC) {
         my $src = $FLG[$i] & INTERPOLATED_POINT ? "bridging time gap: interpolated point"
             : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
@@ -1905,7 +1905,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
         $src .= ( $src eq "" ? "" : "; " ) . "substituted elevation"  if $FLG[$i] & SUBSTITUTED_ELE;
         $src .= ( $src eq "" ? "" : "; " ) . "substituted time"       if $FLG[$i] & SUBSTITUTED_TIM;
         $src .= ( $src eq "" ? "" : "; " ) . "calculated speed"       if $FLG[$i] & CALCULATED_SPEED && INCLUDE_CALC_SPEED;
-        print $out "<src>$src</src>" if $src ne "";
+        print $out "<src>$src</src>" if !DISABLE_TRKPT_SRC && $src ne "";
     }
     if ( ( $FLG[$i] & INTERPOLATED_POINT ) != 0 && !DISABLE_TRKPT_FIX) {
         my $fix = "none";   # TODO check
@@ -1913,7 +1913,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
         print $out "<fix>$fix</fix>";
     }
     my $exts = $EXT[$i];
-    if ( $spd ne "" && ( !( $FLG[$i] & CALCULATED_SPEED ) || INCLUDE_CALC_SPEED ) ) {
+    if (!$prune_exts && $spd ne "" && ( !( $FLG[$i] & CALCULATED_SPEED ) || INCLUDE_CALC_SPEED ) ) {
         my $spdstr = SPEED . spd_string($spd) . _SPEED;
         if ( $exts eq "" ) {
             $exts = "<extensions>$spdstr</extensions>";
@@ -1921,7 +1921,13 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
             $exts =~ s#(<extensions>)#$1$spdstr#s;
         }
     }
-    print $out $exts;
+    if ($exts ne "") {
+        if ( $prune_exts ) {
+            ++$num_pruned_exts;
+        } else {
+            print $out $exts;
+        }
+    }
     print $out "</trkpt>\n";
     print $out "</trkseg>\n<trkseg>\n" if $SEG[ $i + 1 ] && $i < $#TIM;
 }
