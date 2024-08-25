@@ -309,6 +309,12 @@ sub epoch_to_str {
     );
 }
 
+sub round_tim { # round to nearest second
+    my $tim = shift;
+    # $tim =~ s/(:\d\d)(\.\d+)/$1/;  # strip fractional seconds
+    return $tim =~ m/\.(\d+)Z$/ && $1 != 0 ? epoch_to_str(nearest(1, str_to_epoch($tim))) : $tim;
+}
+
 sub timediff_string {
     my $t = $_[0];
     my $s = $t % 60;
@@ -1515,9 +1521,8 @@ for( my $rate, my $spd, my $direction,
             $sum_timediff_mov += $timediff;
         }
         if ( $weight && !$SEG[$i] ) { # not at segment start
-            my $tim_start = $TIM[ $i - 1 ];
+            my $tim_start = round_tim($TIM[$i - 1]);
             $tim_start = "<unknown time>" if $tim_start eq ""; # TODO improve, using index
-            $tim_start =~ s/(:\d\d)(\.\d+)/$1/;    # strip fractional seconds
             my $start_sec = $#TIM < 0 ? 0 : $SEC[0];
             $sum_energy += energy($tim_start,
                                   $prev_sec - $start_sec,
@@ -1644,6 +1649,7 @@ if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # TODO insert metadata if not pres
     my $indent = $1;
     $indent .= ( $indent =~ m/ $/ ? '    ' : "\t" );
     if ( $min_tim ne "" ) {
+        $min_tim = round_tim($min_tim);
         $HEAD =~ s|\r?\n?[ \t]*<time>.*?</time>||sg;   # remove any pre-existing time entry
         $HEAD =~ s|(\r?\n?[ \t]*</metadata>)|$indent<time>$min_tim</time>$1|s; # add new time
     }
@@ -1673,7 +1679,7 @@ sub wpt {
     my ( $lat, $lon, $tim ) = $j >= 0
       ? ( $WLAT[$j], $WLON[$j], $WTIM[$j] )
       : ( $LAT[$i], $LON[$i], $TIM[$i] );
-    $tim =~ s/(:\d\d)(\.\d+)/$1/;    # strip fractional seconds
+    $tim = round_tim($tim);
     my $ele  = correct_ele( $j, $i );
     my $name_or_orig_text = $j >= 0 ? $WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
     return '<wpt lat="' . ( sprintf LAT_PRECISION, $lat ) .
@@ -1693,8 +1699,7 @@ sub point {
     my $ele_text = $ele eq "" ? "" : ",ele";
     my $ele_val =
       $ele eq "" ? "" : "," . ele_string( $ele_prec_len, int($ele) );
-    my $time_val = $TIM[$i] eq "" ? "" : " time = $TIM[$i]";
-    $time_val =~ s/(:\d\d)(\.\d+)/$1/;    # strip fractional seconds
+    my $time_val = $TIM[$i] eq "" ? "" : " time = ".round_tim($TIM[$i]);
     return "At lat,lon$ele_text = "
       . ( sprintf LAT_PRECISION, $LAT[$i] ) . ","
       . ( sprintf LON_PRECISION, $LON[$i] )
@@ -1889,8 +1894,7 @@ use constant SPEED  => "<speed>";     # "<x:TrackPointExtension><x:speed>"
 use constant _SPEED => "</speed>";    # </x:speed></x:TrackPointExtension>"
 print $out $HEAD;                     # includes <gpx> <trk> <trkseg>
 for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
-    ( $tim, $spd ) = ( $TIM[$i], $SPD[$i] );
-    $tim =~ s/(:\d\d)(\.\d+)/$1/;     # strip fractional seconds
+    ( $tim, $spd ) = ( round_tim($TIM[$i]), $SPD[$i] );
     print $out '<trkpt lat="' . ( sprintf LAT_PRECISION, $LAT[$i] )
       . '" lon="' . ( sprintf LON_PRECISION, $LON[$i] ) . '">';
     print $out "<ele>" . ele_string( $ele_prec_len, int( correct_ele( -1, $i ) ) ) . "</ele>" if $ELE[$i] ne "";
