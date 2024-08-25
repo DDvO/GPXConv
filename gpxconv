@@ -1752,8 +1752,8 @@ while (substr( $Max_gain_spd, 0, 1 ) eq " "
     $Max_loss_spd = substr( $Max_loss_spd, 1 );
 }
 my $max_spd_text     = "max speed        =    $Max_spd km/h";
-my $min_ele_text     = "min altitude     = $Min_ele m";
-my $max_ele_text     = "max altitude     = $Max_ele m";
+my $min_ele_text     = "min elevation    = $Min_ele m";
+my $max_ele_text     = "max elevation    = $Max_ele m";
 my $sum__ascent_text = "total  ascent    = $Sum__ascent m";
 my $sum_descent_text = "total descent    = $Sum_descent m";
 my $avg__ascent_text = "avg rate  = $Avg__ascent_rate m/h";
@@ -1765,7 +1765,7 @@ my $max_loss_text    = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h";
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
 
 my $final_text = "\n";
-$final_text .= "total distance       = $Sum_dis km\n";
+$final_text .= "total track length   = $Sum_dis km\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mov;
 $final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov && $weight;
 $final_text .= "average moving speed = $Avg_spd km/h\n"      if $avg_spd;
