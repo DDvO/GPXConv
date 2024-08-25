@@ -297,12 +297,15 @@ sub epoch_to_str {
 #use Date::Manip qw(ParseDate UnixDate);
 #$date = ParseDate("18 Jan 1973, 3:45:50");
 #  return UnixDate($_[0], "%Y-%m-%dT%H:%M:%SZ");
-    my $tm = gmtime( $_[0] );
+    my $sec = shift;
+    my $millisec = nearest(.001, $sec - int($sec)); # fractional seconds
+    my $tm = gmtime($sec);
     return sprintf(
-        "%04d-%02d-%02dT%02d:%02d:%02dZ",
+        "%04d-%02d-%02dT%02d:%02d:%02d%sZ",
         $tm->year + 1900,
         $tm->mon + 1,
-        $tm->mday, $tm->hour, $tm->min, $tm->sec
+        $tm->mday, $tm->hour, $tm->min, $tm->sec,
+        $millisec == 0 ? "" : substr(substr($millisec, 1)."00", 0, 4)
     );
 }
 
@@ -1073,9 +1076,8 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
             $num_no_time     = 0;
             $time_gap_length = 0;
         }
-        my $tim_str = ($tim =~ s/\.\d+//r);
         my $sec_str = $sec ? epoch_to_str($sec) : "";
-        abort("FATAL: inconsistent time data for trkpt with index $i: tim=$tim_str != sec=$sec_str (=$sec)\n") if $tim_str ne $sec_str;
+        abort("FATAL: inconsistent time data for trkpt ".($i + 1).": tim=$tim != $sec_str (=$sec)\n") if $tim ne $sec_str;
 
         # will go wrong if previous trkpt gets ignored: $ELE[$#ELE] = $ELE[$#ELE-1] if $ele eq "" && !$SEG[$#ELE]; # implies $#ELE > 0
         $i++;
