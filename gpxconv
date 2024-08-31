@@ -18,6 +18,7 @@
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 # Produces statistics, optionally including ascent/descent rates of climbing phases.
+# Optionally produces additional statistics on a per-segment or per-day basis.
 # Optionally computes approx. total energy spent by biking along the resulting track.
 # Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
 #
@@ -28,6 +29,8 @@ Command-line options:
   -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
   -smooth                      - smoothen tracks
   -phases                      - analyze ascent/descent phases
+  -segs <n>                    - produce additional statistics per segment, start with n
+  -days <n>                    - produce additional statistics per day, counted from n
   -merge <file>                - complete gaps in infile(s) by data from given GPX file
   -weight <value>              - compute biking energy for given weight in kg
   -begin <time>                - ignore points before given time
@@ -224,26 +227,19 @@ my $min_lon, my $max_lon;
 my ($min_tim, $min_sec) = ("", 0);
 my ($max_tim ,$max_sec) = ("", 0);
 
-my $max_spd  = 0; # also in case no data available
-my $min_ele  = "";
-my $max_ele  = "";
-my $max_gain = 0; # also in case no data available
-my $max_loss = 0; # also in case no data available
-
-my $max_spd_index   = -1;
-my $min_ele_index   = -1;
-my $max_ele_index   = -1;
-my $last_gain_index = -1;
-my $last_loss_index = -1;
-my $max_gain_index  = -1;
-my $max_loss_index  = -1;
-
+my ($days, $segs);
+my $part;  # will be index, defined   if -days or -segs option is given
+my $parts; # will be the argument of the -days or -segs option if given, else 1
+# in the following arrays, index ($parts - 1) will be used for the overall values
+my (@MAX_SPD      , @MIN_ELE      , @MAX_ELE      , @MAX_GAIN      , @MAX_LOSS      );
+my (@MAX_SPD_INDEX, @MIN_ELE_INDEX, @MAX_ELE_INDEX, @MAX_GAIN_INDEX, @MAX_LOSS_INDEX);
+my (@LAST_GAIN_INDEX, @LAST_LOSS_INDEX, @PART_END_INDEX);
+my (@SUM__ASCENT, @TIME__ASCENT,
+    @SUM_DESCENT, @TIME_DESCENT);
 
 my $sum_dis         = 0;
 my $avg_spd;
 my $avg_timediff;
-my $sum__ascent     = my $sum_descent  = 0;
-my $time__ascent    = my $time_descent = 0;
 
 my $sum_timediff_mov = 0;
 my $sum_energy = 0;
@@ -602,6 +598,20 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
         $merge = $arg1;
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
+    elsif ($opt eq "-segs") {
+        abort("cannot use both -days and -$opt option\n") if defined $days;
+        abort("missing number argument for -$opt option\n") if $#ARGV - $i < 1;
+        abort("not an integer argument for -$opt option: $arg1\n") unless $arg1 =~ m/^\d+$/;
+        $segs = $parts = $arg1;
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+    }
+    elsif ($opt eq "-days") {
+        abort("cannot use both -segs adn -$opt option\n") if defined $segs;
+        abort("missing number argument for -$opt option\n") if $#ARGV - $i < 1;
+        abort("not an integer argument for -$opt option: $arg1\n") unless $arg1 =~ m/^\d+$/;
+        $days = $parts = $part = $arg1;
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+    }
     elsif ( $opt eq "-weight" ) {
         abort("missing value argument for -$opt option\n") if $#ARGV - $i < 1;
         abort("cannot parse value argument in '$opt $arg1'\n") unless looks_like_number($arg1);
@@ -664,6 +674,8 @@ if ( $prune_exts ) {
     warning("-max_ext option has little effect since -prune_exts is given") if $max_ext;
     warning("-min_ext option has little effect since -prune_exts is given") if $min_ext;
 }
+$parts = 1 unless defined $parts;
+my $all = $parts - 1;
 
 if ( $activity eq "-swim" ) {
     $MIN_TIMEDIFF          = 4;
@@ -1445,19 +1457,30 @@ for( my $rate, my $spd, my $direction,
      my $local_max_index = 0, my $local_min_index = 0,
      my $local_max_sec = 0, my $local_min_sec = 0,
      my $local_max_ele = 0, my $local_min_ele = 0,
+     my $prev_date = "", my $date,
+     my $seg = 0, my $part_or_all = $all,
      my $i = 0 ; $i < $#TIM + 1 ; $i++ ) {
     if ( $i <= $#TIM ) {
         ( $lat, $lon, $ele, $tim, $sec, $spd ) =
           ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
+        $date = $tim =~ m/(.?)T/ ? $1 : "";
+        if (defined $days) {
+            $part++ if $date ne "" && $prev_date ne "" && $date ne $prev_date;
+            $part_or_all = $part;
+        }
     }
     else {
         $ele = $prev_turn_ele;
     }
-    if ( $SEG[$i] )
-    { # (re-)start climb phase recognition on track segment start (including: at $i == 0)
+    if ($SEG[$i]) { # track segment start (which includes the start: $i == 0)
+        $seg++;
+        $part = $part_or_all = $seg if defined $segs && $seg >= $segs;
+
+        # (re-)start climb phase recognition
         $direction       = 0;
         $prev_turn_ele   = $local_max_ele   = $local_min_ele = "";
     }
+    $PART_END_INDEX[$part] = $i if defined $part && $i <= $#TIM;
     if ($ele ne "") {
         ( $prev_turn_ele, $prev_turn_index ) = ( $ele, $i ) if ( $prev_turn_ele eq "" );
         ( $local_max_ele, $local_max_index ) = ( $ele, $i ) if $direction >= 0
@@ -1481,9 +1504,13 @@ for( my $rate, my $spd, my $direction,
                 } else {
                     $ascent__phases_suppressed++;
                 }
-                $sum__ascent  += $diff_ele;
-                $time__ascent += $local_max_sec - $prev_turn_sec;
-                $last_gain_index = $local_max_index if $ele ne "";
+                my $diff_sec = $local_max_sec - $prev_turn_sec;
+                 $SUM__ASCENT[$all ] += $diff_ele;
+                $TIME__ASCENT[$all ] += $diff_sec;
+                 $SUM__ASCENT[$part] += $diff_ele if defined $part;
+                $TIME__ASCENT[$part] += $diff_sec if defined $part;
+                $LAST_GAIN_INDEX[$all] =
+                $LAST_GAIN_INDEX[$part_or_all] = $local_max_index if $ele ne "";
             }
             ( $prev_turn_ele, $prev_turn_index ) = ( $local_max_ele, $local_max_index );
             ( $local_min_ele, $local_min_index ) = ( $ele, $i );
@@ -1500,9 +1527,13 @@ for( my $rate, my $spd, my $direction,
                 } else {
                     $descent_phases_suppressed++;
                 }
-                $sum_descent  += $diff_ele;
-                $time_descent += $local_min_sec - $prev_turn_sec;
-                $last_loss_index = $local_min_index if $ele ne "";
+                my $diff_sec = $local_min_sec - $prev_turn_sec;
+                 $SUM_DESCENT[$all ] += $diff_ele;
+                $TIME_DESCENT[$all ] += $diff_sec;
+                 $SUM_DESCENT[$part] += $diff_ele if defined $part;
+                $TIME_DESCENT[$part] += $diff_sec if defined $part;
+                $LAST_LOSS_INDEX[$all] =
+                $LAST_LOSS_INDEX[$part_or_all] = $local_min_index if $ele ne "";
             }
             ( $prev_turn_ele, $prev_turn_index ) =
               ( $local_min_ele, $local_min_index );
@@ -1537,23 +1568,40 @@ for( my $rate, my $spd, my $direction,
                                   $prev_spd, $spd);
         }
     }
+
     $min_lat = $lat if $i == 0 || $min_lat > $lat;
     $max_lat = $lat if $i == 0 || $max_lat < $lat;
     $min_lon = $lon if $i == 0 || $min_lon > $lon;
     $max_lon = $lon if $i == 0 || $max_lon < $lon;
     $max_sec = $sec if            $max_sec < $sec; # may be 0
-    ( $min_ele , $min_ele_index  ) = ( $ele           , $i ) if $ele  ne "" && ( $min_ele eq "" || $min_ele  >  $ele  );
-    ( $max_ele , $max_ele_index  ) = ( $ele           , $i ) if $ele  ne "" && ( $max_ele eq "" || $max_ele  <  $ele  );
-    ( $max_gain, $max_gain_index ) = ( max( $rate, 0 ), $i ) if $rate ne "" && (                   $max_gain <  $rate );
-    ( $max_loss, $max_loss_index ) = ( min( $rate, 0 ), $i ) if $rate ne "" && (                  -$max_loss < -$rate );
-    ( $max_spd , $max_spd_index  ) = ( $spd           , $i ) if $spd  ne "" && (                   $max_spd  <  $spd  );
-
-    if ( $i < $#TIM ) {
-        ( $prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd ) =
-          ( $lat, $lon, $ele, $sec, $spd );
+    if ($spd ne "") {
+        ($MAX_SPD[$all ], $MAX_SPD_INDEX[$all ]) = ($spd, $i) if (!defined $MAX_SPD[$all ] || $MAX_SPD[$all ] < $spd);
+        ($MAX_SPD[$part], $MAX_SPD_INDEX[$part]) = ($spd, $i) if defined $part
+                                                              && (!defined $MAX_SPD[$part] || $MAX_SPD[$part] < $spd);
     }
+    if ($ele ne "") {
+        ($MIN_ELE[$all ], $MIN_ELE_INDEX[$all ]) = ($ele , $i) if !defined $MIN_ELE[$all ] || $MIN_ELE[$all ] > $ele;
+        ($MAX_ELE[$all ], $MAX_ELE_INDEX[$all ]) = ($ele , $i) if !defined $MAX_ELE[$all ] || $MAX_ELE[$all ] < $ele;
+        if (defined $part) {
+        ($MIN_ELE[$part], $MIN_ELE_INDEX[$part]) = ($ele , $i) if !defined $MIN_ELE[$part] || $MIN_ELE[$part] > $ele;
+        ($MAX_ELE[$part], $MAX_ELE_INDEX[$part]) = ($ele , $i) if !defined $MAX_ELE[$part] || $MAX_ELE[$part] < $ele;
+        }
+    }
+    if ($rate ne "") {
+        my $gain = max($rate, 0);
+        my $loss = min($rate, 0);
+        ($MAX_GAIN[$all ], $MAX_GAIN_INDEX[$all ]) = ($gain, $i) if !defined $MAX_GAIN[$all ] ||  $MAX_GAIN[$all ] <  $rate;
+        ($MAX_LOSS[$all ], $MAX_LOSS_INDEX[$all ]) = ($loss, $i) if !defined $MAX_LOSS[$all ] || -$MAX_LOSS[$all ] < -$rate;
+        if (defined $part) {
+        ($MAX_GAIN[$part], $MAX_GAIN_INDEX[$part]) = ($gain, $i) if !defined $MAX_GAIN[$part] ||  $MAX_GAIN[$part] <  $rate;
+        ($MAX_LOSS[$part], $MAX_LOSS_INDEX[$part]) = ($loss, $i) if !defined $MAX_LOSS[$part] || -$MAX_LOSS[$part] < -$rate;
+        }
+    }
+
+    ($prev_lat, $prev_lon, $prev_ele, $prev_date, $prev_sec, $prev_spd) =
+        ( $lat,      $lon,      $ele,      $date,      $sec,      $spd) if $i < $#TIM;
 }
-$max_speed = $max_spd if $max_speed < $max_spd; # used only for spd_precision
+$max_speed = $MAX_SPD[$all] if $max_speed < $MAX_SPD[$all]; # used only for spd_precision
 $avg_spd   = $sum_timediff_mov ? $sum_dis / $sum_timediff_mov : 0;
 
 #$sec_diff = $SEC[$max_ele_index] - $SEC[$min_ele_index];
@@ -1623,21 +1671,6 @@ my $Min_lat     = sprintf LAT_PRECISION, $min_lat;
 my $Min_lon     = sprintf LON_PRECISION, $min_lon;
 my $Max_lat     = sprintf LAT_PRECISION, $max_lat;
 my $Max_lon     = sprintf LON_PRECISION, $max_lon;
-my $Min_ele     = sprintf ELE_PRECISION, correct_ele( -1, $min_ele_index ); # may be "" if index < 0
-my $Max_ele     = sprintf ELE_PRECISION, correct_ele( -1, $max_ele_index ); # may be "" if index < 0
-my $Sum__ascent = sprintf DIF_PRECISION, $sum__ascent;
-my $Sum_descent = sprintf DIF_PRECISION, $sum_descent;
-   $Sum_descent =~ s/\+/-/ if !$sum_descent;
-my $Max_gain = sprintf RAT_PRECISION, $max_gain;
-my $Max_loss = sprintf RAT_PRECISION, $max_loss;
-   $Max_loss =~ s/\+/-/ if !$max_loss;
-
-my $avg__ascent_rate = $time__ascent ? 3600 * $sum__ascent / $time__ascent : 0;
-my $avg_descent_rate = $time_descent ? 3600 * $sum_descent / $time_descent : 0;
-#my $Avg_gain=sprintf RAT_PRECISION, $avg_gain;
-my $Avg__ascent_rate = sprintf RAT_PRECISION, $avg__ascent_rate;
-my $Avg_descent_rate = sprintf RAT_PRECISION, $avg_descent_rate;
-$Avg_descent_rate =~ s/\+/-/ if !$avg_descent_rate;
 my $Sum_dis    = sprintf "%" . DIS_PRECISION, $sum_dis / 1000;
 my $Sum_energy = sprintf "%.0f", $sum_energy / 1000 if $weight;
 my $Avg_spd    = spd_string($avg_spd);
@@ -1729,6 +1762,7 @@ my $wpts = "";
 for ( my $j = 0 ; $j <= $#WTIM ; $j++ ) {
     $wpts .= wpt( $j, -1, "" );
 }
+
 my $phase_wpts   = "";
 my $phase_points = "";
 for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
@@ -1755,25 +1789,67 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
     $phase_points .= point($PHASE_MAXSPD_INDEX [$i], $Spd ) if $max_spd_idx;
     $phase_points .= point($PHASE_MAXRATE_INDEX[$i], $Rate) if $max_rate_idx;
 }
+
 my $total_time   = timediff_string($max_sec - $min_sec);
-my $Max_spd      = $max_spd_index  < 0 ? "" : spd_string($SPD[$max_spd_index ]);
-my $Max_gain_spd = $max_gain_index < 0 ? "" : spd_str   ($SPD[$max_gain_index]);
-my $Max_loss_spd = $max_loss_index < 0 ? "" : spd_str   ($SPD[$max_loss_index]);
-while (substr( $Max_gain_spd, 0, 1 ) eq " "
-    && substr( $Max_loss_spd, 0, 1 ) eq " " )
-{
-    $Max_gain_spd = substr( $Max_gain_spd, 1 );
-    $Max_loss_spd = substr( $Max_loss_spd, 1 );
+my $part_wpts   = ""; # also used for overall statistics
+my $part_points = ""; # also used for overall statistics
+for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
+    my $Part = $i == $all ? "" : (defined $segs ? "segment" : "day")." ".(' ' x (length($part) - length($i)))."$i ";
+    my $Min_ele      = sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]); # may be "" if not defined
+    my $Max_ele      = sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]); # may be "" if not defined
+    my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? spd_string($SPD[$MAX_SPD_INDEX [$i]]) : "";
+    my $Max_gain_spd = defined $MAX_GAIN_INDEX[$i] ? spd_str   ($SPD[$MAX_GAIN_INDEX[$i]]) : "";
+    my $Max_loss_spd = defined $MAX_LOSS_INDEX[$i] ? spd_str   ($SPD[$MAX_LOSS_INDEX[$i]]) : "";
+    while (substr( $Max_gain_spd, 0, 1 ) eq " " &&
+           substr( $Max_loss_spd, 0, 1 ) eq " " )
+    {
+        $Max_gain_spd = substr( $Max_gain_spd, 1 );
+        $Max_loss_spd = substr( $Max_loss_spd, 1 );
+    }
+
+    my $Sum__ascent = defined $SUM__ASCENT[$i] ? sprintf DIF_PRECISION, $SUM__ASCENT[$i] : 0;
+    my $Sum_descent = defined $SUM_DESCENT[$i] ? sprintf DIF_PRECISION, $SUM_DESCENT[$i] : 0;
+    $Sum_descent =~ s/\+/-/ if !$Sum_descent;
+    my $Max_gain = defined $MAX_GAIN[$i] ? sprintf RAT_PRECISION, $MAX_GAIN[$i] : 0;
+    my $Max_loss = defined $MAX_LOSS[$i] ? sprintf RAT_PRECISION, $MAX_LOSS[$i] : 0;
+    $Max_loss =~ s/\+/-/ if !$Max_loss;
+
+    my $avg__ascent_rate = defined $TIME__ASCENT[$i] ? 3600 * $SUM__ASCENT[$i] / $TIME__ASCENT[$i] : 0;
+    my $avg_descent_rate = defined $TIME_DESCENT[$i] ? 3600 * $SUM_DESCENT[$i] / $TIME_DESCENT[$i] : 0;
+    #my $Avg_gain=sprintf RAT_PRECISION, $avg_gain;
+    my $Avg__ascent_rate = sprintf RAT_PRECISION, $avg__ascent_rate;
+    my $Avg_descent_rate = sprintf RAT_PRECISION, $avg_descent_rate;
+    $Avg_descent_rate =~ s/\+/-/ if !$avg_descent_rate;
+
+    my $max_spd_text  = $Part."max speed        =   $Max_spd km/h";  # may use "" if not defined
+    my $min_ele_text  = $Part."min altitude     = $Min_ele m";       # may use "" if not defined
+    my $max_ele_text  = $Part."max altitude     = $Max_ele m";       # may use "" if not defined
+    my $ascent_text   = $Part."total  ascent    = $Sum__ascent m; avg rate  = $Avg__ascent_rate m/h";
+    my $descent_text  = $Part."total descent    = $Sum_descent m; avg rate  = $Avg_descent_rate m/h";
+    my $max_gain_text = $Part."max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # may use "" if not defined
+    my $max_loss_text = $Part."max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # may use "" if not defined
+    my $part_end_text = $Part."end";
+    $part_wpts = $part_wpts
+        . wpt(-1, $MAX_SPD_INDEX  [$i], $max_spd_text )
+        . wpt(-1, $MIN_ELE_INDEX  [$i], $min_ele_text )
+        . wpt(-1, $MAX_ELE_INDEX  [$i], $max_ele_text )
+        . wpt(-1, $LAST_GAIN_INDEX[$i], $ascent_text  )
+        . wpt(-1, $LAST_LOSS_INDEX[$i], $descent_text )
+        . wpt(-1, $MAX_GAIN_INDEX [$i], $max_gain_text)
+        . wpt(-1, $MAX_LOSS_INDEX [$i], $max_loss_text)
+        . ($i == $all ? ""
+        : wpt(-1, $PART_END_INDEX [$i], $part_end_text));
+    $part_points = $part_points
+        . point($MAX_SPD_INDEX  [$i], $max_spd_text )
+        . point($MIN_ELE_INDEX  [$i], $min_ele_text )
+        . point($MAX_ELE_INDEX  [$i], $max_ele_text )
+        . point($LAST_GAIN_INDEX[$i], $ascent_text  )
+        . point($LAST_LOSS_INDEX[$i], $descent_text )
+        . point($MAX_GAIN_INDEX [$i], $max_gain_text)
+        . point($MAX_LOSS_INDEX [$i], $max_loss_text)
+        . ($i == $all ? ""
+        : point($PART_END_INDEX [$i], $part_end_text));
 }
-my $max_spd_text     = "max speed        =    $Max_spd km/h"; # may use "" if index < 0
-my $min_ele_text     = "min altitude     = $Min_ele m";       # may use "" if index < 0
-my $max_ele_text     = "max altitude     = $Max_ele m";       # may use "" if index < 0
-my $sum__ascent_text = "total  ascent    = $Sum__ascent m";
-my $sum_descent_text = "total descent    = $Sum_descent m";
-my $avg__ascent_text = "avg rate  = $Avg__ascent_rate m/h";
-my $avg_descent_text = "avg rate  = $Avg_descent_rate m/h";
-my $max_gain_text    = "max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # may use "" if index < 0
-my $max_loss_text    = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # may use "" if index < 0
 
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
@@ -1802,26 +1878,14 @@ $final_text .= ($smoothing ? "within each track, points that are at most ${ \SMO
 
 $wpts .=
     wpt( -1, 0, "start" )
-  . wpt( -1, $max_spd_index,   $max_spd_text )
-  . wpt( -1, $min_ele_index,   $min_ele_text )
-  . wpt( -1, $max_ele_index,   $max_ele_text )
-  . wpt( -1, $last_gain_index, "$sum__ascent_text; $avg__ascent_text" )
-  . wpt( -1, $last_loss_index, "$sum_descent_text; $avg_descent_text" )
-  . wpt( -1, $max_gain_index,  $max_gain_text )
-  . wpt( -1, $max_loss_index,  $max_loss_text )
+  . $part_wpts
   . $phase_wpts
   . wpt( -1, $#TIM, "end$final_text" );
 $HEAD =~ s/(<trk>)/$wpts$1/s;    # prepend collected and computed waypoints to track
 
 my $stats = "GPXConv statistics (not including sanitized trackpoints nor periods between segments)\n"
   . point( 0,                "start" )
-  . point( $max_spd_index,   $max_spd_text )
-  . point( $min_ele_index,   $min_ele_text )
-  . point( $max_ele_index,   $max_ele_text )
-  . point( $last_gain_index, "$sum__ascent_text; $avg__ascent_text" )
-  . point( $last_loss_index, "$sum_descent_text; $avg_descent_text" )
-  . point( $max_gain_index,  $max_gain_text )
-  . point( $max_loss_index,  $max_loss_text )
+  . $part_points
   . $phase_points
   . point( $#TIM, "end" )
   .($phases && $PHASES_REPORT_THRESHOLD > ELE_THRESHOLD ?

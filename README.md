@@ -17,6 +17,7 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
   (Orthometric height = GPS ellipsoidal height - geoid height,
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 * Produces statistics, optionally including ascent/descent rates of climbing phases.
+* Optionally produces additional statistics on a per-segment or per-day basis.
 * Optionally computes approx. total energy spent by biking along the resulting track.
 * Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
 
@@ -29,6 +30,8 @@ Command-line options:
   -walk, -cycle, -drive, -fly  - type of recorded activity, default: drive
   -smooth                      - smoothen tracks
   -phases                      - analyze ascent/descent phases
+  -segs <n>                    - produce additional statistics per segment, start with n
+  -days <n>                    - produce additional statistics per day, counted from n
   -weight <value>              - compute biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
