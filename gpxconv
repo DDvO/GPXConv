@@ -12,7 +12,7 @@
 # Optionally filters out points before or after given time limits.
 # Optionally filters out points with an element value below or above given limits.
 # Optionally prunes all extensions or elements with value below or above given limits.
-# Optionally fills in elevation and time data by interpolation within segments.
+# Optionally fills in altitude and time data by interpolation within segments.
 # Optionally interpolates points in long gaps (by default, > 3600 seconds).
 # Optionally corrects elevation and sanitizes and smoothens tracks.
 # (Orthometric height = GPS ellipsoidal height - geoid height,
@@ -64,17 +64,17 @@ use constant DISABLE_TRKPT_CMT    => 0; # do not add 'cmt' entries to trackpoint
 use constant DISABLE_TRKPT_SRC    => 0; # do not add 'src' entries to trackpoints, e.g., on time gaps and interpolated data
 use constant DISABLE_TRKPT_FIX    => 0; # do not add 'fix' entries to trackpoints, e.g., on points added by interpolation
 
-# control filling in missing elevation and/or time
-use constant CARRY_OVER_ELE    => 1; # copy elevation from last available value or begin of following segment
+# control filling in missing altitude and/or time
+use constant CARRY_OVER_ELE    => 1; # copy altitude from last available value or begin of following segment
 use constant CARRY_OVER_TIME   => 1; # copy time from end of previous segment or begin of following segment
-use constant FILL_MISSING_ELE  => 1; # interpolate missing elevation
+use constant FILL_MISSING_ELE  => 1; # interpolate missing altitude
 use constant FILL_MISSING_TIME => 1; # interpolate missing time
 
 # analysis control
 use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
 use constant ANALYZE_PHASES   =>  0; # by default do not analyze ascent/descent phases
 use constant ELE_THRESHOLD    => 25; # threshold for detecting/accepting ascent or descent (in m);
-                                     # should be larger than short-term elevation measurement error
+                                     # should be larger than short-term altitude measurement error
 my $PHASES_REPORT_THRESHOLD = ELE_THRESHOLD; # default
 
 # smoothing control
@@ -102,7 +102,7 @@ my $MAX_SENSIBLE_ELE_GAIN; # maximal ascent rate in m/h
 my $MAX_SENSIBLE_ELE_LOSS; # maximal descent rate in m/h
 use constant MAX_SENSIBLE_ANGLE_DIFF =>  170; # maximal sensible turning angle above speed threshold
 use constant MAX_SENSIBLE_ANGLE_SPD_THRESHOLD => 2; # speed threshold for maximal sensible turning angle: 7.2 km/h
-use constant MIN_SENSIBLE_ELE        => -450; # minimal sensible elevation; actual values on Earth may be as low as -450 m at Dead Sea
+use constant MIN_SENSIBLE_ELE        => -450; # minimal sensible altitude; actual elevation values on Earth may be as low as -450 m at Dead Sea
 
 # time correction control
 use constant TIME_CORRECTION => 0; # number of seconds to add to time stamps in trkpt and wpt
@@ -116,10 +116,10 @@ use constant DEFAULT_ELE_CORRECTION => 0; # 47; # if used should be -(average ge
 use constant METERS_PER_DEGREE_LAT => 10000 * 1000 / 90; # on Earth, by definition
 use constant LAT_PRECISION =>   "%.5f"; # latitude resolution = 0.00001° (<= 1.11 meters)
 use constant LON_PRECISION =>   "%.5f"; # longitude resolution = 0.00001° (<= 1.11 meters)
-use constant ELE_PRECISION =>  "%5.0f"; # elevation resolution = 1 meters
-use constant DIF_PRECISION => "%+5.0f"; # elevation difference resolution = 1 meters
-use constant RAT_PRECISION => "%+5.0f"; # elevation ascent/descent rate resolution = 1 meters
-use constant RAT_PRECISION2=> "%+6.0f"; # elevation ascent/descent rate resolution = 1 meters
+use constant ELE_PRECISION =>  "%5.0f"; # altitude resolution = 1 meters
+use constant DIF_PRECISION => "%+5.0f"; # altitude difference resolution = 1 meters
+use constant RAT_PRECISION => "%+5.0f"; # altitude ascent/descent rate resolution = 1 meters
+use constant RAT_PRECISION2=> "%+6.0f"; # altitude ascent/descent rate resolution = 1 meters
 use constant DIS_PRECISION =>    ".2f"; # distance resolution = 0.01 km
 use constant SEC_PRECISION =>   "%.0f"; # seconds resolution = 1 second
 use constant SPD_PRECISION =>   "%.0f"; # speed resolution = 1 km/h
@@ -533,7 +533,7 @@ sub distance {
 #my$diff_lon = ($lon * cos(deg2rad($lat)) - $prev_lon * cos(deg2rad($prev_lat))) * METERS_PER_DEGREE_LAT;
     my $diff_ele = ( $ele ne "" && $prev_ele ne "" ? $ele - $prev_ele : 0 );
 
-    # assuming no elevation change if no elevation available
+    # assuming no altitude change if no altitude available
     return sqrt( $diff_lat * $diff_lat + $diff_lon * $diff_lon + $diff_ele * $diff_ele );
 
 #$distance = Math::Trig::great_circle_distance( #does not account for $diff_ele!
@@ -780,7 +780,7 @@ for ( my $state = 0,
             && !( $rest =~ m#\[(start|end.*?)\]# )
             && # waypoint with statistics added previously by this tool:
             !( $rest =~
-m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+[+-]?[\d\.]+ k?m(\/h)?( at -?[\d\.]+ km/h|;\s+avg\s+rate\s+=\s+[+-]?[\d.]+ m/h)?\]# ))
+m#\[((max|min)\s+(altitude|elevation|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+[+-]?[\d\.]+ k?m(\/h)?( at -?[\d\.]+ km/h|;\s+avg\s+rate\s+=\s+[+-]?[\d.]+ m/h)?\]# ))
         {
             push @WLAT, $lat;
             push @WLON, $lon;
@@ -894,7 +894,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                             " has same time ($prev_tim) but different position ($prev_lat, $prev_lon)")
                     if $lat != $prev_lat || $lon != $prev_lon;
                 print_trkpt("FATAL: point before",
-                            " has same time ($prev_tim) but different elevation ($prev_ele m)")
+                            " has same time ($prev_tim) but different altitude ($prev_ele m)")
                     if $ele != $prev_ele;
             }
         }
@@ -907,12 +907,12 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                     $FLG[ $i - 1 ] |= SUBSTITUTED_ELE;
                     $ELE[ $i - 1 ] = $ele;
                     warn_trkpt_i($i - 1, "at segment end    ",
-                                 " no elevation was given; using value from begin of next segment");
+                                 " no altitude was given; using value from begin of next segment");
                 }
             }
             elsif ($ele_miss_start) {
                 warn_trkpt_i($i - 1, "             up to",
-                             " was unable to interpolate missing elevation within segment");
+                             " was unable to interpolate missing altitude within segment");
                 $ele_miss_start = 0;
             }
             if ( CARRY_OVER_TIME && $tim ne "" ) {
@@ -950,7 +950,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                     $resolution = " and carrying over previous available value is disabled";
                 }
                 warn_trkpt( "at segment start  ",
-                    " no elevation ".($resolution =~ / using / ? "was " : "")."given$resolution" );
+                    " no altitude ".($resolution =~ / using / ? "was " : "")."given$resolution" );
             }
             if ( $tim eq "" ) {
                 if ( $prev_tim eq "" ) {
@@ -991,7 +991,7 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
                 $tim_miss_length += $dis;
             }
         }
-        if ( $ele ne "" && $ele_miss_start ) { # fill in missing elevation
+        if ( $ele ne "" && $ele_miss_start ) { # fill in missing altitude
             my $i_end = $i;
             if ( $state < 3 )
             {    # have been carrying over ele to end of last section
@@ -1050,20 +1050,20 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
         push @SPD, $spd;         # as recorded, else ""
         push @EXT, $exts;
 
-        # detect and report missing time and/or elevation
+        # detect and report missing time and/or altitude
         my $ele_solution  = "cannot calculate ascent/descent";
-        $ele_solution  = "trying to interpolate elevation" if $ele_miss_start;
+        $ele_solution  = "trying to interpolate altitude" if $ele_miss_start;
         my $time_solution = "cannot calculate speed and acceleration";
         $time_solution = "trying to interpolate time" if $tim_miss_start;
         if ( $ele eq "" ) {
             $num_no_ele++;
             $ele_gap_length += $dis;
-            warn_trkpt( "no elevation at   ", "; $ele_solution" )
+            warn_trkpt( "no altitude     at", "; $ele_solution" )
               if $num_no_ele == 1;
         }
         elsif ($num_no_ele) {
             my $Len = sprintf "%4" . DIS_PRECISION, $ele_gap_length / 1000;
-            warn_trkpt_i($i - 1, "no elevation up to", " for "
+            warn_trkpt_i($i - 1, "no altitude  up to", " for "
                   . $num_no_ele . " point" . ( $num_no_ele > 1 ? "s" : "" )
                   . " over a distance of $Len km"
             );
@@ -1116,14 +1116,14 @@ m#\[((max|min)\s+(altitude|height)|max\s+speed|max\s+(climb|ascent|descent)\s+ra
     }
 }
 my $Len = sprintf "%4" . DIS_PRECISION, $ele_gap_length / 1000; # TODO restrict scope
-warn_trkpt_i($#TIM, "no elevation up to",
+warn_trkpt_i($#TIM, "no altitude  up to",
              " for " . $num_no_ele . " points over a distance of $Len km") if $num_no_ele > 1;
 $Len = sprintf "%4" . DIS_PRECISION, $time_gap_length / 1000;
 warn_trkpt_i($#TIM, "no time      up to",
              " for " . $num_no_time . " points over a distance of $Len km") if $num_no_time > 1;
 info_trkpt("last   segment end", "") if $#TIM >= 0;
 warn_trkpt("                at",
-           " was unable to interpolate missing elevation by end of last segment") if $ele_miss_start;
+           " was unable to interpolate missing altitude by end of last segment") if $ele_miss_start;
 warn_trkpt("                at",
            " was unable to interpolate missing time by end of last segment") if $tim_miss_start;
 } # end TODO re-format
@@ -1149,7 +1149,7 @@ for ( my $acc, my $rate,
 
     if ( $ele ne "" && $ele < MIN_SENSIBLE_ELE ) {
         $ignore = 1;
-        ignoring_trkpt( "", "elevation is less than " . MIN_SENSIBLE_ELE );
+        ignoring_trkpt( "", "altitude is less than " . MIN_SENSIBLE_ELE );
     }
 
     if ( $SEG[$i] ) { # at segment start
@@ -1355,16 +1355,16 @@ sub energy { # calculate energy difference between trackpoints  # TODO simplify 
     my $t1 = $_[2];                # end   time relative to begin of track in s
     my $dt = $t1 - $t0;            # duration in s
     my $d  = $_[3];                # 3-dimensional distance in m
-    my $h0 = $_[4];                # elevation before in m
-    my $h1 = $_[5];                # elevation after  in m
-    my $default_ele = 500;         # default elevation in m assumed for calculating density
+    my $h0 = $_[4];                # altitude before in m
+    my $h1 = $_[5];                # altitude after  in m
+    my $default_ele = 500;         # default altitude in m assumed for calculating density
     if ($h0 eq "" || $h1 eq "" ) {
         $h0 = $h1 = $default_ele;
-        warning("missing elevation information for computing energy, at least at $t") unless $energy_missing_ele;
+        warning("missing altitude information for computing energy, at least at $t") unless $energy_missing_ele;
         $energy_missing_ele = 1;
     }
-    my $dh =  $h1 - $h0;           # elevation difference, or 0 if $default_ele used
-    my $h  = ( $h0 + $h1 ) / 2;    # average elevation, used for air density
+    my $dh =  $h1 - $h0;           # altitude difference, or 0 if $default_ele used
+    my $h  = ( $h0 + $h1 ) / 2;    # average altitude, used for air density
     my $v0 = $_[6];                # speed before in m/s
     my $v1 = $_[7];                # speed after  in m/s
     my $default_spd = 0;           # default speed in m/s assumed for calculating acceleration and air drag
@@ -1381,7 +1381,7 @@ sub energy { # calculate energy difference between trackpoints  # TODO simplify 
     my $cr = 0.003;                # coefficient of rolling friction for racing bike      - adapt
     my $cdA = 0.39;                # coefficient of wind resistance * frontal area in m^2 - adapt
     my $r = 1.2;                   # air density on average weather (20 °C) at sea level in kg/(m^3)
-    my $density = $r - ( 0.55 * $r ) * $h / 5000; # roughly corrected air density depending on elevation
+    my $density = $r - ( 0.55 * $r ) * $h / 5000; # roughly corrected air density depending on altitude
 
     # energy components and their sum along the distance $d in Joule
     my $roll  = $cr * $m * $g * $d;
@@ -1762,8 +1762,8 @@ while (substr( $Max_gain_spd, 0, 1 ) eq " "
     $Max_loss_spd = substr( $Max_loss_spd, 1 );
 }
 my $max_spd_text     = "max speed        =    $Max_spd km/h";
-my $min_ele_text     = "min elevation    = $Min_ele m";
-my $max_ele_text     = "max elevation    = $Max_ele m";
+my $min_ele_text     = "min altitude     = $Min_ele m";
+my $max_ele_text     = "max altitude     = $Max_ele m";
 my $sum__ascent_text = "total  ascent    = $Sum__ascent m";
 my $sum_descent_text = "total descent    = $Sum_descent m";
 my $avg__ascent_text = "avg rate  = $Avg__ascent_rate m/h";
@@ -1910,9 +1910,9 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
             : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
             . ($i > 0 && ($FLG[$i - 1] & INTERPOLATED_POINT) != 0 ? "after" : "before") : "";
         # cannot place interpolation info in <trkseg> element because it cannot hold a comment
-        $src .= ( $src eq "" ? "" : "; " ) . "interpolated elevation" if $FLG[$i] & INTERPOLATED_ELE;
+        $src .= ( $src eq "" ? "" : "; " ) . "interpolated altitude"  if $FLG[$i] & INTERPOLATED_ELE;
         $src .= ( $src eq "" ? "" : "; " ) . "interpolated time"      if $FLG[$i] & INTERPOLATED_TIM;
-        $src .= ( $src eq "" ? "" : "; " ) . "substituted elevation"  if $FLG[$i] & SUBSTITUTED_ELE;
+        $src .= ( $src eq "" ? "" : "; " ) . "substituted altitude"   if $FLG[$i] & SUBSTITUTED_ELE;
         $src .= ( $src eq "" ? "" : "; " ) . "substituted time"       if $FLG[$i] & SUBSTITUTED_TIM;
         $src .= ( $src eq "" ? "" : "; " ) . "calculated speed"       if $FLG[$i] & CALCULATED_SPEED && INCLUDE_CALC_SPEED;
         print $out "<src>$src</src>" if !DISABLE_TRKPT_SRC && $src ne "";
