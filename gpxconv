@@ -72,6 +72,7 @@ use constant FILL_MISSING_TIME => 1; # interpolate missing time
 
 # analysis control
 use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
+use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
 use constant ANALYZE_PHASES   =>  0; # by default do not analyze ascent/descent phases
 use constant ELE_THRESHOLD    => 25; # threshold for detecting/accepting ascent or descent (in m);
                                      # should be larger than short-term altitude measurement error
@@ -330,10 +331,11 @@ sub ele_string {
     return ( " " x max( 0, $len - length($ele) ) ) . $ele;
 }
 
+sub spd_str { return sprintf SPD_PRECISION, 3.6 * $_[0]; }
 my $max_speed = 0; # used only for spd_precision
 sub spd_string {
-    my $s = sprintf SPD_PRECISION, 3.6 * $_[0];
-    return " " x max( 0, length( sprintf SPD_PRECISION, 3.6 * $max_speed ) - length($s) ) . $s;
+    my $s = spd_str($_[0]);
+    return " " x max(0, length(spd_str($max_speed)) - length($s)) . $s;
 }
 
 my $lat_len = my $lon_len = my $ele_prec_len = my $ele_full_len = my $tim_len = 0;   # used only for formatting
@@ -385,7 +387,7 @@ sub parse_point {
 
     my $spd = "";
     if ( $str =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s ) {
-        $spd       = $2 / 3.6;    # assuming speed is given in km/h
+        $spd       = $2 / 3.6;                  # assuming speed is given in km/h
         $max_speed = $spd if $max_speed < $spd; # used only for spd_precision
     }
 
@@ -1190,11 +1192,11 @@ for ( my $acc, my $rate,
 
         if ( !$ignore && $spd ne "" && $SPD[$i] ne "" )
         {    # $ignore means: last trkpt has been ignored
-            my $spd_diff = 3.6 * abs( $calc_spd - $spd );
+            my $spd_diff = abs($calc_spd - $spd);
             warn_trkpt("before  ",
                        "$Spd_txt calculated speed is " . spd_string($calc_spd) . " km/h " .
-                       "deviation is " . spd_string( $spd_diff / 3.6 ) . " km/h" .
-                       " (more than " . ( MAX_SPEED_DEVIATION - 1 ) . ")") if $spd_diff > MAX_SPEED_DEVIATION;
+                       "deviation is " . spd_string($spd_diff) . " km/h" .
+                       " (more than " . MAX_SPEED_DEVIATION . ")") if $spd_diff > MAX_SPEED_DEVIATION / 3.6;
         }
 
         $ignore = 1; # the current point
@@ -1226,7 +1228,7 @@ for ( my $acc, my $rate,
         }
         else {
             $ignore = 0;
-            if ( $spd ne "" && 3.6 * $spd >= MIN_SPEED_MOVING ) # implies $timediff ne ""
+            if ($spd ne "" && $spd >= MIN_SPEED_MOVING / 3.6) # implies $timediff ne ""
             {
                 $sum_timediff_mov0 += $timediff; # used for smoothing
                 $num_pts_mov++;                  # used for smoothing
@@ -1519,7 +1521,7 @@ for( my $rate, my $spd, my $direction,
         $spd = $SPD[$i];
         push @DIST, $dis;
         push @RATE, $rate;
-        if ( $spd ne "" && $timediff ne "" && 3.6 * $spd >= MIN_SPEED_MOVING ) {
+        if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / 3.6) {
             $sum_timediff_mov += $timediff;
         }
         if ( $weight && !$SEG[$i] ) { # not at segment start
@@ -1752,9 +1754,9 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
     $phase_points .= point($PHASE_MAXRATE_INDEX[$i], $Rate) if $max_rate_index;
 }
 my $total_time   = timediff_string($max_sec - $min_sec);
-my $Max_spd      = spd_string( $SPD[$max_spd_index] );
-my $Max_gain_spd = sprintf SPD_PRECISION, 3.6 * $SPD[$max_gain_index];
-my $Max_loss_spd = sprintf SPD_PRECISION, 3.6 * $SPD[$max_loss_index];
+my $Max_spd      = spd_string($SPD[$max_spd_index]);
+my $Max_gain_spd = spd_str($SPD[$max_gain_index]);
+my $Max_loss_spd = spd_str($SPD[$max_loss_index]);
 while (substr( $Max_gain_spd, 0, 1 ) eq " "
     && substr( $Max_loss_spd, 0, 1 ) eq " " )
 {
