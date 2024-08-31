@@ -1406,18 +1406,18 @@ sub push_phase {
     my $diff_ele       = $ELE[$end_index] - $ELE[$start_index];
     my $dist           = 0;
     my $rate           = 0;
-    my $spd            = 0;
+    my $spd_           = 0;
     my $max_rate       = 0;
     my $max_rate_index = 0;
-    my $max_spd        = 0;
-    my $max_spd_index  = 0;
+    my $max__spd       = 0;
+    my $max__spd_index = 0;
 
     for ( my $i = $start_index + 1 ; $i <= $end_index ; $i++ ) {
         $dist += $DIST[$i];
         $rate = $RATE[$i];
-        $spd  = $SPD[$i];
+        $spd_ = $SPD[$i];
         ( $max_rate, $max_rate_index ) = ( $rate, $i ) if $rate ne "" && ( $diff_ele >= 0 ? $rate > $max_rate : $rate < $max_rate );
-        ( $max_spd , $max_spd_index  ) = ( $spd , $i ) if $spd ne "" && $spd > $max_spd;
+        ( $max__spd, $max__spd_index ) = ( $spd_, $i ) if $spd_ ne "" && $spd_ > $max__spd;
     }
     my $avg_spd  = 0;
     my $avg_rate = 0;
@@ -1431,7 +1431,7 @@ sub push_phase {
     push @PHASE_DIST,          $dist;
     push @PHASE_SPD,           $avg_spd;
     push @PHASE_RATE,          $avg_rate;
-    push @PHASE_MAXSPD_INDEX,  $max_spd_index;
+    push @PHASE_MAXSPD_INDEX,  $max__spd_index;
     push @PHASE_MAXRATE_INDEX, $max_rate_index;
     push @PHASE_END_INDEX,     $end_index;
 }
