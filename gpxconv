@@ -118,6 +118,7 @@ use constant METERS_PER_DEGREE_LAT => 10000 * 1000 / 90; # on Earth, by definiti
 use constant LAT_PRECISION =>   "%.5f"; # latitude resolution = 0.00001° (<= 1.11 meters)
 use constant LON_PRECISION =>   "%.5f"; # longitude resolution = 0.00001° (<= 1.11 meters)
 use constant ELE_PRECISION =>  "%5.0f"; # altitude resolution = 1 meters
+use constant ELE_PRECISION0=>   "%.0f";
 use constant DIF_PRECISION => "%+5.0f"; # altitude difference resolution = 1 meters
 use constant RAT_PRECISION => "%+5.0f"; # altitude ascent/descent rate resolution = 1 meters
 use constant RAT_PRECISION2=> "%+6.0f"; # altitude ascent/descent rate resolution = 1 meters
@@ -328,7 +329,8 @@ sub timediff_string {
 sub ele_string {
     my $len = $_[0];
     my $ele = $_[1];
-    return ( " " x max( 0, $len - length($ele) ) ) . $ele;
+    $ele = (sprintf ELE_PRECISION0, $ele) if $len >= 0;
+    return ( " " x max( 0, abs($len) - length($ele) ) ) . $ele;
 }
 
 sub spd_str { return sprintf SPD_PRECISION, 3.6 * $_[0]; }
@@ -361,8 +363,8 @@ sub parse_point {
     if ( $str =~ s#[ \t]*(<ele>\s*(-?\d*(\.\d+)?)[\.\d]*\s*</ele>)\n?##s ) {
         $ele_str = $1;
         $ele = $2; # may be empty or 0, ignores anything past any second decimal dot, e.g, takes ".12" on ".12.34" input
-        $ele_prec_len = max( $ele_prec_len, length( int($ele) ) ); # sprintf ELE_PRECISION,
-        $ele_full_len = max( $ele_full_len, length($ele) );
+        $ele_prec_len = max($ele_prec_len, length((sprintf ELE_PRECISION0, $ele)));
+        $ele_full_len = max($ele_full_len, length($ele));
         $ele = "" if !$ele_str && !$sec; # for routes generated, e.g., using Google My Maps
     }
 
@@ -471,8 +473,8 @@ sub print_trkpt_i {
     # $long = sprintf LON_PRECISION, $long;
     if ( $elev eq "" ) {
         $elev         = "NONE";
-        $ele_prec_len = max( $ele_prec_len, length("NONE") );
-        $ele_full_len = max( $ele_full_len, length("NONE") );
+        $ele_prec_len = max( $ele_prec_len, length($elev) );
+        $ele_full_len = max( $ele_full_len, length($elev) );
     }
     elsif ( $ele_full_len > $ele_prec_len ) {
         my $decimals = -1;
@@ -485,7 +487,7 @@ sub print_trkpt_i {
       . "<trkpt"
       . ' lat="' . ( $lati . '"' . ( ' ' x max( 0, $lat_len - length($lati) ) ) )
       . ' lon="' . ( $long . '"' . ( ' ' x max( 0, $lon_len - length($long) ) ) )
-      . " <ele>" . ele_string( $ele_full_len, $elev )
+      . " <ele>" . ele_string(-$ele_full_len, $elev)
       . ( $t ne "NO" ? " <time>" . ( $time . ( " " x max( 0, $tim_len - length($time) ) ) ) : "" )
       . "$tail");
     abort("") if ( $head =~ "^FATAL:" );
@@ -1689,7 +1691,7 @@ sub wpt {
     return '<wpt lat="' . ( sprintf LAT_PRECISION, $lat ) .
          '" ' . 'lon="' . ( sprintf LON_PRECISION, $lon ) . '">'
         . ( $ele eq "" ? "     " . (" " x $ele_prec_len ) . "      "
-            : "<ele>" . ele_string( $ele_prec_len, int($ele) ) . "</ele>" )
+            : "<ele>" . ele_string($ele_prec_len, $ele) . "</ele>" )
         . ( $tim eq "" ? "      " . "                    " . "       "
             : "<time>$tim</time>" )
       . $name_or_orig_text . "</wpt>\n";
@@ -1702,7 +1704,7 @@ sub point {
     my $ele      = correct_ele( -1, $i );
     my $ele_text = $ele eq "" ? "" : ",ele";
     my $ele_val =
-      $ele eq "" ? "" : "," . ele_string( $ele_prec_len, int($ele) );
+      $ele eq "" ? "" : "," . ele_string($ele_prec_len, $ele);
     my $time_val = $TIM[$i] eq "" ? "" : " time = ".round_tim($TIM[$i]);
     return "At lat,lon$ele_text = "
       . ( sprintf LAT_PRECISION, $LAT[$i] ) . ","
@@ -1903,7 +1905,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     ( $tim, $spd ) = ( round_tim($TIM[$i]), $SPD[$i] );
     print $out '<trkpt lat="' . ( sprintf LAT_PRECISION, $LAT[$i] )
       . '" lon="' . ( sprintf LON_PRECISION, $LON[$i] ) . '">';
-    print $out "<ele>" . ele_string( $ele_prec_len, int( correct_ele( -1, $i ) ) ) . "</ele>" if $ELE[$i] ne "";
+    print $out "<ele>" . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
     print $out "<time>$tim</time>" if $tim;
     print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>"
         if !DISABLE_TRKPT_CMT && $IGN[$i];
