@@ -358,9 +358,9 @@ sub parse_point {
     $lon_len = max( $lon_len, length($lon) ); # sprintf LON_PRECISION,
 
     my $ele_str = my $ele = "";
-    if ( $str =~ s#[ \t]*(<ele>\s*(-?[\.\d]+)\s*</ele>)\n?##s ) {
+    if ( $str =~ s#[ \t]*(<ele>\s*(-?\d*(\.\d+)?)[\.\d]*\s*</ele>)\n?##s ) {
         $ele_str = $1;
-        $ele = $2; # may be empty or 0
+        $ele = $2; # may be empty or 0, ignores anything past any second decimal dot, e.g, takes ".12" on ".12.34" input
         $ele_prec_len = max( $ele_prec_len, length( int($ele) ) ); # sprintf ELE_PRECISION,
         $ele_full_len = max( $ele_full_len, length($ele) );
         $ele = "" if !$ele_str && !$sec; # for routes generated, e.g., using Google My Maps
