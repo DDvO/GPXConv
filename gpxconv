@@ -1144,7 +1144,7 @@ for ( my $acc, my $rate,
     $timediff_before = $timediff;
     $spd_before = $spd;
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
-      ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[ $i + 0 ] );
+      ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
 
     ## debug"sanitizing point $i with lat=$lat lon=$lon ele='$ele' tim='$tim' sec=$sec spd='$spd'";
     my $ignore = 0;
@@ -1621,8 +1621,8 @@ my $Min_lat     = sprintf LAT_PRECISION, $min_lat;
 my $Min_lon     = sprintf LON_PRECISION, $min_lon;
 my $Max_lat     = sprintf LAT_PRECISION, $max_lat;
 my $Max_lon     = sprintf LON_PRECISION, $max_lon;
-my $Min_ele     = sprintf ELE_PRECISION, correct_ele( -1, $min_ele_index ); # may be ""
-my $Max_ele     = sprintf ELE_PRECISION, correct_ele( -1, $max_ele_index ); # may be ""
+my $Min_ele     = sprintf ELE_PRECISION, correct_ele( -1, $min_ele_index ); # may be "" if index < 0
+my $Max_ele     = sprintf ELE_PRECISION, correct_ele( -1, $max_ele_index ); # may be "" if index < 0
 my $Sum__ascent = sprintf DIF_PRECISION, $sum__ascent;
 my $Sum_descent = sprintf DIF_PRECISION, $sum_descent;
    $Sum_descent =~ s/\+/-/ if !$sum_descent;
@@ -1754,24 +1754,24 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
     $phase_points .= point($PHASE_MAXRATE_INDEX[$i], $Rate) if $max_rate_idx;
 }
 my $total_time   = timediff_string($max_sec - $min_sec);
-my $Max_spd      = spd_string($SPD[$max_spd_index]);
-my $Max_gain_spd = spd_str($SPD[$max_gain_index]);
-my $Max_loss_spd = spd_str($SPD[$max_loss_index]);
+my $Max_spd      = $max_spd_index  < 0 ? "" : spd_string($SPD[$max_spd_index ]);
+my $Max_gain_spd = $max_gain_index < 0 ? "" : spd_str   ($SPD[$max_gain_index]);
+my $Max_loss_spd = $max_loss_index < 0 ? "" : spd_str   ($SPD[$max_loss_index]);
 while (substr( $Max_gain_spd, 0, 1 ) eq " "
     && substr( $Max_loss_spd, 0, 1 ) eq " " )
 {
     $Max_gain_spd = substr( $Max_gain_spd, 1 );
     $Max_loss_spd = substr( $Max_loss_spd, 1 );
 }
-my $max_spd_text     = "max speed        =    $Max_spd km/h";
-my $min_ele_text     = "min altitude     = $Min_ele m";
-my $max_ele_text     = "max altitude     = $Max_ele m";
+my $max_spd_text     = "max speed        =    $Max_spd km/h"; # may use "" if index < 0
+my $min_ele_text     = "min altitude     = $Min_ele m";       # may use "" if index < 0
+my $max_ele_text     = "max altitude     = $Max_ele m";       # may use "" if index < 0
 my $sum__ascent_text = "total  ascent    = $Sum__ascent m";
 my $sum_descent_text = "total descent    = $Sum_descent m";
 my $avg__ascent_text = "avg rate  = $Avg__ascent_rate m/h";
 my $avg_descent_text = "avg rate  = $Avg_descent_rate m/h";
-my $max_gain_text    = "max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h";
-my $max_loss_text    = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h";
+my $max_gain_text    = "max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # may use "" if index < 0
+my $max_loss_text    = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # may use "" if index < 0
 
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
