@@ -336,7 +336,21 @@ sub spd_string {
     return " " x max(0, $max_speed_len - length($s)) . $s;
 }
 
-my $lat_len = my $lon_len = my $ele_prec_len = my $ele_full_len = my $tim_len = 0;   # used only for formatting
+my $lat_prec_len = my $lat_full_len =
+my $lon_prec_len = my $lon_full_len =
+my $ele_prec_len = my $ele_full_len = my $tim_len = 1; # used only for formatting
+sub lat_str { return sprintf LAT_PRECISION, $_[0]; }
+sub lon_str { return sprintf LON_PRECISION, $_[0]; }
+sub lat_string {
+    my $s = lat_str($_[0]);
+    return " " x max(0, $lat_prec_len - length($s)) . $s;
+}
+sub lon_string {
+    my $s = lon_str($_[0]);
+    return " " x max(0, $lon_prec_len - length($s)) . $s;
+}
+
+
 sub parse_point {
     my $str = $_[0];
 
@@ -352,8 +366,8 @@ sub parse_point {
     } else {
         abort("FATAL: Cannot parse point: $str\n");
     }
-    $lat_len = max( $lat_len, length($lat) ); # sprintf LAT_PRECISION,
-    $lon_len = max( $lon_len, length($lon) ); # sprintf LON_PRECISION,
+    $lat_full_len = max($lat_full_len, length($lat));
+    $lon_full_len = max($lon_full_len, length($lon));
 
     my $ele_str = my $ele = "";
     if ( $str =~ s#[ \t]*(<ele>\s*(-?\d*(\.\d+)?)[\.\d]*\s*</ele>)\n?##s ) {
@@ -465,8 +479,8 @@ sub print_trkpt_i {
       : ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i] );
 
     # using original precision here for better traceability
-    # $lati = sprintf LAT_PRECISION, $lati;
-    # $long = sprintf LON_PRECISION, $long;
+    # $lati = lat_str($lati);
+    # $long = lon_str($long);
     if ( $elev eq "" ) {
         $elev         = "NONE";
         $ele_prec_len = max( $ele_prec_len, length($elev) );
@@ -481,8 +495,8 @@ sub print_trkpt_i {
     my $time = $t ne "" ? $t : "NONE";
     print_line("$head "
       . "<trkpt"
-      . ' lat="' . ( $lati . '"' . ( ' ' x max( 0, $lat_len - length($lati) ) ) )
-      . ' lon="' . ( $long . '"' . ( ' ' x max( 0, $lon_len - length($long) ) ) )
+      . ' lat="' . ( $lati . '"' . ( ' ' x max( 0, $lat_full_len - length($lati) ) ) )
+      . ' lon="' . ( $long . '"' . ( ' ' x max( 0, $lon_full_len - length($long) ) ) )
       . " <ele>" . ele_string(-$ele_full_len, $elev)
       . ( $t ne "NO" ? " <time>" . ( $time . ( " " x max( 0, $tim_len - length($time) ) ) ) : "" )
       . "$tail");
@@ -1604,6 +1618,8 @@ for( my $rate, my $spd, my $direction,
 $avg_spd   = $sum_timediff_mov ? $sum_dis / $sum_timediff_mov : 0;
 $max_speed = $MAX_SPD[$all] if $max_speed < $MAX_SPD[$all]; # used only for spd_string
 $max_speed_len = length(spd_str($max_speed));
+$lat_prec_len = max(length(lat_str($max_lat)), length(lat_str($min_lat)));
+$lon_prec_len = max(length(lon_str($max_lon)), length(lon_str($min_lon)));
 
 #$sec_diff = $SEC[$max_ele_index] - $SEC[$min_ele_index];
 #$avg_gain = $sec_diff != 0 ? ($max_ele - $min_ele) / $sec_diff * 3600 : 0;
@@ -1668,10 +1684,10 @@ sub correct_ele {    # may update $ele_corr; uses $ele_corr
 
 # TODO make below decls local
 #must be done before interpolating, which may shift indexes
-my $Min_lat     = sprintf LAT_PRECISION, $min_lat;
-my $Min_lon     = sprintf LON_PRECISION, $min_lon;
-my $Max_lat     = sprintf LAT_PRECISION, $max_lat;
-my $Max_lon     = sprintf LON_PRECISION, $max_lon;
+my $Min_lat     = lat_str($min_lat);
+my $Min_lon     = lon_str($min_lon);
+my $Max_lat     = lat_str($max_lat);
+my $Max_lon     = lon_str($max_lon);
 my $Sum_dis    = sprintf "%" . DIS_PRECISION, $sum_dis / 1000;
 my $Sum_energy = sprintf "%.0f", $sum_energy / 1000 if $weight;
 my $Avg_spd    = spd_string($avg_spd);
@@ -1722,8 +1738,7 @@ sub wpt {
     $tim = round_tim($tim);
     my $ele  = correct_ele( $j, $i );
     my $name_or_orig_text = $j >= 0 ? $WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
-    return '<wpt lat="' . ( sprintf LAT_PRECISION, $lat ) .
-         '" ' . 'lon="' . ( sprintf LON_PRECISION, $lon ) . '">'
+    return '<wpt lat="' . lat_string($lat) . '" ' . 'lon="' . lon_string($lon) . '">'
         . ( $ele eq "" ? "     " . (" " x $ele_prec_len ) . "      "
             : "<ele>" . ele_string($ele_prec_len, $ele) . "</ele>" )
         . ( $tim eq "" ? "      " . "                    " . "       "
@@ -1740,10 +1755,7 @@ sub point {
     my $ele_val =
       $ele eq "" ? "" : "," . ele_string($ele_prec_len, $ele);
     my $time_val = $TIM[$i] eq "" ? "" : " time = ".round_tim($TIM[$i]);
-    return "At lat,lon$ele_text = "
-      . ( sprintf LAT_PRECISION, $LAT[$i] ) . ","
-      . ( sprintf LON_PRECISION, $LON[$i] )
-      . $ele_val . $time_val . ": $n\n";
+    return "At lat,lon$ele_text = " . lat_string($LAT[$i]) . "," . lon_string($LON[$i]) . $ele_val . $time_val . ": $n\n";
 }
 
 sub phase_text {
@@ -1968,8 +1980,7 @@ use constant _SPEED => "</speed>";    # </x:speed></x:TrackPointExtension>"
 print $out $HEAD;                     # includes <gpx> <trk> <trkseg>
 for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     ( $tim, $spd ) = ( round_tim($TIM[$i]), $SPD[$i] );
-    print $out '<trkpt lat="' . ( sprintf LAT_PRECISION, $LAT[$i] )
-      . '" lon="' . ( sprintf LON_PRECISION, $LON[$i] ) . '">';
+    print $out '<trkpt lat="' . lat_string($LAT[$i]) . '" lon="' . lon_string($LON[$i]) . '">';
     print $out "<ele>" . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
     print $out "<time>$tim</time>" if $tim;
     print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>"
