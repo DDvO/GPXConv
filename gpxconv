@@ -118,18 +118,18 @@ use constant DEFAULT_ELE_CORRECTION => 0; # 47; # if used should be -(average ge
 ### other constants
 
 use constant METERS_PER_DEGREE_LAT => 10000 * 1000 / 90; # on Earth, by definition
-use constant LAT_PRECISION =>   "%.5f"; # latitude resolution = 0.00001° (<= 1.11 meters)
-use constant LON_PRECISION =>   "%.5f"; # longitude resolution = 0.00001° (<= 1.11 meters)
-use constant ELE_PRECISION =>  "%5.0f"; # altitude resolution = 1 meters
-use constant ELE_PRECISION0=>   "%.0f";
-use constant DIF_PRECISION => "%+5.0f"; # altitude difference resolution = 1 meters
-use constant RAT_PRECISION => "%+5.0f"; # altitude ascent/descent rate resolution = 1 meters
-use constant RAT_PRECISION2=> "%+6.0f"; # altitude ascent/descent rate resolution = 1 meters
-use constant DIS_PRECISION =>    ".2f"; # distance resolution = 0.01 km
-use constant SEC_PRECISION =>   "%.0f"; # seconds resolution = 1 second
-use constant SPD_PRECISION =>   "%.0f"; # speed resolution = 1 km/h
-use constant SPD_PRECISION2=>  "%4.0f"; # speed resolution = 1 km/h
-use constant ACC_PRECISION =>   "%.1f"; # acceleration resolution = 0.1 m/s/s
+use constant LAT_PRECISION  =>   "%.5f"; #  latitude resolution = 0.00001° (<= 1.11 meters)
+use constant LON_PRECISION  =>   "%.5f"; # longitude resolution = 0.00001° (<= 1.11 meters)
+use constant ELE_PRECISION  =>  "%5.0f"; #  altitude resolution = 1 meters
+use constant ELE_PRECISION0 =>   "%.0f";
+use constant DIF_PRECISION  => "%+5.0f"; #  altitude difference          resolution = 1 meters
+use constant RAT_PRECISION  => "%+5.0f"; #  altitude ascent/descent rate resolution = 1 meters
+use constant RAT_PRECISION2 => "%+6.0f"; #  altitude ascent/descent rate resolution = 1 meters
+use constant DIS_PRECISION  =>    ".2f"; #  distance resolution = 0.01 km
+use constant SEC_PRECISION  =>   "%.0f"; #   seconds resolution = 1 second
+use constant SPD_PRECISION  =>  "%4.0f"; #     speed resolution = 1 km/h
+use constant SPD_PRECISION0 =>   "%.0f";
+use constant ACC_PRECISION  =>   "%.1f"; # acceleration resolution = 0.1 m/s/s
 
 # trkpt flags
 use constant DUPLICATED_POINT   => 1 << 0;
@@ -329,11 +329,11 @@ sub ele_string {
     return ( " " x max( 0, abs($len) - length($ele) ) ) . $ele;
 }
 
-sub spd_str { return sprintf SPD_PRECISION, 3.6 * $_[0]; }
-my $max_speed = 0; # used only for spd_precision
+my ($max_speed, $max_speed_len) = (0, 1); # used only for spd_string
+sub spd_str { return sprintf SPD_PRECISION0, 3.6 * $_[0]; }
 sub spd_string {
     my $s = spd_str($_[0]);
-    return " " x max(0, length(spd_str($max_speed)) - length($s)) . $s;
+    return " " x max(0, $max_speed_len - length($s)) . $s;
 }
 
 my $lat_len = my $lon_len = my $ele_prec_len = my $ele_full_len = my $tim_len = 0;   # used only for formatting
@@ -386,7 +386,7 @@ sub parse_point {
     my $spd = "";
     if ( $str =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s ) {
         $spd       = $2 / 3.6;                  # assuming speed is given in km/h
-        $max_speed = $spd if $max_speed < $spd; # used only for spd_precision
+        $max_speed = $spd if $max_speed < $spd; # used only for spd_string
     }
 
     my $ext = "";
@@ -1601,8 +1601,9 @@ for( my $rate, my $spd, my $direction,
     ($prev_lat, $prev_lon, $prev_ele, $prev_date, $prev_sec, $prev_spd) =
         ( $lat,      $lon,      $ele,      $date,      $sec,      $spd) if $i < $#TIM;
 }
-$max_speed = $MAX_SPD[$all] if $max_speed < $MAX_SPD[$all]; # used only for spd_precision
 $avg_spd   = $sum_timediff_mov ? $sum_dis / $sum_timediff_mov : 0;
+$max_speed = $MAX_SPD[$all] if $max_speed < $MAX_SPD[$all]; # used only for spd_string
+$max_speed_len = length(spd_str($max_speed));
 
 #$sec_diff = $SEC[$max_ele_index] - $SEC[$min_ele_index];
 #$avg_gain = $sec_diff != 0 ? ($max_ele - $min_ele) / $sec_diff * 3600 : 0;
@@ -1774,8 +1775,8 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
     $Len .= "; duration = " . timediff_string($duration) if $duration >= 0;
     my $max_spd_idx = $PHASE_MAXSPD_INDEX[$i];
     my $Spd = phase_text($i)
-        . "max speed =  " . (sprintf SPD_PRECISION2, 3.6 * $SPD[$max_spd_idx]) . " km/h; "
-        . "avg speed  = " . (sprintf SPD_PRECISION2, 3.6 * $PHASE_SPD[$i]    ) . " km/h"
+        . "max speed =  " . (sprintf SPD_PRECISION, 3.6 * $SPD[$max_spd_idx]) . " km/h; "
+        . "avg speed  = " . (sprintf SPD_PRECISION, 3.6 * $PHASE_SPD[$i]    ) . " km/h"
         if $max_spd_idx;
     my $max_rate_idx = $PHASE_MAXRATE_INDEX[$i];
     my $Rate = phase_text($i)
