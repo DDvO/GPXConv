@@ -329,11 +329,11 @@ sub ele_string {
     return ( " " x max( 0, abs($len) - length($ele) ) ) . $ele;
 }
 
-my ($max_speed, $max_speed_len) = (0, 1); # used only for spd_string
+my $spd_prec_len = 1; # used only for spd_string
 sub spd_str { return sprintf SPD_PRECISION0, 3.6 * $_[0]; }
 sub spd_string {
     my $s = spd_str($_[0]);
-    return " " x max(0, $max_speed_len - length($s)) . $s;
+    return " " x ($spd_prec_len - length($s)) . $s;
 }
 
 my $lat_prec_len = my $lat_full_len =
@@ -400,8 +400,8 @@ sub parse_point {
 
     my $spd = "";
     if ( $str =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s ) {
-        $spd       = $2 / 3.6;                  # assuming speed is given in km/h
-        $max_speed = $spd if $max_speed < $spd; # used only for spd_string
+        $spd = $2 / 3.6; # assuming speed is given in km/h
+        $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
     }
 
     my $ext = "";
@@ -1210,7 +1210,10 @@ for ( my $acc, my $rate,
         }
         my $Theta_diff = sprintf "%+.0f", $theta_diff;
         ( my $diff_ele, $timediff, $rate, my $dis, my $calc_spd, $acc ) = calc_diffs();
-        $spd = $calc_spd if $spd eq "";
+        if ($spd eq "") {
+            $spd = $calc_spd;
+            $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
+        }
         my $Spd      = $spd ne "" ? spd_string("$spd") : "";
         my $Spd_txt  = $spd ne "" ? " at speed = $Spd km/h" : "";
         my $Dis      = sprintf "%4" . DIS_PRECISION, $dis / 1000;
@@ -1618,8 +1621,6 @@ for( my $rate, my $spd, my $direction,
         ( $lat,      $lon,      $ele,      $date,      $sec,      $spd) if $i < $#TIM;
 }
 $avg_spd   = $sum_timediff_mov ? $sum_dis / $sum_timediff_mov : 0;
-$max_speed = $MAX_SPD[$all] if $max_speed < $MAX_SPD[$all]; # used only for spd_string
-$max_speed_len = length(spd_str($max_speed));
 $lat_prec_len = max(length(lat_str($max_lat)), length(lat_str($min_lat)));
 $lon_prec_len = max(length(lon_str($max_lon)), length(lon_str($min_lon)));
 
