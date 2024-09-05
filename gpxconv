@@ -355,12 +355,10 @@ sub parse_point {
     my $str = $_[0];
 
     my $lat, my $lon;
-    #  $str =~ m#lat="(-?\d+\.?\d*)"\s*lon="(-?\d+\.?\d*)">\s*
-    #  <ele>(-?\d+\.?\d*)</ele>\s*<time>(.*?T(\d\d):(\d\d):(\d\d)Z?)</time>#s
-    if ( $str =~ s#lat=\s*"(-?[\.\d]+)"\s*lon=\s*"(-?[\.\d]+)"\s*>##s ) {
+    if ($str =~ s#lat=\s*"(-?[\.\d]+)"\s*lon=\s*"(-?[\.\d]+)"\s*>##s) {
         $lat     = $1;
         $lon     = $2;
-    } elsif ( $str =~ s#lon=\s*"(-?[\.\d]+)"\s*lat=\s*"(-?[\.\d]+)"\s*>##s ) {
+    } elsif ($str =~ s#lon=\s*"(-?[\.\d]+)"\s*lat=\s*"(-?[\.\d]+)"\s*>##s) {
         $lat     = $2;
         $lon     = $1;
     } else {
@@ -370,7 +368,7 @@ sub parse_point {
     $lon_full_len = max($lon_full_len, length($lon));
 
     my $ele_str = my $ele = "";
-    if ( $str =~ s#[ \t]*(<ele>\s*(-?\d*(\.\d+)?)[\.\d]*\s*</ele>)\n?##s ) {
+    if ($str =~ s#[ \t]*(<ele>\s*(-?\d*(\.\d+)?)[\.\d]*\s*</ele>)\n?##s) {
         $ele_str = $1;
         $ele = $2; # may be empty or 0, ignores anything past any second decimal dot, e.g, takes ".12" on ".12.34" input
         $ele_prec_len = max($ele_prec_len, length((sprintf ELE_PRECISION0, $ele)));
@@ -379,7 +377,7 @@ sub parse_point {
     }
 
     my $tim = "", my $sec = 0;
-    if ( $str =~ s#[ \t]*(<time>\s*([-:.T\dZ]+)\s*</time>)\n?##s ) {
+    if ($str =~ s#[ \t]*(<time>\s*([-:.T\dZ]+)\s*</time>)\n?##s) {
         $tim = $2;
         $tim =~ s/\.0+Z/Z/;
         $tim_len = max( $tim_len, length($tim) );
@@ -399,13 +397,13 @@ sub parse_point {
     }
 
     my $spd = "";
-    if ( $str =~ m#<(\w:)?speed>(-?[\.\d ]+)</(\w:)?speed>#s ) {
+    if ($str =~ m#<(\w:)?speed>\s*(-?[\.\d ]+)\s*</(\w:)?speed>#s) {
         $spd = $2 / 3.6; # assuming speed is given in km/h
         $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
     }
 
     my $ext = "";
-    if ( $str =~ s#[ \t]*(<extensions>(.*?</extensions>)+)\n?##s ) {
+    if ($str =~ s#[ \t]*(<extensions>(.*?</extensions>)+)\n?##s) {
         if ( $prune_exts ) {
             ++$num_pruned_exts;
         } else {
@@ -810,8 +808,7 @@ for ( my $state = 0,
                   $rest =~ m#<name><!\[CDATA\[\d*\]\]></name># && ++$num_auto_wpts )
             && !( $rest =~ m#\[(start|end.*?)\]# )
             && # waypoint with statistics added previously by this tool:
-            !( $rest =~
-m#\[((max|min)\s+(altitude|elevation|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+[+-]?[\d\.]+ k?m(\/h)?( at -?[\d\.]+ km/h|;\s+avg\s+rate\s+=\s+[+-]?[\d.]+ m/h)?\]# ))
+            !($rest =~ m#\[((max|min)\s+(altitude|elevation|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+[+-]?[\.\d]+ k?m(\/h)?( at -?[\.\d]+ km/h|;\s+avg\s+rate\s+=\s+[+-]?[\d.]+ m/h)?\]#))
         {
             push @WLAT, $lat;
             push @WLON, $lon;
@@ -855,7 +852,7 @@ m#\[((max|min)\s+(altitude|elevation|height)|max\s+speed|max\s+(climb|ascent|des
     }
     elsif (!$in_merge && m#(<gpx )#s) { # processing further track file
         ++$num_ignored_hdrs;
-        if ( $smoothing && m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n# )
+        if ($smoothing && m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n#)
         {
             warning("smoothing apparently has already been done on input");
         }
@@ -1639,7 +1636,7 @@ sub neg_geoid_height {    # potentially $updates $found_corr and $ele_corr
       . "http://geographiclib.sourceforge.net/cgi-bin/GeoidEval?input=$lat+$lon";
     open G, $tmp_GeoidEval;
     while (<G>) {
-        if (m#EGM84</a>\s*=\s*<font.*?>(-?\d+\.?\d*)</font>#i) {
+        if (m#EGM84</a>\s*=\s*<font.*?>\s*(-?[\.\d]+)\s*</font>#i) {
             $found_corr = 1;
             $ele_corr   = -$1;
         }
@@ -1706,7 +1703,7 @@ $HEAD =~ s|(<gpx )|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtensi
 # http://docstore.mik.ua/orelly/perl/cookbook/ch06_07.htm match multiple lines with 's' option
 if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # TODO insert metadata if not present
     my $indent = $1;
-    $indent .= ( $indent =~ m/ $/ ? '    ' : "\t" );
+    $indent .= ($indent =~ m/ $/ ? '    ' : "\t");
     if ( $min_tim ne "" ) {
         $min_tim = round_tim($min_tim);
         $HEAD =~ s|\r?\n?[ \t]*<time>.*?</time>||sg;   # remove any pre-existing time entry
