@@ -102,6 +102,7 @@ use constant MAX_SPEED_DEVIATION =>    2; # threshold for speed measuring deviat
 my $MIN_TIMEDIFF         ; # in seconds
 my $MAX_SENSIBLE_SPEED   ; # maximal speed in km/h
 my $MAX_SENSIBLE_ACCEL   ; # maximal acceleration m/s/s
+my $MAX_SENSIBLE_DECEL   ; # maximal deceleration m/s/s
 my $MAX_SENSIBLE_ELE_GAIN; # maximal ascent rate in m/h
 my $MAX_SENSIBLE_ELE_LOSS; # maximal descent rate in m/h
 use constant MAX_SENSIBLE_ANGLE_DIFF =>  170; # maximal sensible turning angle above speed threshold
@@ -691,6 +692,7 @@ if ( $activity eq "-swim" ) {
     $MIN_TIMEDIFF          = 4;
     $MAX_SENSIBLE_SPEED    = 7;
     $MAX_SENSIBLE_ACCEL    = 1;
+    $MAX_SENSIBLE_DECEL    = 2;
     $MAX_SENSIBLE_ELE_GAIN = 1;
     $MAX_SENSIBLE_ELE_LOSS = 1;
 }
@@ -698,6 +700,7 @@ elsif ( $activity eq "-walk" ) {
     $MIN_TIMEDIFF          = 4;
     $MAX_SENSIBLE_SPEED    = 20;
     $MAX_SENSIBLE_ACCEL    = 0.5;
+    $MAX_SENSIBLE_DECEL    = 1;
     $MAX_SENSIBLE_ELE_GAIN = 1800;
     $MAX_SENSIBLE_ELE_LOSS = 3600;
 }
@@ -705,6 +708,7 @@ elsif ( $activity eq "-cycle" ) {
     $MIN_TIMEDIFF          = 2;
     $MAX_SENSIBLE_SPEED    = 80;
     $MAX_SENSIBLE_ACCEL    = 4;
+    $MAX_SENSIBLE_DECEL    = 8;
     $MAX_SENSIBLE_ELE_GAIN = 3000;
     $MAX_SENSIBLE_ELE_LOSS = 9000;
 }
@@ -712,6 +716,7 @@ elsif ( $activity eq "-drive" ) { # default
     $MIN_TIMEDIFF          = 2;     # in seconds
     $MAX_SENSIBLE_SPEED    = 200;   # maximal speed in km/h
     $MAX_SENSIBLE_ACCEL    = 5;     # maximal acceleration m/s/s
+    $MAX_SENSIBLE_DECEL    = 10;    # maximal deceleration m/s/s
     $MAX_SENSIBLE_ELE_GAIN = 20000; # maximal ascent rate in m/h
     $MAX_SENSIBLE_ELE_LOSS = 20000; # maximal descent rate in m/h
     $PHASES_REPORT_THRESHOLD = 100;
@@ -720,6 +725,7 @@ elsif ( $activity eq "-fly" ) {
     $MIN_TIMEDIFF          = 1;
     $MAX_SENSIBLE_SPEED    = 1200;
     $MAX_SENSIBLE_ACCEL    = 10;
+    $MAX_SENSIBLE_DECEL    = 10;
     $MAX_SENSIBLE_ELE_GAIN = 30000;
     $MAX_SENSIBLE_ELE_LOSS = 50000;
     $PHASES_REPORT_THRESHOLD = 100;
@@ -1156,6 +1162,8 @@ warn_trkpt("                at",
 
 ## sanitize trackpoints
 
+my ($num_removals_ele, $num_removals_dir, $num_removals_spd, $num_removals_acc, $num_removals_dec,
+    $num_removals_gain, $num_removals_loss, $num_removals_diff) = (0, 0, 0, 0, 0, 0, 0, 0);
 { # TODO re-format
 my $num_removals_in_row = 0;
 my $last_ignore = 0;
@@ -1177,6 +1185,7 @@ for ( my $acc, my $rate,
 
     if ( $ele ne "" && $ele < MIN_SENSIBLE_ELE ) {
         $ignore = 1;
+        $num_removals_ele++;
         ignoring_trkpt( "", "altitude is less than " . MIN_SENSIBLE_ELE );
     }
 
@@ -1216,42 +1225,44 @@ for ( my $acc, my $rate,
         my $Warn_dis = sprintf "%" . DIS_PRECISION,  WARNING_TPT_DIST / 1000;
         my $Rate     = $rate ne "" ? sprintf RAT_PRECISION, $rate : "";
         my $Acc      = $acc ne "" ? sprintf ACC_PRECISION, $acc : "";
+        my $Dec      = $acc ne "" ? sprintf ACC_PRECISION, -$acc : "";
         warn_trkpt("before  ", "$Spd_txt distance between points = $Dis km (more than $Warn_dis)")
             if $dis > WARNING_TPT_DIST;
-
-        if ( !$ignore && $spd ne "" && $SPD[$i] ne "" )
-        {    # $ignore means: last trkpt has been ignored
-            my $spd_diff = abs($calc_spd - $spd);
-            warn_trkpt("before  ",
-                       "$Spd_txt calculated speed is " . spd_string($calc_spd) . " km/h " .
-                       "deviation is " . spd_string($spd_diff) . " km/h" .
-                       " (more than " . MAX_SPEED_DEVIATION . ")") if $spd_diff > MAX_SPEED_DEVIATION / 3.6;
-        }
 
         $ignore = 1; # the current point
         if ( MAX_SENSIBLE_ANGLE_DIFF < abs($theta_diff) ) {
             $ignore = -1; # the point before
+            $num_removals_dir++;
             ignoring_trkpt_i( $i - 1, spd_string($spd2), "direction change = $Theta_diff° ("
                   . ( $theta_diff >= 0 ? "more than  " : "less than -" ) . MAX_SENSIBLE_ANGLE_DIFF . "°)" );
         }
         elsif ( $spd ne "" && $Spd > $MAX_SENSIBLE_SPEED ) {
+            $num_removals_spd++;
             ignoring_trkpt( $Spd, "speed = $Spd km/h more than " . $MAX_SENSIBLE_SPEED);
         }
-        elsif ($acc ne "" && abs($acc) > $MAX_SENSIBLE_ACCEL
+        elsif ($acc ne "" && $acc > $MAX_SENSIBLE_ACCEL
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
-            ignoring_trkpt( $Spd, "acceleration = $Acc m/s/s ("
-                  . ( $acc >= 0 ? "more than " : "less than -" ) . $MAX_SENSIBLE_ACCEL . ")" );
+            $num_removals_acc++;
+            ignoring_trkpt( $Spd, "acceleration = $Acc m/s/s (more than " . $MAX_SENSIBLE_ACCEL . ")" );
+        }
+        elsif ($acc ne "" && -$acc > $MAX_SENSIBLE_DECEL
+            && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
+            $num_removals_dec++;
+            ignoring_trkpt( $Spd, "deceleration = $Dec m/s/s (more than " . $MAX_SENSIBLE_DECEL . ")" );
         }
         elsif ( $rate ne "" && $Rate > $MAX_SENSIBLE_ELE_GAIN ) {
+            $num_removals_gain++;
             ignoring_trkpt( $Spd, " ascent rate = $Rate m/h (more than  " . $MAX_SENSIBLE_ELE_GAIN . ")" );
         }
         elsif ( $rate ne "" && $Rate < -$MAX_SENSIBLE_ELE_LOSS ) {
+            $num_removals_loss++;
             ignoring_trkpt( $Spd, "descent rate = $Rate m/h (less than -" . $MAX_SENSIBLE_ELE_LOSS . ")" );
         }
         elsif ( $timediff ne "" && $timediff < $MIN_TIMEDIFF
                 && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) )
         {
             my $inter = ( $FLG[$i] & INTERPOLATED_TIM ) ? "interpolated " : "";
+            $num_removals_diff++;
             ignoring_trkpt( $Spd, $inter . "time difference = " . int($timediff)
                   . " sec (less than " . $MIN_TIMEDIFF . ") over a distance of $Dis km" ) if $timediff > 1.001;
         }
@@ -1894,6 +1905,14 @@ $final_text .= "$num_ignored_before points with time before " . epoch_to_str($be
 $final_text .= "$num_ignored_after points with time after  "  . epoch_to_str($end_sec  )  . " filtered out\n" if $end_sec;
 $final_text .= "$num_elem_above points with $max_elem above " . $max_elem_limit           . " filtered out\n" if $max_elem;
 $final_text .= "$num_elem_below points with $min_elem below " . $min_elem_limit           . " filtered out\n" if $min_elem;
+$final_text .= "$num_removals_ele points ignored due to altitude less than ".MIN_SENSIBLE_ELE." m\n" if $num_removals_ele;
+$final_text .= "$num_removals_dir points ignored due to direction change out of range -".MAX_SENSIBLE_ANGLE_DIFF."°..+".MAX_SENSIBLE_ANGLE_DIFF."°\n" if $num_removals_dir;
+$final_text .= "$num_removals_spd points ignored due to speed more than $MAX_SENSIBLE_SPEED km/h\n"           if $num_removals_spd;
+$final_text .= "$num_removals_acc points ignored due to acceleration more than $MAX_SENSIBLE_ACCEL m/s/s\n"   if $num_removals_acc;
+$final_text .= "$num_removals_dec points ignored due to deceleration more than $MAX_SENSIBLE_DECEL m/s/s\n"   if $num_removals_dec;
+$final_text .= "$num_removals_gain points ignored due to ascent rate more than $MAX_SENSIBLE_ELE_GAIN m/s\n"  if $num_removals_gain;
+$final_text .= "$num_removals_loss points ignored due to descent rate more than $MAX_SENSIBLE_ELE_LOSS m/s\n" if $num_removals_loss;
+$final_text .= "$num_removals_diff points ignored due to time difference less than $MIN_TIMEDIFF sec\n"       if $num_removals_diff;
 $final_text .= "$num_ext_above extensions with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= "$num_ext_below extensions with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
