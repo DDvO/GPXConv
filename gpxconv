@@ -510,11 +510,8 @@ sub ignoring_trkpt_i {
     warn_trkpt_i( $_[0], "ignoring", "$Spd_txt because $_[2]" );
 }
 
-my $i_last_removed = -1;
 sub remove_trkpt {
     my $i = $_[0];
-    warning("ignored more than one point in a row") if $i == $i_last_removed;
-    $i_last_removed = $i;
     $IGN[ $i + 1 ] = $IGN[$i] + 1; # indicate that previous point has been ignored, in addition to any previous ignores
     $SEG[ $i + 1 ] = 1 if $SEG[$i] && $i < $#SEG;  # take over any segment start
     $DIS[ $i + 1 ] = distance($LAT[ $i + 1 ], $LON[ $i + 1 ], $ELE[ $i + 1 ],
@@ -1160,6 +1157,8 @@ warn_trkpt("                at",
 ## sanitize trackpoints
 
 { # TODO re-format
+my $num_removals_in_row = 0;
+my $last_ignore = 0;
 my $sum_timediff_mov0 = 0;
 my $num_pts_mov       = 0;
 my $timediff_before;
@@ -1265,16 +1264,28 @@ for ( my $acc, my $rate,
             }
         }
     }
-    if ($ignore != 0) {
+    if ($ignore) {
+        if ($ignore == 1 && $last_ignore == -1) { # must delay output by one point because current point may be ignored in next iteration
+            warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
+            $num_removals_in_row = 0;
+        }
+        $num_removals_in_row++;
         remove_trkpt( $ignore == -1 ? --$i : $i-- );
         # will re-calculate speed etc. relative to same previous point as before
     }
     else {
+        if ($last_ignore != 1) { # must delay output by one point because current point may be ignored in next iteration
+            warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
+            $num_removals_in_row = 0;
+        }
         ( $prev_lat, $prev_lon, $prev_ele,  $prev_tim,
           $prev_sec, $prev_spd, $prev_rate, $prev_acc )
             = ( $lat, $lon, $ele, $tim, $sec, $spd, $rate, $acc );
     }
+    $last_ignore = $ignore;
 }
+warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
+
 $avg_timediff = $num_pts_mov ? $sum_timediff_mov0 / $num_pts_mov : 0; # used for smoothing
 # $sum_timediff_mov will be re-calculated thereafter, since points may have been ignored or smoothened
 } # end TODO re-format
