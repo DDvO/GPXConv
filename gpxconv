@@ -1174,7 +1174,7 @@ for ( my $acc, my $rate,
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
 
     ## debug"sanitizing point $i with lat=$lat lon=$lon ele='$ele' tim='$tim' sec=$sec spd='$spd'";
-    my $ignore = 0;
+    my ($ignore, $ignore_before) = (0, 0);
     sub ignore_trkpt        { $ignore =  1; ignoring_trkpt(  -1, @_); }
     sub ignore_trkpt_before { $ignore = -1; ignoring_trkpt($i-1, @_); }
     sub ignoring_trkpt { my ($index, $Spd, $reason) = @_;
@@ -1232,10 +1232,6 @@ for ( my $acc, my $rate,
             ignore_trkpt_before(spd_string($spd2), "direction change = $Theta_diff° (" .
                                 ($theta_diff >= 0 ? "more than  " : "less than -" ).MAX_SENSIBLE_ANGLE_DIFF."°)");
         }
-        elsif ( $spd ne "" && $Spd > $MAX_SENSIBLE_SPEED ) {
-            $num_removals_spd++;
-            ignoring_trkpt("", "speed = $Spd km/h more than ".$MAX_SENSIBLE_SPEED);
-        }
         elsif ($acc ne "" && $acc > $MAX_SENSIBLE_ACCEL
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
             $num_removals_acc++;
@@ -1245,6 +1241,17 @@ for ( my $acc, my $rate,
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
             $num_removals_dec++;
             ignore_trkpt_before($Spd, "deceleration = $Dec m/s/s (more than $MAX_SENSIBLE_DECEL)");
+        }
+        if ($ignore == -1) {
+            $num_removals_in_row++;
+            remove_trkpt(--$i);
+            # maybe should re-calculate speed etc. relative to new previous point
+            $ignore_before = -1;
+            $ignore = 0;
+        }
+        if ( $spd ne "" && $Spd > $MAX_SENSIBLE_SPEED ) {
+            $num_removals_spd++;
+            ignoring_trkpt("", "speed = $Spd km/h more than ".$MAX_SENSIBLE_SPEED);
         }
         elsif ( $rate ne "" && $rate > $MAX_SENSIBLE_ELE_GAIN ) {
             $num_removals_gain++;
@@ -1262,7 +1269,7 @@ for ( my $acc, my $rate,
             ignore_trkpt($Spd, $inter."time difference = ".int($timediff).
                          " sec (less than $MIN_TIMEDIFF) over a distance of $Dis km") if $timediff > 1.001;
         }
-        else {
+        elsif (!$ignore_before) {
             if ($spd ne "" && $spd >= MIN_SPEED_MOVING / 3.6) # implies $timediff ne ""
             {
                 $sum_timediff_mov0 += $timediff; # used for smoothing
@@ -1271,15 +1278,15 @@ for ( my $acc, my $rate,
         }
     }
     if ($ignore) {
-        if ($ignore == 1 && $last_ignore == -1) { # must delay output by one point because current point may be ignored in next iteration
+        if ($ignore == 1 && !$ignore_before && $last_ignore == -1) { # must delay output by one point because current point may be ignored in next iteration
             warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
             $num_removals_in_row = 0;
         }
         $num_removals_in_row++;
-        remove_trkpt( $ignore == -1 ? --$i : $i-- );
+        remove_trkpt($i--);
         # will re-calculate speed etc. relative to same previous point as before
     }
-    else {
+    elsif (!$ignore_before) {
         if ($last_ignore != 1) { # must delay output by one point because current point may be ignored in next iteration
             warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
             $num_removals_in_row = 0;
@@ -1288,7 +1295,7 @@ for ( my $acc, my $rate,
           $prev_sec, $prev_spd, $prev_rate, $prev_acc )
             = ( $lat, $lon, $ele, $tim, $sec, $spd, $rate, $acc );
     }
-    $last_ignore = $ignore;
+    $last_ignore = $ignore == 1 ? 1 : $ignore_before;
 }
 warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
 
