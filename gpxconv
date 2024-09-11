@@ -1300,6 +1300,10 @@ for ( my $acc, my $rate,
           $prev_sec, $prev_spd, $prev_rate, $prev_acc )
             = ( $lat, $lon, $ele, $tim, $sec, $spd, $rate, $acc );
     }
+    if ($ignore_before) {
+        ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_spd, $prev_rate, $prev_acc) =
+        (     $lat,      $lon,      $ele,      $tim,      $sec,      $spd, $prev_rate, $prev_acc);
+    }
     $last_ignore = $ignore ? 1 : $ignore_before ? -1 : 0;
 }
 warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
