@@ -1192,12 +1192,13 @@ for ( my $acc, my $rate,
         $acc = $rate = ""; # keep any recorded speed, but reset acceleration and climb/descent rate
     }
     else {
+        ( my $diff_ele, $timediff, $rate, my $dis, my $calc_spd, $acc ) = calc_diffs();
         my $theta_diff = 0;
         my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
         my $spd2 = $timediff2 <= 0 || $spd_before eq "" || $spd eq "" ? "" :
-            ($spd_before * $timediff_before + $spd * $timediff) / $timediff2;
+            ($spd_before * $timediff_before + $spd * $timediff) / $timediff2; # average speed between last two points
         if ($i >= 2 && !$SEG[ $i - 1 ] # previous point not at segment start
-            && $spd2 ne "" && $spd2 > MAX_SENSIBLE_ANGLE_SPD_THRESHOLD) # average speed between last two points
+            && $spd2 ne "" && $spd2 > MAX_SENSIBLE_ANGLE_SPD_THRESHOLD)
         {
             # turning angle calculation for spike detection
             my $prev_lon_diff = nearest( .00001, $prev_lon ) - nearest( .00001, $LON[ $i - 2 ] );
@@ -1213,7 +1214,6 @@ for ( my $acc, my $rate,
             }
         }
         my $Theta_diff = sprintf "%+.0f", $theta_diff;
-        ( my $diff_ele, $timediff, $rate, my $dis, my $calc_spd, $acc ) = calc_diffs();
         if ($spd eq "") {
             $spd = $calc_spd;
             $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
