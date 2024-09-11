@@ -51,6 +51,7 @@ Other options can be set by changing values of the configuration variables.
 
 use strict;
 use warnings;
+# use feature 'signatures'; # https://perldoc.perl.org/perlsub#Signatures
 
 ### configuration variables
 
@@ -501,14 +502,6 @@ sub print_trkpt_i {
       . ( $t ne "NO" ? " <time>" . ( $time . ( " " x max( 0, $tim_len - length($time) ) ) ) : "" )
       . "$tail");
     abort("") if ( $head =~ "^FATAL:" );
-}
-
-sub ignoring_trkpt { ignoring_trkpt_i( -1, $_[0] , $_[1] ); }
-
-sub ignoring_trkpt_i {
-    my $Spd = $_[1];
-    my $Spd_txt = $Spd ne "" ? " at speed = $Spd km/h" : "";
-    warn_trkpt_i( $_[0], "ignoring", "$Spd_txt because $_[2]" );
 }
 
 sub remove_trkpt {
@@ -1182,11 +1175,16 @@ for ( my $acc, my $rate,
 
     ## debug"sanitizing point $i with lat=$lat lon=$lon ele='$ele' tim='$tim' sec=$sec spd='$spd'";
     my $ignore = 0;
+    sub ignore_trkpt        { $ignore =  1; ignoring_trkpt(  -1, @_); }
+    sub ignore_trkpt_before { $ignore = -1; ignoring_trkpt($i-1, @_); }
+    sub ignoring_trkpt { my ($index, $Spd, $reason) = @_;
+        my $Spd_txt = $Spd eq "" ? "" : " at speed = $Spd km/h";
+        warn_trkpt_i($index, "ignoring", "$Spd_txt because $reason");
+    }
 
     if ( $ele ne "" && $ele < MIN_SENSIBLE_ELE ) {
-        $ignore = 1;
         $num_removals_ele++;
-        ignoring_trkpt( "", "altitude is less than " . MIN_SENSIBLE_ELE );
+        ignore_trkpt("", "altitude is less than ".MIN_SENSIBLE_ELE);
     }
 
     if ( $SEG[$i] ) { # at segment start
@@ -1229,47 +1227,42 @@ for ( my $acc, my $rate,
         warn_trkpt("before  ", "$Spd_txt distance between points = $Dis km (more than $Warn_dis)")
             if $dis > WARNING_TPT_DIST;
 
-        $ignore = 1; # the current point
         if ( MAX_SENSIBLE_ANGLE_DIFF < abs($theta_diff) ) {
-            $ignore = -1; # the point before
             $num_removals_dir++;
-            ignoring_trkpt_i( $i - 1, spd_string($spd2), "direction change = $Theta_diff° ("
-                  . ( $theta_diff >= 0 ? "more than  " : "less than -" ) . MAX_SENSIBLE_ANGLE_DIFF . "°)" );
+            ignore_trkpt_before(spd_string($spd2), "direction change = $Theta_diff° (" .
+                                ($theta_diff >= 0 ? "more than  " : "less than -" ).MAX_SENSIBLE_ANGLE_DIFF."°)");
         }
         elsif ( $spd ne "" && $Spd > $MAX_SENSIBLE_SPEED ) {
             $num_removals_spd++;
-            ignoring_trkpt( "", "speed = $Spd km/h more than " . $MAX_SENSIBLE_SPEED);
+            ignoring_trkpt("", "speed = $Spd km/h more than ".$MAX_SENSIBLE_SPEED);
         }
         elsif ($acc ne "" && $acc > $MAX_SENSIBLE_ACCEL
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
-            $ignore = -1; # the point before
             $num_removals_acc++;
-            ignoring_trkpt_i( $i - 1, $Spd, "acceleration = $Acc m/s/s (more than " . $MAX_SENSIBLE_ACCEL . ")" );
+            ignore_trkpt_before($Spd, "acceleration = $Acc m/s/s (more than $MAX_SENSIBLE_ACCEL)");
         }
         elsif ($acc ne "" && -$acc > $MAX_SENSIBLE_DECEL
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
-            $ignore = -1; # the point before
             $num_removals_dec++;
-            ignoring_trkpt_i( $i - 1, $Spd, "deceleration = $Dec m/s/s (more than " . $MAX_SENSIBLE_DECEL . ")" );
+            ignore_trkpt_before($Spd, "deceleration = $Dec m/s/s (more than $MAX_SENSIBLE_DECEL)");
         }
-        elsif ( $rate ne "" && $Rate > $MAX_SENSIBLE_ELE_GAIN ) {
+        elsif ( $rate ne "" && $rate > $MAX_SENSIBLE_ELE_GAIN ) {
             $num_removals_gain++;
-            ignoring_trkpt( $Spd, " ascent rate = $Rate m/h (more than  " . $MAX_SENSIBLE_ELE_GAIN . ")" );
+            ignore_trkpt($Spd, " ascent rate = $Rate m/h (more than  $MAX_SENSIBLE_ELE_GAIN)");
         }
-        elsif ( $rate ne "" && $Rate < -$MAX_SENSIBLE_ELE_LOSS ) {
+        elsif ( $rate ne "" && $rate < -$MAX_SENSIBLE_ELE_LOSS ) {
             $num_removals_loss++;
-            ignoring_trkpt( $Spd, "descent rate = $Rate m/h (less than -" . $MAX_SENSIBLE_ELE_LOSS . ")" );
+            ignore_trkpt($Spd, "descent rate = $Rate m/h (less than -$MAX_SENSIBLE_ELE_LOSS)");
         }
         elsif ( $timediff ne "" && $timediff < $MIN_TIMEDIFF
                 && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) )
         {
             my $inter = ( $FLG[$i] & INTERPOLATED_TIM ) ? "interpolated " : "";
             $num_removals_diff++;
-            ignoring_trkpt( $Spd, $inter . "time difference = " . int($timediff)
-                  . " sec (less than " . $MIN_TIMEDIFF . ") over a distance of $Dis km" ) if $timediff > 1.001;
+            ignore_trkpt($Spd, $inter."time difference = ".int($timediff).
+                         " sec (less than $MIN_TIMEDIFF) over a distance of $Dis km") if $timediff > 1.001;
         }
         else {
-            $ignore = 0;
             if ($spd ne "" && $spd >= MIN_SPEED_MOVING / 3.6) # implies $timediff ne ""
             {
                 $sum_timediff_mov0 += $timediff; # used for smoothing
