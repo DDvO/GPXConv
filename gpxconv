@@ -1162,13 +1162,12 @@ my $num_removals_in_row = 0;
 my $last_ignore = 0;
 my $sum_timediff_mov0 = 0;
 my $num_pts_mov       = 0;
-my $timediff_before;
+my ($timediff_before, $dis_before, $dis);
 my $timediff = "";
 my $spd_before;
 $spd = "";
 for ( my $acc, my $rate,
       my $i = 0 ; $i <= $#TIM ; $i++ ) {
-    $timediff_before = $timediff;
     $spd_before = $spd;
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
@@ -1192,15 +1191,15 @@ for ( my $acc, my $rate,
         $acc = $rate = ""; # keep any recorded speed, but reset acceleration and climb/descent rate
     }
     else {
-        ( my $diff_ele, $timediff, $rate, my $dis, my $calc_spd, $acc ) = calc_diffs();
+        ( my $diff_ele, $timediff, $rate, $dis, my $calc_spd, $acc ) = calc_diffs();
         my $theta_diff = 0;
         my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
-        my $spd2 = $timediff2 <= 0 || $spd_before eq "" || $spd eq "" ? "" :
-            ($spd_before * $timediff_before + $spd * $timediff) / $timediff2; # average speed between last two points
+        my $dis2 = !defined $dis_before || $dis_before eq "" || $dis eq "" ? 0 : $dis_before + $dis;
+        my $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed between three most recent points
         if ($i >= 2 && !$SEG[ $i - 1 ] # previous point not at segment start
             && $spd2 ne "" && $spd2 > MAX_SENSIBLE_ANGLE_SPD_THRESHOLD)
         {
-            # turning angle calculation for spike detection
+            # calculate horizontal direction change (i.e., turning angle) for spike detection
             my $prev_lon_diff = nearest( .00001, $prev_lon ) - nearest( .00001, $LON[ $i - 2 ] );
             my $prev_lat_diff = nearest( .00001, $prev_lat ) - nearest( .00001, $LAT[ $i - 2 ] );
             my $curr_lon_diff = nearest( .00001, $lon ) - nearest( .00001, $prev_lon );
@@ -1304,7 +1303,9 @@ for ( my $acc, my $rate,
         ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_spd, $prev_rate, $prev_acc) =
         (     $lat,      $lon,      $ele,      $tim,      $sec,      $spd, $prev_rate, $prev_acc);
         $timediff += $timediff_before;
+        $dis += $dis_before;
     }
+    ($timediff_before, $dis_before) = ($timediff, $dis);
     $last_ignore = $ignore ? 1 : $ignore_before ? -1 : 0;
 }
 warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
