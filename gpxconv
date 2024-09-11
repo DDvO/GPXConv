@@ -1175,8 +1175,8 @@ for ( my $acc, my $rate,
 
     ## debug"sanitizing point $i with lat=$lat lon=$lon ele='$ele' tim='$tim' sec=$sec spd='$spd'";
     my ($ignore, $ignore_before) = (0, 0);
-    sub ignore_trkpt        { $ignore = 1; ignoring_trkpt(  -1, @_); }
-    sub ignore_trkpt_before { $ignore = 1; ignoring_trkpt($i-1, @_); }
+    sub ignore_trkpt        { ignoring_trkpt(  -1, @_); }
+    sub ignore_trkpt_before { ignoring_trkpt($i-1, @_); }
     sub ignoring_trkpt { my ($index, $Spd, $reason) = @_;
         my $Spd_txt = $Spd eq "" ? "" : " at speed = $Spd km/h";
         warn_trkpt_i($index, "ignoring", "$Spd_txt because $reason");
@@ -1184,6 +1184,7 @@ for ( my $acc, my $rate,
 
     if ( $ele ne "" && $ele < MIN_SENSIBLE_ELE ) {
         $num_removals_ele++;
+        $ignore = 1;
         ignore_trkpt("", "altitude is less than ".MIN_SENSIBLE_ELE);
     }
 
@@ -1227,6 +1228,7 @@ for ( my $acc, my $rate,
         warn_trkpt("before  ", "$Spd_txt distance between points = $Dis km (more than $Warn_dis)")
             if $dis > WARNING_TPT_DIST;
 
+        $ignore = 1; # tentatively remove point before
         if ( MAX_SENSIBLE_ANGLE_DIFF < abs($theta_diff) ) {
             $num_removals_dir++;
             ignore_trkpt_before(spd_string($spd2), "direction change = $Theta_diff° (" .
@@ -1241,6 +1243,8 @@ for ( my $acc, my $rate,
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
             $num_removals_dec++;
             ignore_trkpt_before($Spd, "deceleration = $Dec m/s/s (more than $MAX_SENSIBLE_DECEL)");
+        } else {
+            $ignore = 0;
         }
         if ($ignore) {
             $num_removals_in_row++;
@@ -1249,6 +1253,7 @@ for ( my $acc, my $rate,
             $ignore_before = 1;
             $ignore = 0;
         }
+        $ignore = 1; # tentatively remove current point
         if ( $spd ne "" && $Spd > $MAX_SENSIBLE_SPEED ) {
             $num_removals_spd++;
             ignoring_trkpt("", "speed = $Spd km/h more than ".$MAX_SENSIBLE_SPEED);
@@ -1268,9 +1273,9 @@ for ( my $acc, my $rate,
             $num_removals_diff++;
             ignore_trkpt($Spd, $inter."time difference = ".int($timediff).
                          " sec (less than $MIN_TIMEDIFF) over a distance of $Dis km") if $timediff > 1.001;
-        }
-        elsif (!$ignore_before) {
-            if ($spd ne "" && $spd >= MIN_SPEED_MOVING / 3.6) # implies $timediff ne ""
+        } else {
+            $ignore = 0;
+            if (!$ignore_before && $spd ne "" && $spd >= MIN_SPEED_MOVING / 3.6) # implies $timediff ne ""
             {
                 $sum_timediff_mov0 += $timediff; # used for smoothing
                 $num_pts_mov++;                  # used for smoothing
