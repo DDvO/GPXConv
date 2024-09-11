@@ -1238,17 +1238,19 @@ for ( my $acc, my $rate,
         }
         elsif ( $spd ne "" && $Spd > $MAX_SENSIBLE_SPEED ) {
             $num_removals_spd++;
-            ignoring_trkpt( $Spd, "speed = $Spd km/h more than " . $MAX_SENSIBLE_SPEED);
+            ignoring_trkpt( "", "speed = $Spd km/h more than " . $MAX_SENSIBLE_SPEED);
         }
         elsif ($acc ne "" && $acc > $MAX_SENSIBLE_ACCEL
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
+            $ignore = -1; # the point before
             $num_removals_acc++;
-            ignoring_trkpt( $Spd, "acceleration = $Acc m/s/s (more than " . $MAX_SENSIBLE_ACCEL . ")" );
+            ignoring_trkpt_i( $i - 1, $Spd, "acceleration = $Acc m/s/s (more than " . $MAX_SENSIBLE_ACCEL . ")" );
         }
         elsif ($acc ne "" && -$acc > $MAX_SENSIBLE_DECEL
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
+            $ignore = -1; # the point before
             $num_removals_dec++;
-            ignoring_trkpt( $Spd, "deceleration = $Dec m/s/s (more than " . $MAX_SENSIBLE_DECEL . ")" );
+            ignoring_trkpt_i( $i - 1, $Spd, "deceleration = $Dec m/s/s (more than " . $MAX_SENSIBLE_DECEL . ")" );
         }
         elsif ( $rate ne "" && $Rate > $MAX_SENSIBLE_ELE_GAIN ) {
             $num_removals_gain++;
