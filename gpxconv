@@ -1303,6 +1303,7 @@ for ( my $acc, my $rate,
     if ($ignore_before) {
         ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_spd, $prev_rate, $prev_acc) =
         (     $lat,      $lon,      $ele,      $tim,      $sec,      $spd, $prev_rate, $prev_acc);
+        $timediff += $timediff_before;
     }
     $last_ignore = $ignore ? 1 : $ignore_before ? -1 : 0;
 }
