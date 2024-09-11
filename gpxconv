@@ -1192,24 +1192,25 @@ for ( my $acc, my $rate,
     }
     else {
         ( my $diff_ele, $timediff, $rate, $dis, my $calc_spd, $acc ) = calc_diffs();
-        my $theta_diff = 0;
-        my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
-        my $dis2 = !defined $dis_before || $dis_before eq "" || $dis eq "" ? 0 : $dis_before + $dis;
-        my $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed between three most recent points
-        if ($i >= 2 && !$SEG[ $i - 1 ] # previous point not at segment start
-            && $spd2 ne "" && $spd2 > MAX_SENSIBLE_ANGLE_SPD_THRESHOLD)
-        {
-            # calculate horizontal direction change (i.e., turning angle) for spike detection
-            my $prev_lon_diff = nearest( .00001, $prev_lon ) - nearest( .00001, $LON[ $i - 2 ] );
-            my $prev_lat_diff = nearest( .00001, $prev_lat ) - nearest( .00001, $LAT[ $i - 2 ] );
-            my $curr_lon_diff = nearest( .00001, $lon ) - nearest( .00001, $prev_lon );
-            my $curr_lat_diff = nearest( .00001, $lat ) - nearest( .00001, $prev_lat );
-            if ( $prev_lon_diff && $prev_lat_diff && $curr_lon_diff && $curr_lat_diff )
-            {
-                my $theta1 = atan2( $prev_lon_diff, $prev_lat_diff ) * 360 / pi2;
-                my $theta2 = atan2( $curr_lon_diff, $curr_lat_diff ) * 360 / pi2;
-                $theta_diff = ( $theta2 - $theta1 ) % 360;
-                $theta_diff -= 360 if $theta_diff >= 180;
+        my ($theta_diff, $Spd2) = (0, "");
+        if (!$SEG[$i - 1]) { # previous point not at segment start, implies $i >= 2 here
+            my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
+            my      $dis2 =      $dis_before eq "" ||      $dis eq "" ? 0 :      $dis_before +      $dis;
+            my $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed between three most recent points
+            if ($spd2 ne "" && $spd2 > MAX_SENSIBLE_ANGLE_SPD_THRESHOLD) {
+                # calculate horizontal direction change (i.e., turning angle) for spike detection
+                my $prev_lon_diff = nearest(.00001, $prev_lon) - nearest(.00001, $LON[$i - 2]);
+                my $prev_lat_diff = nearest(.00001, $prev_lat) - nearest(.00001, $LAT[$i - 2]);
+                my $curr_lon_diff = nearest(.00001,      $lon) - nearest(.00001, $prev_lon   );
+                my $curr_lat_diff = nearest(.00001,      $lat) - nearest(.00001, $prev_lat   );
+                if ($prev_lon_diff && $prev_lat_diff && $curr_lon_diff && $curr_lat_diff)
+                {
+                    my $theta1 = atan2($prev_lon_diff, $prev_lat_diff) * 360 / pi2;
+                    my $theta2 = atan2($curr_lon_diff, $curr_lat_diff) * 360 / pi2;
+                    $theta_diff = ($theta2 - $theta1) % 360;
+                    $theta_diff -= 360 if $theta_diff >= 180;
+                }
+                $Spd2 = spd_string($spd2);
             }
         }
         my $Theta_diff = sprintf "%+.0f", $theta_diff;
@@ -1230,8 +1231,7 @@ for ( my $acc, my $rate,
         $ignore = 1; # tentatively remove point before
         if ( MAX_SENSIBLE_ANGLE_DIFF < abs($theta_diff) ) {
             $num_removals_dir++;
-            ignore_trkpt_before(spd_string($spd2), "direction change = $Theta_diff° (" .
-                                ($theta_diff >= 0 ? "more than  " : "less than -" ).MAX_SENSIBLE_ANGLE_DIFF."°)");
+            ignore_trkpt_before($Spd2, "direction change = $Theta_diff° (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_SENSIBLE_ANGLE_DIFF."°)");
         }
         elsif ($acc ne "" && $acc > $MAX_SENSIBLE_ACCEL
             && ( $FLG[ $i - 1 ] & INTERPOLATED_TIM ) == ( $FLG[$i] & INTERPOLATED_TIM ) ) {
