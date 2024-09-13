@@ -1229,12 +1229,13 @@ for ( my $acc, my $rate,
             }
         }
         my $Theta_diff = sprintf "%+.0f", $theta_diff;
+        my $Comp_spd = spd_string($comp_spd) if $comp_spd ne "";
         if ($comp_spd ne "" && $spd ne "" && $timediff ne "" && $timediff <= MAX_TIMEDIFF_RECORDED_SPEED) {
             my $spd_diff = abs($comp_spd - $spd);
             $sum_speed_deviation += $spd_diff;
             $sum_speed += $comp_spd + $spd; # will later divide by 2 for average;
             warn_trkpt("before  ",
-                       "recorded speed is ".spd_string($spd).", computed speed is ".spd_string($comp_spd)." km/h ".
+                       "recorded speed is ".spd_string($spd).", computed speed is $Comp_spd km/h ".
                        "deviation is " . spd_string($spd_diff) . " km/h" .
                        " (more than " . MAX_SPEED_DEVIATION . ")") if $spd_diff > (MAX_SPEED_DEVIATION + 0.5) / 3.6;
         }
@@ -1273,11 +1274,11 @@ for ( my $acc, my $rate,
         }
         elsif ($acc ne "" &&  $acc > $MAX_PLAUSIBLE_ACCEL && ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
             $num_removals_acc++;
-            ignore_trkpt($Spd, "acceleration = $Acc m/s/s (more than $MAX_PLAUSIBLE_ACCEL)");
+            ignore_trkpt($Comp_spd, "acceleration = $Acc m/s/s (more than $MAX_PLAUSIBLE_ACCEL)");
         }
         elsif ($acc ne "" && -$acc > $MAX_PLAUSIBLE_DECEL && ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
             $num_removals_dec++;
-            ignore_trkpt($Spd, "deceleration = $Dec m/s/s (more than $MAX_PLAUSIBLE_DECEL)");
+            ignore_trkpt($Comp_spd, "deceleration = $Dec m/s/s (more than $MAX_PLAUSIBLE_DECEL)");
         }
         elsif ($rate ne "" && $rate > $MAX_PLAUSIBLE_ELE_GAIN) {
             $num_removals_gain++;
