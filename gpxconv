@@ -1256,14 +1256,6 @@ for ( my $acc, my $rate,
         if (MAX_PLAUSIBLE_ANGLE_DIFF < abs($theta_diff)) {
             $num_removals_dir++;
             ignore_trkpt_before($Spd2, "direction change = $Theta_diff° (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_PLAUSIBLE_ANGLE_DIFF."°)");
-        }
-        elsif ($acc ne "" &&  $acc > $MAX_PLAUSIBLE_ACCEL && ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
-            $num_removals_acc++;
-            ignore_trkpt_before($Spd, "acceleration = $Acc m/s/s (more than $MAX_PLAUSIBLE_ACCEL)");
-        }
-        elsif ($acc ne "" && -$acc > $MAX_PLAUSIBLE_DECEL && ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
-            $num_removals_dec++;
-            ignore_trkpt_before($Spd, "deceleration = $Dec m/s/s (more than $MAX_PLAUSIBLE_DECEL)");
         } else {
             $ignore = 0;
         }
@@ -1278,6 +1270,14 @@ for ( my $acc, my $rate,
         if ($spd ne "" && $Spd > $MAX_PLAUSIBLE_SPEED) {
             $num_removals_spd++;
             ignoring_trkpt("", "speed = $Spd km/h more than ".$MAX_PLAUSIBLE_SPEED);
+        }
+        elsif ($acc ne "" &&  $acc > $MAX_PLAUSIBLE_ACCEL && ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
+            $num_removals_acc++;
+            ignore_trkpt($Spd, "acceleration = $Acc m/s/s (more than $MAX_PLAUSIBLE_ACCEL)");
+        }
+        elsif ($acc ne "" && -$acc > $MAX_PLAUSIBLE_DECEL && ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
+            $num_removals_dec++;
+            ignore_trkpt($Spd, "deceleration = $Dec m/s/s (more than $MAX_PLAUSIBLE_DECEL)");
         }
         elsif ($rate ne "" && $rate > $MAX_PLAUSIBLE_ELE_GAIN) {
             $num_removals_gain++;
