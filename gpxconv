@@ -74,6 +74,9 @@ use constant CARRY_OVER_TIME   => 1; # copy time from end of previous segment or
 use constant FILL_MISSING_ELE  => 1; # interpolate missing altitude
 use constant FILL_MISSING_TIME => 1; # interpolate missing time
 
+# control use of recorded vs. calculated speed
+use constant MAX_TIMEDIFF_RECORDED_SPEED => 2; # maximum number of seconds for which recorded speed is used
+
 # analysis control
 use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
 use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
@@ -98,6 +101,7 @@ use constant PRINT_INFO          =>    1; # whether printing information is enab
 use constant WARNING_TPT_DIST    => 2000; # threshold for trackpoint distance warning (in meters)
 use constant WARNING_WPT_DIST    =>  100; # threshold for waypoint distance warning (in meters)
 use constant MAX_SPEED_DEVIATION =>    2; # threshold for speed measuring deviation warning (in km/h)
+# using absolute value for MAX_SPEED_DEVIATION because we compute speed from absolute values (coordinates and time)
 
 # pruning control
 my $MIN_TIMEDIFF         ; # in seconds
@@ -242,6 +246,10 @@ my (@SUM__ASCENT, @TIME__ASCENT,
 my $sum_dis         = 0;
 my $avg_spd;
 my $avg_timediff;
+
+ # for calculating relative deviation between recorded and calculated speed
+my $sum_speed = 0;
+my $sum_speed_deviation = 0;
 
 my $sum_timediff_mov = 0;
 my $sum_energy = 0;
@@ -1217,11 +1225,20 @@ for ( my $acc, my $rate,
             }
         }
         my $Theta_diff = sprintf "%+.0f", $theta_diff;
-        if ($spd eq "") {
-            $spd = $calc_spd;
+        if ($calc_spd ne "" && $spd ne "" && $timediff ne "" && $timediff <= MAX_TIMEDIFF_RECORDED_SPEED) {
+            my $spd_diff = abs($calc_spd - $spd);
+            $sum_speed_deviation += $spd_diff;
+            $sum_speed += $calc_spd + $spd; # will later divide by 2 for average;
+            warn_trkpt("before  ",
+                       "recorded speed is ". spd_string($spd) . ", calculated speed is " . spd_string($calc_spd) . " km/h " .
+                       "deviation is " . spd_string($spd_diff) . " km/h" .
+                       " (more than " . MAX_SPEED_DEVIATION . ")") if $spd_diff > (MAX_SPEED_DEVIATION + 0.5) / 3.6;
+        }
+        if ($spd eq "" || $timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED) {
+            $spd = $calc_spd; # $SPD[$i] will be set later if needed
             $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
         }
-        my $Spd      = $spd ne "" ? spd_string("$spd") : "";
+        my $Spd      = $spd ne "" ? spd_string($spd) : "";
         my $Spd_txt  = $spd ne "" ? " at speed = $Spd km/h" : "";
         my $Dis      = sprintf "%4" . DIS_PRECISION, $dis / 1000;
         my $Warn_dis = sprintf "%" . DIS_PRECISION,  WARNING_TPT_DIST / 1000;
@@ -1600,10 +1617,10 @@ for( my $rate, my $spd, my $direction,
         ( my $diff_ele_unused, my $timediff, $rate, my $dis, $spd, my $acc_unused ) =
           $SEG[$i] ? ( "", "", "", 0, "", "" ) : calc_diffs();
         $sum_dis += $dis;
-        if ( $SPD[$i] eq "" && $spd ne "") # set calculated speed if recorded speed is not available
+        if ($SPD[$i] eq "" || ($timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED)) # set calculated speed if recorded speed is not available or over unusually long time
         {
             $SPD[$i] = $spd;
-            $FLG[$i] |= CALCULATED_SPEED;
+            $FLG[$i] |= CALCULATED_SPEED if $spd ne "";
         }
         $spd = $SPD[$i];
         push @DIST, $dis;
@@ -1732,6 +1749,8 @@ my $Avg_spd    = spd_string($avg_spd);
    $Avg_spd =~ s/^\s+//;
 my $Sum_timediff_mov = timediff_string($sum_timediff_mov);
    $Sum_timediff_mov =~ s/^\s+//;
+my $Speed_deviation_text = $sum_speed ? ("average deviation between recorded and calculated speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
+                                         int(0.5 + 100 * $sum_speed_deviation / ($sum_speed / 2))." %\n") : "";
 
 $HEAD =~ s/(<gpx )/$1creator="GPXConv" /
   unless $HEAD =~ m/<gpx.*? creator\s*=.*?>/;
@@ -1947,6 +1966,7 @@ my $stats = "GPXConv statistics (not including sanitized trackpoints nor periods
   . $part_points
   . $phase_points
   . point( $#TIM, "end" )
+  . $Speed_deviation_text
   .($phases && $PHASES_REPORT_THRESHOLD > ELE_THRESHOLD ?
     "$ascent__phases_suppressed ascent phases and $descent_phases_suppressed descent phases " .
     "not reported because they are below the threshold of +/-$PHASES_REPORT_THRESHOLD m\n" : "")
