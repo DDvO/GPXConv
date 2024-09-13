@@ -18,7 +18,7 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 * Produces statistics, optionally including ascent/descent rates of climbing phases.
 * Optionally produces additional statistics on a per-segment or per-day basis.
-* Optionally computes approx. total energy spent by biking along the resulting track.
+* Optionally calculates approx. total energy spent by biking along the resulting track.
 * Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
 
 Usage:
@@ -32,7 +32,7 @@ Command-line options:
   -phases                      - analyze ascent/descent phases
   -segs <n>                    - produce additional statistics per segment, start with n
   -days <n>                    - produce additional statistics per day, counted from n
-  -weight <value>              - compute biking energy for given weight in kg
+  -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
   -max <name> <limit>          - ignore points with element value above limit
