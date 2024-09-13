@@ -469,6 +469,9 @@ sub debug {
     print_line("### DEBUG: $_[0]");
 }
 
+sub plural { my ($n, $str) = @_; return "$n $str".($n == 1 ? "" : "s"); }
+sub points { return plural ($_[0], "point"); }
+
 sub info_trkpt  { info_trkpt_i( -1, $_[0], $_[1] ); }
 sub warn_trkpt  { warn_trkpt_i( -1, $_[0], $_[1] ); }
 sub print_trkpt { print_trkpt_i( -1, $_[0], $_[1] ); }
@@ -1098,10 +1101,7 @@ for ( my $state = 0,
         }
         elsif ($num_no_ele) {
             my $Len = sprintf "%4" . DIS_PRECISION, $ele_gap_length / 1000;
-            warn_trkpt_i($i - 1, "no altitude  up to", " for "
-                  . $num_no_ele . " point" . ( $num_no_ele > 1 ? "s" : "" )
-                  . " over a distance of $Len km"
-            );
+            warn_trkpt_i($i - 1, "no altitude  up to", " for ".points($num_no_ele)." over a distance of $Len km");
             $num_no_ele     = 0;
             $ele_gap_length = 0;
         }
@@ -1112,10 +1112,7 @@ for ( my $state = 0,
         }
         elsif ($num_no_time) {
             my $Len = sprintf "%4" . DIS_PRECISION, $time_gap_length / 1000;
-            warn_trkpt_i($i - 1, "no time      up to", " for "
-                  . $num_no_time . " point" . ( $num_no_time > 1 ? "s" : "" )
-                  . " over a distance of $Len km"
-            );
+            warn_trkpt_i($i - 1, "no time      up to", " for ".points($num_no_time)." over a distance of $Len km");
             $num_no_time     = 0;
             $time_gap_length = 0;
         }
@@ -1930,29 +1927,29 @@ $final_text .= "total recording time = $total_time\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mov;
 $final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov && $weight;
 $final_text .= "average moving speed = $Avg_spd km/h\n"      if $avg_spd;
-$final_text .= "$num_pruned_wpts waypoints"    . " pruned\n" if $num_pruned_wpts;
-$final_text .= "$num_auto_wpts automatic waypoints pruned\n" if $num_auto_wpts;
-$final_text .= "$num_ignored_hdrs track headers"." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
-$final_text .= "$num_pruned_exts extensions"   . " pruned\n" if $num_pruned_exts;    # not counting nested ones
-$final_text .= "$num_pruned_descs descriptions". " pruned\n" if $num_pruned_descs;   # not counting nested ones
-$final_text .= "$num_pruned_links links"       . " pruned\n" if $num_pruned_links;   # not counting nested ones
-$final_text .= "$num_ignored_before points with time before " . epoch_to_str($begin_sec)  . " filtered out\n" if $begin_sec;
-$final_text .= "$num_ignored_after points with time after  "  . epoch_to_str($end_sec  )  . " filtered out\n" if $end_sec;
-$final_text .= "$num_elem_above points with $max_elem above " . $max_elem_limit           . " filtered out\n" if $max_elem;
-$final_text .= "$num_elem_below points with $min_elem below " . $min_elem_limit           . " filtered out\n" if $min_elem;
-$final_text .= "$num_removals_ele points ignored due to altitude less than ".MIN_SENSIBLE_ELE." m\n" if $num_removals_ele;
-$final_text .= "$num_removals_dir points ignored due to direction change out of range -".MAX_SENSIBLE_ANGLE_DIFF."°..+".MAX_SENSIBLE_ANGLE_DIFF."°\n" if $num_removals_dir;
-$final_text .= "$num_removals_spd points ignored due to speed more than $MAX_SENSIBLE_SPEED km/h\n"           if $num_removals_spd;
-$final_text .= "$num_removals_acc points ignored due to acceleration more than $MAX_SENSIBLE_ACCEL m/s/s\n"   if $num_removals_acc;
-$final_text .= "$num_removals_dec points ignored due to deceleration more than $MAX_SENSIBLE_DECEL m/s/s\n"   if $num_removals_dec;
-$final_text .= "$num_removals_gain points ignored due to ascent rate more than $MAX_SENSIBLE_ELE_GAIN m/s\n"  if $num_removals_gain;
-$final_text .= "$num_removals_loss points ignored due to descent rate more than $MAX_SENSIBLE_ELE_LOSS m/s\n" if $num_removals_loss;
-$final_text .= "$num_removals_diff points ignored due to time difference less than $MIN_TIMEDIFF sec\n"       if $num_removals_diff;
-$final_text .= "$num_ext_above extensions with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
-$final_text .= "$num_ext_below extensions with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
+$final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
+$final_text .= plural($num_auto_wpts, "automatic waypoint")." pruned\n" if $num_auto_wpts;
+$final_text .= plural($num_ignored_hdrs,    "track header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
+$final_text .= plural($num_pruned_exts,        "extension")." pruned\n" if $num_pruned_exts;    # not counting nested ones
+$final_text .= plural($num_pruned_descs,     "description")." pruned\n" if $num_pruned_descs;   # not counting nested ones
+$final_text .= plural($num_pruned_links,            "link")." pruned\n" if $num_pruned_links;   # not counting nested ones
+$final_text .= points($num_ignored_before)." with time before ".epoch_to_str($begin_sec)." filtered out\n" if $begin_sec;
+$final_text .= points($num_ignored_after )." with time after  ".epoch_to_str($end_sec  )." filtered out\n" if $end_sec;
+$final_text .= points($num_elem_above    )." with $max_elem above $max_elem_limit"      ." filtered out\n" if $max_elem;
+$final_text .= points($num_elem_below    )." with $min_elem below $min_elem_limit"      ." filtered out\n" if $min_elem;
+$final_text .= points($num_removals_ele  )." ignored due to altitude less than "            .MIN_SENSIBLE_ELE                                     ." m\n" if $num_removals_ele;
+$final_text .= points($num_removals_dir  )." ignored due to direction change out of range -".MAX_SENSIBLE_ANGLE_DIFF."°..+".MAX_SENSIBLE_ANGLE_DIFF."°\n" if $num_removals_dir;
+$final_text .= points($num_removals_spd  )." ignored due to speed more than $MAX_SENSIBLE_SPEED km/h\n"          if $num_removals_spd;
+$final_text .= points($num_removals_acc  )." ignored due to acceleration more than $MAX_SENSIBLE_ACCEL m/s/s\n"  if $num_removals_acc;
+$final_text .= points($num_removals_dec  )." ignored due to deceleration more than $MAX_SENSIBLE_DECEL m/s/s\n"  if $num_removals_dec;
+$final_text .= points($num_removals_gain )." ignored due to ascent rate more than $MAX_SENSIBLE_ELE_GAIN m/s\n"  if $num_removals_gain;
+$final_text .= points($num_removals_loss )." ignored due to descent rate more than $MAX_SENSIBLE_ELE_LOSS m/s\n" if $num_removals_loss;
+$final_text .= points($num_removals_diff )." ignored due to time difference less than $MIN_TIMEDIFF sec\n"       if $num_removals_diff;
+$final_text .= plural($num_ext_above, "extension")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
+$final_text .= plural($num_ext_below, "extension")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
-$final_text .= ($smoothing ? "within each track, points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened\n" : "" );
+$final_text .= ($smoothing ? "within each track, points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened\n" : "" ); # not using sub points() here
 
 $wpts .=
     wpt( -1, 0, "start" )
@@ -1996,9 +1993,7 @@ for ( my $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
         my $Dis      = sprintf "%4" . DIS_PRECISION, $dis / 1000;
         my $dis_inc  = $dis / $n_spans;
         my $N_points = $n_spans - 1;
-        my $s        = $N_points > 1 ? "s" : "";
-        warn_trkpt( "before", "  long time gap = ". timediff_string($diff_time) .
-                    " over a distance of " . $Dis . " km" . "; inserting $N_points point$s" );
+        warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of $Dis km; inserting ".points($N_points));
         # by interpolation every ". (sprintf SEC_PRECISION, $time_inc) ." seconds");
         my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after interpolated points
         my $start = $seg ? 0 : 1;
@@ -2049,8 +2044,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     print $out '<trkpt lat="' . lat_string($LAT[$i]) . '" lon="' . lon_string($LON[$i]) . '">';
     print $out "<ele>" . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
     print $out "<time>$tim</time>" if $tim;
-    print $out "<cmt>$IGN[$i] previous point" . ( $IGN[$i] == 1 ? "" : "s" ) . " ignored</cmt>"
-        if !DISABLE_TRKPT_CMT && $IGN[$i];
+    print $out "<cmt>".plural($IGN[$i], "previous point")." ignored</cmt>" if !DISABLE_TRKPT_CMT && $IGN[$i];
     if (!DISABLE_TRKPT_SRC) {
         my $src = $FLG[$i] & INTERPOLATED_POINT ? "bridging time gap: interpolated point"
             : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
