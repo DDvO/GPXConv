@@ -7,13 +7,13 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
 * Can complete gaps in input file(s) by merging data from an alternative GPX file (parallel composition).
 * Concatenates all given tracks (or routes) preserving segments, collecting waypoints.
 * The metadata (header) of the first input track is used for the output track.
-* Reports missing data and ignores points containing non-plausible data.
+* Reports missing data and by default ignores points containing implausible data.
 * Optionally filters out points before or after given time limits.
 * Optionally filters out points with an element value below or above given limits.
 * Optionally prunes all extensions or elements with value below or above given limits.
 * Optionally fills in altitude and time data by interpolation within segments.
 * Optionally interpolates points in long gaps (by default, > 3600 seconds).
-* Optionally corrects elevation and sanitizes and smoothens tracks.
+* Optionally corrects elevation and and smoothens tracks.
   (Orthometric height = GPS ellipsoidal height - geoid height,
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 * Produces statistics, optionally including ascent/descent rates of climbing phases.
