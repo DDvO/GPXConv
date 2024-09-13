@@ -1018,7 +1018,7 @@ for ( my $state = 0,
                 # substitute time using recorded speed and distance from previous point
                 $tim = epoch_to_str($calc_sec);    # will become $TIM[$i]
                 $sec = $calc_sec;                  # will become $SEC[$i]
-                warn_trkpt("at                ", " no time      given, " .
+                warn_trkpt("at                ", " no time recognized, " .
                            " filled in using time difference calculated by distance / speed");
                 $FLG[$i] |= SUBSTITUTED_TIM;
             }
