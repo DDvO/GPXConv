@@ -399,7 +399,7 @@ sub parse_point {
     }
 
     my $spd = "";
-    if ($str =~ m#<(\w:)?speed>\s*(-?[\.\d ]+)\s*</(\w:)?speed>#s) {
+    if ($str =~ m#<(\w+:)?speed>\s*(-?[\.\d ]+)\s*</(\w+:)?speed>#s) {
         $spd = $2 / 3.6; # assuming speed is given in km/h
         $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
     }
