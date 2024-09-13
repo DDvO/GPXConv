@@ -570,6 +570,7 @@ sub distance_curr {    # of $lat, $lon, $ele
 
 sub comp_diffs()
 { # of $lat, $lon, $ele relative to $prev_lat, $prev_lon, $prev_ele, so speed is relative to previous point
+    # $prev_spd is assumed to be average speed computed between previous points
     my $dis = distance_curr( $prev_lat, $prev_lon, $prev_ele );
     # re-calculating distance since coordinates may have been filled in or smoothened
     my $diff_ele = ( $ele ne "" && $prev_ele ne "" ? $ele - $prev_ele : "" );
@@ -1202,11 +1203,12 @@ for ( my $acc, my $rate,
         ignore_trkpt("", "altitude is less than ".MIN_PLAUSIBLE_ELE);
     }
 
+    my $comp_spd = "";
     if ( $SEG[$i] ) { # at segment start
         $acc = $rate = ""; # keep any recorded speed, but reset acceleration and climb/descent rate
     }
     else {
-        ( my $diff_ele, $timediff, $rate, $dis, my $comp_spd, $acc ) = comp_diffs();
+        ( my $diff_ele, $timediff, $rate, $dis, $comp_spd, $acc ) = comp_diffs();
         my ($theta_diff, $Spd2) = (0, "");
         if (!$SEG[$i - 1]) { # previous point not at segment start, implies $i >= 2 here
             my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
@@ -1319,11 +1321,11 @@ for ( my $acc, my $rate,
         }
         ( $prev_lat, $prev_lon, $prev_ele,  $prev_tim,
           $prev_sec, $prev_spd, $prev_rate, $prev_acc )
-            = ( $lat, $lon, $ele, $tim, $sec, $spd, $rate, $acc );
+            = ( $lat, $lon, $ele, $tim, $sec, $comp_spd, $rate, $acc );
     }
     if ($ignore_before) {
         ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_spd, $prev_rate, $prev_acc) =
-        (     $lat,      $lon,      $ele,      $tim,      $sec,      $spd, $prev_rate, $prev_acc);
+        (     $lat,      $lon,      $ele,      $tim,      $sec, $comp_spd, $prev_rate, $prev_acc);
         $timediff += $timediff_before;
         $dis += $dis_before;
     }
