@@ -400,7 +400,10 @@ sub parse_point {
 
     my $spd = "";
     if ($str =~ m#<(\w+:)?speed>\s*(-?[\.\d ]+)\s*</(\w+:)?speed>#s) {
-        $spd = $2 / 3.6; # assuming speed is given in km/h
+        # we assume that recorded speed takes altitude into accouont (i.e., is not just horizontal/lateral speed),
+        # see also https://forums.geocaching.com/GC/index.php?/topic/209525-gps-speed-3d-or-2d/
+        $spd = $2;
+        $spd /= 3.6 unless $1; # usuallly, speed is given m/s, while our abbreviated extension uses km/h
         $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
     }
 
