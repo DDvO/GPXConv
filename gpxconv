@@ -343,6 +343,7 @@ sub ele_string {
 }
 
 my $spd_prec_len = 1; # used only for spd_string
+sub spd_full { return sprintf SPD_PRECISION, 3.6 * $_[0]; }
 sub spd_str { return sprintf SPD_PRECISION0, 3.6 * $_[0]; }
 sub spd_string {
     my $s = spd_str($_[0]);
@@ -1849,8 +1850,8 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
     $Len .= "; duration = " . timediff_string($duration) if $duration >= 0;
     my $max_spd_idx = $PHASE_MAXSPD_INDEX[$i];
     my $Spd = phase_text($i)
-        . "max speed =  " . (sprintf SPD_PRECISION, 3.6 * $SPD[$max_spd_idx]) . " km/h; "
-        . "avg speed  = " . (sprintf SPD_PRECISION, 3.6 * $PHASE_SPD[$i]    ) . " km/h"
+        . "max speed =  ".spd_full($SPD[$max_spd_idx])." km/h; "
+        . "avg speed  = ".spd_full($PHASE_SPD[    $i])." km/h"
         if $max_spd_idx;
     my $max_rate_idx = $PHASE_MAXRATE_INDEX[$i];
     my $Rate = phase_text($i)
@@ -1872,9 +1873,9 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
     my $Part = $i == $all ? "" : (defined $segs ? "segment" : "day")." ".(' ' x (length($part) - length($i)))."$i ";
     my $Min_ele      = sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]); # may be "" if not defined
     my $Max_ele      = sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]); # may be "" if not defined
-    my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? spd_string($SPD[$MAX_SPD_INDEX [$i]]) : "";
-    my $Max_gain_spd = defined $MAX_GAIN_INDEX[$i] ? spd_str   ($SPD[$MAX_GAIN_INDEX[$i]]) : "";
-    my $Max_loss_spd = defined $MAX_LOSS_INDEX[$i] ? spd_str   ($SPD[$MAX_LOSS_INDEX[$i]]) : "";
+    my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? " ".spd_full($SPD[$MAX_SPD_INDEX [$i]]) : "";
+    my $Max_gain_spd = defined $MAX_GAIN_INDEX[$i] ?     spd_str ($SPD[$MAX_GAIN_INDEX[$i]]) : "";
+    my $Max_loss_spd = defined $MAX_LOSS_INDEX[$i] ?     spd_str ($SPD[$MAX_LOSS_INDEX[$i]]) : "";
     while (substr( $Max_gain_spd, 0, 1 ) eq " " &&
            substr( $Max_loss_spd, 0, 1 ) eq " " )
     {
@@ -1896,7 +1897,7 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
     my $Avg_descent_rate = sprintf RAT_PRECISION, $avg_descent_rate;
     $Avg_descent_rate =~ s/\+/-/ if !$avg_descent_rate;
 
-    my $max_spd_text  = $Part."max speed        =   $Max_spd km/h";  # may use "" if not defined
+    my $max_spd_text  = $Part."max speed        = $Max_spd km/h";    # may use "" if not defined
     my $min_ele_text  = $Part."min altitude     = $Min_ele m";       # may use "" if not defined
     my $max_ele_text  = $Part."max altitude     = $Max_ele m";       # may use "" if not defined
     my $ascent_text   = $Part."total  ascent    = $Sum__ascent m; avg rate  = $Avg__ascent_rate m/h";
