@@ -11,17 +11,18 @@
 </metadata>
 
 <wpt lat="43.8135040" lon="7.7715837"><ele>1.21</ele><time>2019-08-23T00:00:00Z</time>
-<name><![CDATA[0001496]]></name><link>this automatic wpt will be pruned by default</link><desc><![CDATA[<p><br /><h3>Name: WP1</h3>]]></desc><sym>Waypoint</sym><type>Starting Point</type>
+<name><![CDATA[0001496]]></name><cmt>this automatic wpt will be pruned by default</cmt><desc><![CDATA[<p><br /><h3>Name: WP1</h3>]]></desc><sym>Waypoint</sym><type>Starting Point</type>
 <extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
 </wpt>
 <wpt lat="43.8135855" lon="7.7715481"><ele>7.12</ele><time>2019-08-23T15:11:36Z</time>
-<name><![CDATA[non-auto]]></name><link>wpt link</link><sym>Waypoint</sym><type>Finishing Point</type>
+<name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Finishing Point</type>
 <extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
 </wpt>
 
 
 <trk>
 <name><![CDATA[2019-08-22_Vernazza-Chiavari-Sanremo]]></name>
+<cmt>trk comment</cmt>
 <desc><![CDATA[<p>Original start time: 08/22/2019 07:44<br/>Original finish time: 08/23/2019 22:56<br/>Distance: 98.4 km (71:37)]]></desc>
 <link>trk link</link>
 <type>Driving</type>

@@ -10,8 +10,8 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
 * Reports missing data and by default ignores points containing implausible data.
 * Optionally filters out points before or after given time limits.
 * Optionally filters out points with an element value below or above given limits.
-* Optionally prunes all extensions or elements with value below or above given limits.
-* Optionally fills in altitude and time data by interpolation within segments.
+* Optionally prunes comments, extensions, or elements with value below or above given limits.
+* Optionally fills in alitude and time data by interpolation within segments.
 * Optionally interpolates points in long gaps (by default, > 3600 seconds).
 * Optionally corrects elevation and and smoothens tracks.
   (Orthometric height = GPS ellipsoidal height - geoid height,
@@ -40,6 +40,7 @@ Command-line options:
   -max_ext <name> <limit>      - prune extension elements with value above limit
   -min_ext <name> <limit>      - prune extension elements with value below limit
   -prune_wpts                  - remove waypoints
+  -prune_cmts                  - remove comments
   -prune_exts                  - remove track, waypoint, and trackpoint extensions
   -nw                          - do not print warnings
   -ni                          - do not print information

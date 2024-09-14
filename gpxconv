@@ -11,7 +11,7 @@
 # Reports missing data and by default sanitizes points containing implausible data.
 # Optionally filters out points before or after given time limits.
 # Optionally filters out points with an element value below or above given limits.
-# Optionally prunes all extensions or elements with value below or above given limits.
+# Optionally prunes comments, extensions, or elements with value below or above given limits.
 # Optionally fills in altitude and time data by interpolation within segments.
 # Optionally interpolates points in long gaps (by default, > 3600 seconds).
 # Optionally corrects elevation and smoothens tracks.
@@ -41,6 +41,7 @@ Command-line options:
   -max_ext <name> <limit>      - prune extension elements with value above limit
   -min_ext <name> <limit>      - prune extension elements with value below limit
   -prune_wpts                  - remove waypoints
+  -prune_cmts                  - remove comments
   -prune_exts                  - remove extensions
   -nw                          - do not print warnings
   -ni                          - do not print information
@@ -61,6 +62,7 @@ my $activity = "-drive"; # default
 # basic output control
 use constant PRUNE_WPTS           => 0; # by default do not ignore waypoints
 use constant PRUNE_AUTOMATIC_WPTS => 1; # ignore waypoints containing <name><!\[CDATA\[\d*\]\]></name>
+use constant PRUNE_CMTS           => 0; # by default do not remove comments
 use constant PRUNE_DESCS          => 0; # do not remove descriptions
 use constant PRUNE_LINKS          => 0; # do not remove links
 use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions
@@ -177,6 +179,8 @@ my $weight;
 my $prune_wpts       = PRUNE_WPTS;
 my $num_pruned_wpts  = 0;
 my $num_auto_wpts    = 0;
+my $prune_cmts       = PRUNE_CMTS;
+my $num_pruned_cmts  = 0;
 my $num_pruned_descs = 0;
 my $num_pruned_links = 0;
 my $prune_exts       = PRUNE_EXTENSIONS;
@@ -196,6 +200,7 @@ my @TIM;
 my @SEC; # computed from @TIM, possibly adapted
 my @DIS;
 my @SPD; # as recorded or computed
+my @CMT;
 my @EXT;
 
 # waypoint data
@@ -367,6 +372,7 @@ sub lon_string {
 
 sub parse_point {
     my $str = $_[0];
+    my $is_trkpt = $str =~ m/^<trkpt /;
 
     my $lat, my $lon;
     if ($str =~ s#lat=\s*"(-?[\.\d]+)"\s*lon=\s*"(-?[\.\d]+)"\s*>##s) {
@@ -419,6 +425,12 @@ sub parse_point {
         $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
     }
 
+    my $cmt = "";
+    if ($is_trkpt && $str =~ s#[ \t]*(<cmt>.*?</cmt>)\n?##s) {
+        $cmt = $1;
+        $cmt =~ s#\n##sg;
+    }
+
     my $ext = "";
     if ($str =~ s#[ \t]*(<extensions>.*?</extensions>)\n?##s) {
         $ext = $1;
@@ -446,7 +458,7 @@ sub parse_point {
     $ext =~ s#<gpxtpx:TrackPointExtension></gpxtpx:TrackPointExtension>##sg;
     $ext =~ s#<extensions></extensions>##sg;
 
-    return ( $lat, $lon, $ele, $tim, $sec, $spd, $rest, $ext, $ignore );
+    return ( $lat, $lon, $ele, $tim, $sec, $spd, $rest, $cmt, $ext, $ignore );
 }
 
 sub print_line { print STDERR "$_[0]\n"; }
@@ -533,6 +545,7 @@ sub remove_trkpt {
     splice @SEC, $i, 1;
     splice @DIS, $i, 1;
     splice @SPD, $i, 1;
+    splice @CMT, $i, 1;
     splice @EXT, $i, 1;
 }
 
@@ -667,6 +680,9 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     elsif ( $opt eq "-prune_wpts" ) {
         $prune_wpts = 1;
     }
+    elsif ( $opt eq "-prune_cmts" ) {
+        $prune_cmts = 1;
+    }
     elsif ( $opt eq "-prune_exts" ) {
         $prune_exts = 1;
     }
@@ -766,15 +782,15 @@ if ($merge) {
     open M, $merge || abort("FATAL: Cannot open alternative GPX source file $merge: $.\n") if $#TIM < 0;
     <M>; # first item is before "<trktpt"
 }
-my ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $exts1) if $merge; # current end of gap to be merged
-my ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $exts2) if $merge; # current trkpt from alternative input
+my ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1) if $merge; # current end of gap to be merged
+my ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $exts2) if $merge; # current trkpt from alternative input
 sub next_trkpt2() {
     my $trkpt2;
     my $ignore2 = 1;
     while ($ignore2 && defined($trkpt2 = <M>)) {
         $trkpt2 =~ m#(.*?</trkpt>)#s;
         $trkpt2 = $1;
-        ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
+        ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $cmt2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
     }
     ## debug "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=$sec2 spd=".($spd2 eq "" ? "" : spd_str($spd2)) if $trkpt2;
     return $trkpt2;
@@ -799,6 +815,7 @@ for ( my $state = 0,
                        ? ($in_merge = 2, 1) : 0));
     ) {
     # anywhere (in headers, tracks, waypoints, trackpoints, ...):
+    $num_pruned_cmts  += s#[ \t]*<cmts>.*?</cmt>\n?##sg              if $prune_cmts;
     $num_pruned_descs += s#[ \t]*<desc>.+?</desc>\n?##sg             if PRUNE_DESCS;
     $num_pruned_links += s#[ \t]*<link.*?>.+?</link>\n?##sg          if PRUNE_LINKS;
     $num_pruned_exts  += s#[ \t]*<extensions>.*?</extensions>\n?##sg if $prune_exts;
@@ -814,7 +831,7 @@ for ( my $state = 0,
         next if $wpt_time_stripped eq $prev_wpt_time_stripped;
         $prev_wpt_time_stripped = $wpt_time_stripped;
 
-        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $rest, my $exts, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
+        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $rest, my $cmt_unused, my $exts, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
         $rest =~ s#^<wpt[ \t]*##;
         $rest =~ s#</wpt>$##;
         ++$num_pruned_wpts if $prune_wpts;
@@ -877,17 +894,17 @@ for ( my $state = 0,
     else {
         # when $state == 1 || $state == 2: processing first trkpt in new trkseg
         # when $state == 3: processing further trkpt in trkseg
-        my ($sec, $spd, $exts);
+        my ($sec, $spd, $cmt, $exts);
         if (!$in_merge) {
             m#(.*?</trkpt>)#s;
             my $trkpt = $1;
-            ( $lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $exts, my $ignore ) = parse_point("<trkpt $trkpt");
+            ( $lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $exts, my $ignore ) = parse_point("<trkpt $trkpt");
             next if $ignore;
             ## debug "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd))."; state = $state";
         } elsif ($merge) {
             ( $lat, $lon, $ele, $tim, $sec, $spd, $exts) =
-                $in_merge == -1 ? ( $lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $exts1 ) # EOF in $merge during infile(s)
-                                : ( $lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $exts2 );
+                $in_merge == -1 ? ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1) # EOF in $merge during infile(s)
+                                : ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $exts2);
         }
         my $diff_time = $sec && $prev_avail_sec ? $sec - $prev_avail_sec : 0;
 
@@ -901,10 +918,10 @@ for ( my $state = 0,
                     } else { # certainly $i > 0
                         info_trkpt_i( $i - 1, "start using alternative input on ".timediff_string($diff_time)." gap after", "" );
                     }
-                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $exts1)
-                        = ($lat, $lon, $ele, $tim, $sec, $spd, $exts);
-                    ($lat, $lon, $ele, $tim, $sec, $spd, $exts) =
-                        ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $exts2);
+                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1) =
+                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $exts );
+                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $exts ) =
+                    ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $exts2);
                 } else {
                     while ($merge && $sec && $sec2 && $sec2 <= $sec) {
                         # advance $merge as far as possible to catch up with infile(s)
@@ -913,8 +930,8 @@ for ( my $state = 0,
                 }
             } else { # $in_merge != 0
                 if ($sec && $in_merge != 2 && $sec1 && $sec1 <= $sec) { # $merge is not before infiles(s)
-                    ( $lat, $lon, $ele, $tim, $sec, $spd, $exts) =
-                        ( $lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $exts1 );
+                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $exts ) =
+                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1);
                     $in_merge = 0;
                     info_trkpt_i( $i - 1, "end using alternative input at", "" );
                 }
@@ -1087,6 +1104,7 @@ for ( my $state = 0,
         push @SEC, $sec;
         push @DIS, $dis;
         push @SPD, $spd; # initially as recorded, else ""
+        push @CMT, $cmt;
         push @EXT, $exts;
 
         # detect and report missing time and/or altitude
@@ -1933,9 +1951,10 @@ $final_text .= "average moving speed = $Avg_spd km/h\n"      if defined $Avg_spd
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
 $final_text .= plural($num_auto_wpts, "automatic waypoint")." pruned\n" if $num_auto_wpts;
 $final_text .= plural($num_ignored_hdrs,    "track header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
-$final_text .= plural($num_pruned_exts,        "extension")." pruned\n" if $num_pruned_exts;
+$final_text .= plural($num_pruned_cmts,              "cmt")." pruned\n" if $num_pruned_cmts;
 $final_text .= plural($num_pruned_descs,     "description")." pruned\n" if $num_pruned_descs;
 $final_text .= plural($num_pruned_links,            "link")." pruned\n" if $num_pruned_links;
+$final_text .= plural($num_pruned_exts,        "extension")." pruned\n" if $num_pruned_exts;
 $final_text .= points($num_ignored_before)." with time before ".epoch_to_str($begin_sec)." filtered out\n" if $begin_sec;
 $final_text .= points($num_ignored_after )." with time after  ".epoch_to_str($end_sec  )." filtered out\n" if $end_sec;
 $final_text .= points($num_elem_above    )." with $max_elem above $max_elem_limit"      ." filtered out\n" if $max_elem;
@@ -2031,6 +2050,7 @@ for ( my $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
             splice @SEC, $i, 0, $SEC[$p] + $t;
             splice @DIS, $i, 0, $dis_inc;
             splice @SPD, $i, 0, $spd;
+            splice @CMT, $i, 0, "";
             splice @EXT, $i, 0, "";
             $i++;
             $t += $time_inc;
@@ -2050,7 +2070,20 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     print $out '<trkpt lat="' . lat_string($LAT[$i]) . '" lon="' . lon_string($LON[$i]) . '">';
     print $out "<ele>" . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
     print $out "<time>$tim</time>" if $tim;
-    print $out "<cmt>".plural($IGN[$i], "previous point")." ignored</cmt>" if !DISABLE_TRKPT_CMT && $IGN[$i];
+
+    my $cmt = $CMT[$i];
+    if (!DISABLE_TRKPT_CMT && $IGN[$i]) {
+        if ($cmt eq "") {
+            $cmt = "<cmt>".plural($IGN[$i], "previous point")." ignored</cmt>";
+        } else {
+            my $old_count = ($cmt =~ s#(\d+) previous points? ignored(; )?##s ? $1 : 0); # remove any previous instance of our comment
+            my $cmtstr = plural($old_count + $IGN[$i], "previous point")." ignored";
+            $cmtstr .= "; " if $cmt ne "<cmt></cmt>";
+            $cmt =~ s#(<cmt>)#$1$cmtstr#s;
+        }
+    }
+    print $out $cmt if $cmt ne "";
+
     if (!DISABLE_TRKPT_SRC) {
         my $src = $FLG[$i] & INTERPOLATED_POINT ? "bridging time gap: interpolated point"
             : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
