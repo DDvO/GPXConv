@@ -1261,11 +1261,10 @@ for ( my $acc, my $rate,
         my $Spd      = $spd ne "" ? spd_string($spd) : "";
         my $Spd_txt  = $spd ne "" ? " at speed = $Spd km/h" : "";
         my $Dis      = sprintf "%4" . DIS_PRECISION, $dis / 1000;
-        my $Warn_dis = sprintf "%" . DIS_PRECISION,  WARNING_TPT_DIST / 1000;
         my $Rate     = $rate ne "" ? sprintf RAT_PRECISION, $rate : "";
         my $Acc      = $acc ne "" ? sprintf ACC_PRECISION, $acc : "";
         my $Dec      = $acc ne "" ? sprintf ACC_PRECISION, -$acc : "";
-        warn_trkpt("           before ", "$Spd_txt distance between points = $Dis km (more than $Warn_dis)") if $dis > WARNING_TPT_DIST;
+        warn_trkpt("           before ", "$Spd_txt distance between points = $Dis km (more than ".(WARNING_TPT_DIST / 1000).")") if $dis > WARNING_TPT_DIST;
 
         $ignore = 1; # tentatively remove point before
         if (MAX_PLAUSIBLE_ANGLE_DIFF < abs($theta_diff)) {
