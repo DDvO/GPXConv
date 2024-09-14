@@ -1815,11 +1815,9 @@ sub point {
     my $n = $_[1];
     return "" if $i < 0;
     my $ele      = correct_ele( -1, $i );
-    my $ele_text = $ele eq "" ? "" : ",ele";
-    my $ele_val =
-      $ele eq "" ? "" : "," . ele_string($ele_prec_len, $ele);
-    my $time_val = $TIM[$i] eq "" ? "" : " time = ".round_tim($TIM[$i]);
-    return "At lat,lon$ele_text = " . lat_string($LAT[$i]) . "," . lon_string($LON[$i]) . $ele_val . $time_val . ": $n\n";
+    my $ele_val  = $ele     eq "" ? "NONE".(" " x max(0, $ele_prec_len - length("NONE"))) : ele_string($ele_prec_len, $ele);
+    my $time_val = $TIM[$i] eq "" ? "NONE".(" " x max(0,      $tim_len - length("NONE"))) : round_tim($TIM[$i]);
+    return "At lat,lon,ele = " . lat_string($LAT[$i]) . "," . lon_string($LON[$i]).",$ele_val time = $time_val: $n\n";
 }
 
 sub phase_text {
