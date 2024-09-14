@@ -13,7 +13,7 @@
 # Optionally filters out points with an element value below or above given limits.
 # Optionally prunes comments, extensions, or elements with value below or above given limits.
 # Optionally fills in altitude and time data by interpolation within segments.
-# Optionally interpolates points in long gaps (by default, > 3600 seconds).
+# Optionally interpolates points in long gaps (default 1800 seconds sufficient for exiftool).
 # Optionally corrects elevation and smoothens tracks.
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
@@ -95,8 +95,8 @@ use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackp
 
 # control interpolation of points over long (time) gaps
 use constant INTERPOLATE_POINTS    =>    1; # enable inserting interpolated points in long time gaps
-use constant INTERPOLATION_MAX_GAP => 3600; # in seconds between neighboring trackpoints before
-                                            # interpolation should be used (3600 for both exiftool and TrailGuru)
+use constant INTERPOLATION_MAX_GAP => 1800; # length of gap in seconds between consecutive trackpoints before
+# interpolation should be used (1800 for exiftool default GeoMaxIntSecs; for TrailGuru 3600 would be sufficient)
 
 # warning output control
 use constant PRINT_WARNINGS      =>    1; # whether printing warnings is enabled by default
