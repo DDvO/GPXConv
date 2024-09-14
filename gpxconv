@@ -1948,6 +1948,7 @@ $final_text .= "total recording time = $total_time\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mov;
 $final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov && $weight;
 $final_text .= "average moving speed = $Avg_spd km/h\n"      if defined $Avg_spd;
+my $end_text = $final_text;
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
 $final_text .= plural($num_auto_wpts, "automatic waypoint")." pruned\n" if $num_auto_wpts;
 $final_text .= plural($num_ignored_hdrs,    "track header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
@@ -1969,15 +1970,15 @@ $final_text .= points($num_removals_loss )." ignored due to descent rate more th
 $final_text .= points($num_removals_diff )." ignored due to time difference less than $MIN_TIMEDIFF sec\n"        if $num_removals_diff;
 $final_text .= plural($num_ext_above, "extension")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= plural($num_ext_below, "extension")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
+$final_text .= ($smoothing ? "within each track, points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened\n" : "" ); # not using sub points() here
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
-$final_text .= ($smoothing ? "within each track, points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened\n" : "" ); # not using sub points() here
 
 $wpts .=
     wpt( -1, 0, "start" )
   . $part_wpts
   . $phase_wpts
-  . wpt( -1, $#TIM, "end$final_text" );
+  . wpt( -1, $#TIM, "end$end_text" );
 $HEAD =~ s/(<trk>)/$wpts$1/s;    # prepend collected and computed waypoints to track
 
 my $num_sanitized = $num_removals_ele + $num_removals_dir + $num_removals_spd + $num_removals_acc
