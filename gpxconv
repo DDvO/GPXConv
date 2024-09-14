@@ -2062,8 +2062,6 @@ for ( my $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
 
 ## finally write output
 
-use constant SPEED  => "<speed>";     # "<x:TrackPointExtension><x:speed>"
-use constant _SPEED => "</speed>";    # </x:speed></x:TrackPointExtension>"
 print $out $HEAD;                     # includes <gpx> <trk> <trkseg>
 for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     ( $tim, $spd ) = ( round_tim($TIM[$i]), $SPD[$i] );
@@ -2103,8 +2101,8 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     }
     my $exts = $EXT[$i];
     if ($spd ne "" && (!($FLG[$i] & COMPUTED_SPEED) || INCLUDE_COMP_SPEED)) {
-        my $spdstr = SPEED . spd_string($spd) . _SPEED;
-        if ( $exts eq "" ) {
+        my $spdstr = "<speed>".spd_string($spd)."</speed>";
+        if ($exts eq "") {
             $exts = "<extensions>$spdstr</extensions>";
         } else {
             $exts =~ s#(<extensions>)#$1$spdstr#s;
