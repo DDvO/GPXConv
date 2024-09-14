@@ -584,6 +584,7 @@ sub comp_diffs()
     my $speed = ( $timediff ne ""
                   ? ( $timediff > 0 ? $dis / $timediff : $prev_spd )
                   : "" );
+    $spd_prec_len = max($spd_prec_len, length(spd_str($speed))) if $speed ne ""; # used only for spd_string
     my $acc = ( $speed ne "" && $prev_spd ne "" && $timediff ne ""
                 ? ( $timediff > 0 ? ( $speed - $prev_spd ) / $timediff : $prev_acc )
                 : "" );
@@ -780,8 +781,7 @@ sub next_trkpt2() {
         $trkpt2 = $1;
         ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
     }
-    my $Spd_ = defined($spd2) && $spd2 ne "" ? spd_string($spd2) : "";
-    ## debug "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=$sec2 spd=$Spd_" if $trkpt2;
+    ## debug "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=$sec2 spd=".($spd2 eq "" ? "" : spd_str($spd2)) if $trkpt2;
     return $trkpt2;
 }
 my $in_merge = 0; # if set, using trkpt from $merge
@@ -889,8 +889,7 @@ for ( my $state = 0,
             my $trkpt = $1;
             ( $lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $exts, my $ignore ) = parse_point("<trkpt $trkpt");
             next if $ignore;
-            my $Spd_ = $spd ne "" ? spd_string($spd) : "";
-            ## debug "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$Spd_; state = $state";
+            ## debug "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd))."; state = $state";
         } elsif ($merge) {
             ( $lat, $lon, $ele, $tim, $sec, $spd, $exts) =
                 $in_merge == -1 ? ( $lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $exts1 ) # EOF in $merge during infile(s)
@@ -1189,7 +1188,7 @@ for ( my $acc, my $rate,
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
 
-    ## debug"sanitizing point $i with lat=$lat lon=$lon ele='$ele' tim='$tim' sec=$sec spd='$spd'";
+    ## debug "sanitizing point $i with lat=$lat lon=$lon ele='$ele' tim='$tim' sec=$sec spd=".($spd eq "" ? "" : spd_str($spd));
     my ($ignore, $ignore_before) = (0, 0);
     sub ignore_trkpt        { ignoring_trkpt(  -1, @_); }
     sub ignore_trkpt_before { ignoring_trkpt($i-1, @_); }
@@ -1215,6 +1214,7 @@ for ( my $acc, my $rate,
             my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
             my      $dis2 =      $dis_before eq "" ||      $dis eq "" ? 0 :      $dis_before +      $dis;
             my $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed between three most recent points
+            $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))) if $spd2 ne ""; # used only for spd_string
             if ($spd2 ne "" && $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
                 # calculate horizontal direction change (i.e., turning angle) for spike detection
                 my $prev_lon_diff = nearest(.00001, $prev_lon) - nearest(.00001, $LON[$i - 2]);
@@ -1235,6 +1235,7 @@ for ( my $acc, my $rate,
         my $Comp_spd = spd_string($comp_spd) if $comp_spd ne "";
         if ($comp_spd ne "" && $spd ne "" && $timediff ne "" && $timediff <= MAX_TIMEDIFF_RECORDED_SPEED) {
             my $spd_diff = abs($comp_spd - $spd);
+            $spd_prec_len = max($spd_prec_len, length(spd_str($spd_diff))); # used only for spd_string
             $sum_speed_deviation += $spd_diff;
             $sum_speed += $comp_spd + $spd; # will later divide by 2 for average;
             warn_trkpt("before  ",
@@ -1244,7 +1245,6 @@ for ( my $acc, my $rate,
         }
         if ($spd eq "" || $timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED) {
             $spd = $comp_spd; # $SPD[$i] will be set later if needed
-            $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
         }
         my $Spd      = $spd ne "" ? spd_string($spd) : "";
         my $Spd_txt  = $spd ne "" ? " at speed = $Spd km/h" : "";
@@ -1992,7 +1992,7 @@ $HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s;    # prepend stats to track comment
 for ( my $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] ); # needed also for print_trkpt
-    ## debug "checking gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=$spd";
+    ## debug "checking gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd));
     my $diff_time = $i > 0 && $sec && $SEC[ $i - 1 ] ? int( $sec - $SEC[ $i - 1 ] ) : 0;
     if ( $diff_time > INTERPOLATION_MAX_GAP ) { # implies $i>0
         my $n_spans = int( $diff_time / INTERPOLATION_MAX_GAP ) +
