@@ -1557,7 +1557,10 @@ for( my $rate, my $spd, my $direction,
         $direction       = 0;
         $prev_turn_ele   = $local_max_ele   = $local_min_ele = "";
     }
-    $PART_END_INDEX[$part] = $i if defined $part && $i <= $#TIM;
+    if ($i <= $#TIM) {
+        $PART_END_INDEX[$all ] = $i;
+        $PART_END_INDEX[$part] = $i if defined $part;
+    }
     if ($ele ne "") {
         ( $prev_turn_ele, $prev_turn_index ) = ( $ele, $i ) if ( $prev_turn_ele eq "" );
         ( $local_max_ele, $local_max_index ) = ( $ele, $i ) if $direction >= 0
@@ -1903,12 +1906,14 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
     my $max_gain_text = $Part."max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # may use "" if not defined
     my $max_loss_text = $Part."max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # may use "" if not defined
     my $part_end_text = $Part."end";
+    my $last_gain_index = $LAST_GAIN_INDEX[$i] // $PART_END_INDEX[$i];
+    my $last_loss_index = $LAST_LOSS_INDEX[$i] // $PART_END_INDEX[$i];
     $part_wpts = $part_wpts
         . wpt(-1, $MAX_SPD_INDEX  [$i], $max_spd_text )
         . wpt(-1, $MIN_ELE_INDEX  [$i], $min_ele_text )
         . wpt(-1, $MAX_ELE_INDEX  [$i], $max_ele_text )
-        . wpt(-1, $LAST_GAIN_INDEX[$i], $ascent_text  )
-        . wpt(-1, $LAST_LOSS_INDEX[$i], $descent_text )
+        . wpt(-1, $last_gain_index    , $ascent_text  )
+        . wpt(-1, $last_loss_index    , $descent_text )
         . wpt(-1, $MAX_GAIN_INDEX [$i], $max_gain_text)
         . wpt(-1, $MAX_LOSS_INDEX [$i], $max_loss_text)
         . ($i == $all ? ""
@@ -1917,8 +1922,8 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
         . point($MAX_SPD_INDEX  [$i], $max_spd_text )
         . point($MIN_ELE_INDEX  [$i], $min_ele_text )
         . point($MAX_ELE_INDEX  [$i], $max_ele_text )
-        . point($LAST_GAIN_INDEX[$i], $ascent_text  )
-        . point($LAST_LOSS_INDEX[$i], $descent_text )
+        . point($last_gain_index    , $ascent_text  )
+        . point($last_loss_index    , $descent_text )
         . point($MAX_GAIN_INDEX [$i], $max_gain_text)
         . point($MAX_LOSS_INDEX [$i], $max_loss_text)
         . ($i == $all ? ""
