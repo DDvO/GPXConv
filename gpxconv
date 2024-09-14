@@ -1881,12 +1881,12 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
         $Max_loss_spd = substr( $Max_loss_spd, 1 );
     }
 
-    my $Sum__ascent = defined $SUM__ASCENT[$i] ? sprintf DIF_PRECISION, $SUM__ASCENT[$i] : 0;
-    my $Sum_descent = defined $SUM_DESCENT[$i] ? sprintf DIF_PRECISION, $SUM_DESCENT[$i] : 0;
-    $Sum_descent =~ s/\+/-/ if !$Sum_descent;
-    my $Max_gain = defined $MAX_GAIN[$i] ? sprintf RAT_PRECISION, $MAX_GAIN[$i] : 0;
-    my $Max_loss = defined $MAX_LOSS[$i] ? sprintf RAT_PRECISION, $MAX_LOSS[$i] : 0;
-    $Max_loss =~ s/\+/-/ if !$Max_loss;
+    my $Sum__ascent = sprintf DIF_PRECISION, $SUM__ASCENT[$i] // 0;
+    my $Sum_descent = sprintf DIF_PRECISION, $SUM_DESCENT[$i] // 0;
+    $Sum_descent =~ s/\+/-/ if $Sum_descent == 0;
+    my $Max_gain = sprintf RAT_PRECISION, $MAX_GAIN[$i] // 0;
+    my $Max_loss = sprintf RAT_PRECISION, $MAX_LOSS[$i] // 0;
+    $Max_loss =~ s/\+/-/ if $Max_loss == 0;
 
     my $avg__ascent_rate = defined $TIME__ASCENT[$i] ? 3600 * $SUM__ASCENT[$i] / $TIME__ASCENT[$i] : 0;
     my $avg_descent_rate = defined $TIME_DESCENT[$i] ? 3600 * $SUM_DESCENT[$i] / $TIME_DESCENT[$i] : 0;
