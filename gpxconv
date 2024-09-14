@@ -1115,7 +1115,7 @@ for ( my $state = 0,
         if (!$sec) {
             $num_no_time++;
             $time_gap_length += $dis;
-            warn_trkpt( "no time      at   ", "; $time_solution" ) if $num_no_time == 1;
+            warn_trkpt( "no time         at", "; $time_solution" ) if $num_no_time == 1;
         }
         elsif ($num_no_time) {
             my $Len = sprintf "%4" . DIS_PRECISION, $time_gap_length / 1000;
@@ -1238,7 +1238,7 @@ for ( my $acc, my $rate,
             $spd_prec_len = max($spd_prec_len, length(spd_str($spd_diff))); # used only for spd_string
             $sum_speed_deviation += $spd_diff;
             $sum_speed += $comp_spd + $spd; # will later divide by 2 for average;
-            warn_trkpt("before  ",
+            warn_trkpt("           before ",
                        "recorded speed is ".spd_string($spd).", computed speed is $Comp_spd km/h ".
                        "deviation is " . spd_string($spd_diff) . " km/h" .
                        " (more than " . MAX_SPEED_DEVIATION . ")") if $spd_diff > (MAX_SPEED_DEVIATION + 0.5) / 3.6;
@@ -1253,8 +1253,7 @@ for ( my $acc, my $rate,
         my $Rate     = $rate ne "" ? sprintf RAT_PRECISION, $rate : "";
         my $Acc      = $acc ne "" ? sprintf ACC_PRECISION, $acc : "";
         my $Dec      = $acc ne "" ? sprintf ACC_PRECISION, -$acc : "";
-        warn_trkpt("before  ", "$Spd_txt distance between points = $Dis km (more than $Warn_dis)")
-            if $dis > WARNING_TPT_DIST;
+        warn_trkpt("           before ", "$Spd_txt distance between points = $Dis km (more than $Warn_dis)") if $dis > WARNING_TPT_DIST;
 
         $ignore = 1; # tentatively remove point before
         if (MAX_PLAUSIBLE_ANGLE_DIFF < abs($theta_diff)) {
