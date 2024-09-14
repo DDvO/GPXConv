@@ -1798,9 +1798,9 @@ $HEAD =~ s/ *$//;
 
 sub wpt {
     my $j = $_[0];    # index of waypoint if >= 0
-    my $i = $_[1];    # otherwise, index of trackpoint or < 0 for no wpt
+    my $i = $_[1];    # otherwise, index of trackpoint or undefined or < 0 for no wpt
     my $n = $_[2];    # text to be attributed to trackpoint
-    return "" if $j < 0 && $i < 0;
+    return "" if $j < 0 && (!defined $i || $i < 0);
     if ( $j < 0 ) {
         $n =~ s/\n/; /g;
         $n =~ s/; $//;
@@ -1821,9 +1821,9 @@ sub wpt {
 }
 
 sub point {
-    my $i = $_[0];
+    my $i = $_[0]; # index of trackpoint or undefined or < 0 for none
     my $n = $_[1];
-    return "" if $i < 0;
+    return "" if !defined $i || $i < 0;
     my $ele      = correct_ele( -1, $i );
     my $ele_val  = $ele     eq "" ? "NONE".(" " x max(0, $ele_prec_len - length("NONE"))) : ele_string($ele_prec_len, $ele);
     my $time_val = $TIM[$i] eq "" ? "NONE".(" " x max(0,      $tim_len - length("NONE"))) : round_tim($TIM[$i]);
@@ -1861,18 +1861,18 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
     my $Spd = phase_text($i)
         . "max speed =  ".spd_full($SPD[$max_spd_idx])." km/h; "
         . "avg speed  = ".spd_full($PHASE_SPD[    $i])." km/h"
-        if $max_spd_idx;
+        if defined $max_spd_idx;
     my $max_rate_idx = $PHASE_MAXRATE_INDEX[$i];
     my $Rate = phase_text($i)
         . "max rate  =" . (sprintf RAT_PRECISION2, $RATE[$max_rate_idx]) . "  m/h; "
         . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE[$i]     ) . "  m/h"
-        if $max_rate_idx;
+        if defined $max_rate_idx;
     $phase_wpts .= wpt(-1, $PHASE_END_INDEX    [$i], $Len );
-    $phase_wpts .= wpt(-1, $PHASE_MAXSPD_INDEX [$i], $Spd ) if $max_spd_idx;
-    $phase_wpts .= wpt(-1, $PHASE_MAXRATE_INDEX[$i], $Rate) if $max_rate_idx;
+    $phase_wpts .= wpt(-1, $PHASE_MAXSPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
+    $phase_wpts .= wpt(-1, $PHASE_MAXRATE_INDEX[$i], $Rate) if defined $max_rate_idx;
     $phase_points .= point($PHASE_END_INDEX    [$i], $Len );
-    $phase_points .= point($PHASE_MAXSPD_INDEX [$i], $Spd ) if $max_spd_idx;
-    $phase_points .= point($PHASE_MAXRATE_INDEX[$i], $Rate) if $max_rate_idx;
+    $phase_points .= point($PHASE_MAXSPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
+    $phase_points .= point($PHASE_MAXRATE_INDEX[$i], $Rate) if defined $max_rate_idx;
 }
 
 my $total_time   = timediff_string($max_sec - $min_sec);
@@ -1880,8 +1880,8 @@ my $part_wpts   = ""; # also used for overall statistics
 my $part_points = ""; # also used for overall statistics
 for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
     my $Part = $i == $all ? "" : (defined $segs ? "segment" : "day")." ".(' ' x (length($part) - length($i)))."$i ";
-    my $Min_ele      = sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]); # may be "" if not defined
-    my $Max_ele      = sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]); # may be "" if not defined
+    my $Min_ele      = defined $MIN_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]) : "";
+    my $Max_ele      = defined $MAX_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]) : "";
     my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? " ".spd_full($SPD[$MAX_SPD_INDEX [$i]]) : "";
     my $Max_gain_spd = defined $MAX_GAIN_INDEX[$i] ?     spd_str ($SPD[$MAX_GAIN_INDEX[$i]]) : "";
     my $Max_loss_spd = defined $MAX_LOSS_INDEX[$i] ?     spd_str ($SPD[$MAX_LOSS_INDEX[$i]]) : "";
@@ -1914,14 +1914,12 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
     my $max_gain_text = $Part."max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # may use "" if not defined
     my $max_loss_text = $Part."max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # may use "" if not defined
     my $part_end_text = $Part."end";
-    my $last_gain_index = $LAST_GAIN_INDEX[$i] // $PART_END_INDEX[$i];
-    my $last_loss_index = $LAST_LOSS_INDEX[$i] // $PART_END_INDEX[$i];
     $part_wpts = $part_wpts
         . wpt(-1, $MAX_SPD_INDEX  [$i], $max_spd_text )
         . wpt(-1, $MIN_ELE_INDEX  [$i], $min_ele_text )
         . wpt(-1, $MAX_ELE_INDEX  [$i], $max_ele_text )
-        . wpt(-1, $last_gain_index    , $ascent_text  )
-        . wpt(-1, $last_loss_index    , $descent_text )
+        . wpt(-1, $LAST_GAIN_INDEX[$i], $ascent_text  )
+        . wpt(-1, $LAST_LOSS_INDEX[$i], $descent_text )
         . wpt(-1, $MAX_GAIN_INDEX [$i], $max_gain_text)
         . wpt(-1, $MAX_LOSS_INDEX [$i], $max_loss_text)
         . ($i == $all ? ""
@@ -1930,8 +1928,8 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
         . point($MAX_SPD_INDEX  [$i], $max_spd_text )
         . point($MIN_ELE_INDEX  [$i], $min_ele_text )
         . point($MAX_ELE_INDEX  [$i], $max_ele_text )
-        . point($last_gain_index    , $ascent_text  )
-        . point($last_loss_index    , $descent_text )
+        . point($LAST_GAIN_INDEX[$i], $ascent_text  )
+        . point($LAST_LOSS_INDEX[$i], $descent_text )
         . point($MAX_GAIN_INDEX [$i], $max_gain_text)
         . point($MAX_LOSS_INDEX [$i], $max_loss_text)
         . ($i == $all ? ""
