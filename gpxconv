@@ -137,6 +137,7 @@ use constant RAT_PRECISION2 => "%+6.0f"; #  altitude ascent/descent rate resolut
 use constant DIS_PRECISION  =>    ".2f"; #  distance resolution = 0.01 km
 use constant SEC_PRECISION  =>   "%.0f"; #   seconds resolution = 1 second
 use constant SPD_PRECISION  =>  "%4.0f"; #     speed resolution = 1 km/h
+use constant AVG_PRECISION  =>   "%.1f"; # avg speed resolution = 0.1 km/h
 use constant SPD_PRECISION0 =>   "%.0f";
 use constant ACC_PRECISION  =>   "%.1f"; # acceleration resolution = 0.1 m/s/s
 
@@ -247,7 +248,6 @@ my (@SUM__ASCENT, @TIME__ASCENT,
     @SUM_DESCENT, @TIME_DESCENT);
 
 my $sum_dis         = 0;
-my $avg_spd;
 my $avg_timediff;
 
  # for calculating relative deviation between recorded and computed speed
@@ -1512,7 +1512,7 @@ sub push_phase {
         ( $max_rate, $max_rate_index ) = ( $rate, $i ) if $rate ne "" && ( $diff_ele >= 0 ? $rate > $max_rate : $rate < $max_rate );
         ( $max__spd, $max__spd_index ) = ( $spd_, $i ) if $spd_ ne "" && $spd_ > $max__spd;
     }
-    my $avg_spd  = 0;
+    my $avg_spd  = "";
     my $avg_rate = 0;
     if ( $sec1 && $sec2 && $sec2 > $sec1 ) {
         $duration = $sec2 - $sec1;
@@ -1678,7 +1678,6 @@ for( my $rate, my $spd, my $direction,
     ($prev_lat, $prev_lon, $prev_ele, $prev_date, $prev_sec, $prev_spd) =
         ( $lat,      $lon,      $ele,      $date,      $sec,      $spd) if $i < $#TIM;
 }
-$avg_spd   = $sum_timediff_mov ? $sum_dis / $sum_timediff_mov : 0;
 $lat_prec_len = max(length(lat_str($max_lat)), length(lat_str($min_lat)));
 $lon_prec_len = max(length(lon_str($max_lon)), length(lon_str($min_lon)));
 
@@ -1751,8 +1750,7 @@ my $Max_lat     = lat_str($max_lat);
 my $Max_lon     = lon_str($max_lon);
 my $Sum_dis    = sprintf "%" . DIS_PRECISION, $sum_dis / 1000;
 my $Sum_energy = sprintf "%.0f", $sum_energy / 1000 if $weight;
-my $Avg_spd    = spd_string($avg_spd);
-   $Avg_spd =~ s/^\s+//;
+my $Avg_spd    = sprintf AVG_PRECISION, 3.6 * $sum_dis / $sum_timediff_mov if $sum_timediff_mov;
 my $Sum_timediff_mov = timediff_string($sum_timediff_mov);
    $Sum_timediff_mov =~ s/^\s+//;
 my $Speed_deviation_text = $sum_speed ? ("average deviation between recorded and computed speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
@@ -1935,7 +1933,7 @@ $final_text .= "total track length   = $Sum_dis km\n";
 $final_text .= "total recording time = $total_time\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mov;
 $final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov && $weight;
-$final_text .= "average moving speed = $Avg_spd km/h\n"      if $avg_spd;
+$final_text .= "average moving speed = $Avg_spd km/h\n"      if defined $Avg_spd;
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
 $final_text .= plural($num_auto_wpts, "automatic waypoint")." pruned\n" if $num_auto_wpts;
 $final_text .= plural($num_ignored_hdrs,    "track header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
