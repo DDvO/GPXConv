@@ -41,7 +41,7 @@ Command-line options:
   -max_ext <name> <limit>      - prune extension elements with value above limit
   -min_ext <name> <limit>      - prune extension elements with value below limit
   -prune_wpts                  - remove waypoints
-  -prune_exts                  - remove track, waypoint, and trackpoint extensions
+  -prune_exts                  - remove extensions
   -nw                          - do not print warnings
   -ni                          - do not print information
   -o <outfile>                 - output the resulting track to <outfile>
@@ -61,9 +61,9 @@ my $activity = "-drive"; # default
 # basic output control
 use constant PRUNE_WPTS           => 0; # by default do not ignore waypoints
 use constant PRUNE_AUTOMATIC_WPTS => 1; # ignore waypoints containing <name><!\[CDATA\[\d*\]\]></name>
-use constant PRUNE_DESCS          => 0; # not not remove descriptions
-use constant PRUNE_LINKS          => 0; # not not remove links
-use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions in tracks, waypoints, and trackpoints
+use constant PRUNE_DESCS          => 0; # do not remove descriptions
+use constant PRUNE_LINKS          => 0; # do not remove links
+use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions
 use constant INCLUDE_COMP_SPEED   => 1; # include speed extensions with computed speed
 use constant DISABLE_TRKPT_CMT    => 0; # do not add 'cmt' entries to trackpoints, e.g., comments on ignored points
 use constant DISABLE_TRKPT_SRC    => 0; # do not add 'src' entries to trackpoints, e.g., on time gaps and interpolated data
@@ -420,14 +420,9 @@ sub parse_point {
     }
 
     my $ext = "";
-    if ($str =~ s#[ \t]*(<extensions>(.*?</extensions>)+)\n?##s) {
-        if ( $prune_exts ) {
-            ++$num_pruned_exts;
-        } else {
-            $ext = $1;
-            $ext =~ s#\n##sg;
-            $ext =~ s#>[ \t]+<#><#sg;
-        }
+    if ($str =~ s#[ \t]*(<extensions>.*?</extensions>)\n?##s) {
+        $ext = $1;
+        $ext =~ s#\n##sg;
     }
 
     my $rest = $str;
@@ -803,8 +798,10 @@ for ( my $state = 0,
                    ($merge && (info("infile(s) ended before alternative input"), 1)
                        ? ($in_merge = 2, 1) : 0));
     ) {
-    ++$num_pruned_descs if PRUNE_DESCS && s#[ \t]*<desc>.+?</desc>\n?##sg;
-    ++$num_pruned_links if PRUNE_LINKS && s#[ \t]*<link>.+?</link>\n?##sg;
+    # anywhere (in headers, tracks, waypoints, trackpoints, ...):
+    $num_pruned_descs += s#[ \t]*<desc>.+?</desc>\n?##sg             if PRUNE_DESCS;
+    $num_pruned_links += s#[ \t]*<link.*?>.+?</link>\n?##sg          if PRUNE_LINKS;
+    $num_pruned_exts  += s#[ \t]*<extensions>.*?</extensions>\n?##sg if $prune_exts;
 
     #collect waypoints, possibly in later infile(s) headers
     my $prev_wpt_time_stripped = "";
@@ -842,9 +839,6 @@ for ( my $state = 0,
     if ( $state == 0 ) {
         # processing first header (of first input file)
 
-        if ( $prune_exts ) {
-            ++$num_pruned_exts if s#<extensions>(.*?</extensions>)+\n?##sg;
-        }
         # well, the following extension pruning may affect also header elements outside extensions
         s#[ \t]*<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>\n?##s if $max_ext
            && m#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>#s && $1 > $max_ext_limit && ++$num_ext_above;
@@ -1939,9 +1933,9 @@ $final_text .= "average moving speed = $Avg_spd km/h\n"      if defined $Avg_spd
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
 $final_text .= plural($num_auto_wpts, "automatic waypoint")." pruned\n" if $num_auto_wpts;
 $final_text .= plural($num_ignored_hdrs,    "track header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
-$final_text .= plural($num_pruned_exts,        "extension")." pruned\n" if $num_pruned_exts;    # not counting nested ones
-$final_text .= plural($num_pruned_descs,     "description")." pruned\n" if $num_pruned_descs;   # not counting nested ones
-$final_text .= plural($num_pruned_links,            "link")." pruned\n" if $num_pruned_links;   # not counting nested ones
+$final_text .= plural($num_pruned_exts,        "extension")." pruned\n" if $num_pruned_exts;
+$final_text .= plural($num_pruned_descs,     "description")." pruned\n" if $num_pruned_descs;
+$final_text .= plural($num_pruned_links,            "link")." pruned\n" if $num_pruned_links;
 $final_text .= points($num_ignored_before)." with time before ".epoch_to_str($begin_sec)." filtered out\n" if $begin_sec;
 $final_text .= points($num_ignored_after )." with time after  ".epoch_to_str($end_sec  )." filtered out\n" if $end_sec;
 $final_text .= points($num_elem_above    )." with $max_elem above $max_elem_limit"      ." filtered out\n" if $max_elem;
@@ -2075,7 +2069,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
         print $out "<fix>$fix</fix>";
     }
     my $exts = $EXT[$i];
-    if (!$prune_exts && $spd ne "" && (!($FLG[$i] & COMPUTED_SPEED) || INCLUDE_COMP_SPEED)) {
+    if ($spd ne "" && (!($FLG[$i] & COMPUTED_SPEED) || INCLUDE_COMP_SPEED)) {
         my $spdstr = SPEED . spd_string($spd) . _SPEED;
         if ( $exts eq "" ) {
             $exts = "<extensions>$spdstr</extensions>";
@@ -2083,13 +2077,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
             $exts =~ s#(<extensions>)#$1$spdstr#s;
         }
     }
-    if ($exts ne "") {
-        if ( $prune_exts ) {
-            ++$num_pruned_exts;
-        } else {
-            print $out $exts;
-        }
-    }
+    print $out $exts if $exts ne "";
     print $out "</trkpt>\n";
     print $out "</trkseg>\n<trkseg>\n" if $SEG[ $i + 1 ] && $i < $#TIM;
 }
