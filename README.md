@@ -3,7 +3,7 @@
 GPX track converter: post-process routes and tracks typically produced by GPS loggers.
 
 * Reads from file(s) given as argument (or STDIN) and writes to STDOUT or a file.
-* Can append segments from multiple tracks and files (sequential composition).
+* Can append segments from multiple tracks and files (sequential composition), using the metadata of the first track.
 * Can complete gaps in input file(s) by merging data from an alternative GPX file (parallel composition).
 * Concatenates all given tracks (or routes) preserving segments, collecting waypoints.
 * The metadata (header) of the first input track is used for the output track.
@@ -27,11 +27,12 @@ Usage:
 ```
 Command-line options:
 ```
-  -walk, -cycle, -drive, -fly  - type of recorded activity, default: drive
+  -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
   -smooth                      - smoothen tracks
   -phases                      - analyze ascent/descent phases
   -segs <n>                    - produce additional statistics per segment, start with n
   -days <n>                    - produce additional statistics per day, counted from n
+  -merge <file>                - complete gaps in infile(s) by data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
@@ -47,4 +48,3 @@ Command-line options:
   -o <outfile>                 - output the resulting track to <outfile>
 ```
 Other options can be set by changing values of the configuration variables.
-

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ################################################################################
-# GPX converter: post-process routes and tracks typically produced by GPS loggers.
+# GPX track converter: post-process routes and tracks typically produced by GPS loggers.
 #
 # Reads from file(s) given as argument (or STDIN) and writes to STDOUT or a file.
 # Can append segments from multiple tracks and files (sequential composition), using the metadata of the first track.
