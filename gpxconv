@@ -529,12 +529,13 @@ sub print_trkpt_i {
     abort("") if ( $head =~ "^FATAL:" );
 }
 
-sub remove_trkpt {
-    my $i = $_[0];
+sub remove_trkpt { my ($i, $last) = @_;
     $IGN[ $i + 1 ] = $IGN[$i] + 1; # indicate that previous point has been ignored, in addition to any previous ignores
-    $SEG[ $i + 1 ] = 1 if $SEG[$i] && $i < $#SEG;  # take over any segment start
-    $DIS[ $i + 1 ] = distance($LAT[ $i + 1 ], $LON[ $i + 1 ], $ELE[ $i + 1 ],
-                              $LAT[ $i - 1 ], $LON[ $i - 1 ], $ELE[ $i - 1 ]) if $i > 0;
+    if ($i < $last) {
+        $SEG[ $i + 1 ] = 1 if $SEG[$i]; # take over any segment start
+        $DIS[ $i + 1 ] = distance($LAT[$i + 1], $LON[$i + 1], $ELE[$i + 1],
+                                  $LAT[$i - 1], $LON[$i - 1], $ELE[$i - 1]) if $i > 0;
+    }
     splice @IGN, $i, 1;
     splice @SEG, $i, 1;
     splice @FLG, $i, 1;
@@ -1275,7 +1276,7 @@ for ( my $acc, my $rate,
         }
         if ($ignore) {
             $num_removals_in_row++;
-            remove_trkpt(--$i);
+            remove_trkpt($i - 1, $i--);
             # maybe should re-compute speed etc. relative to new previous point
             $ignore_before = 1;
             $ignore = 0;
@@ -1322,7 +1323,7 @@ for ( my $acc, my $rate,
             $num_removals_in_row = 0;
         }
         $num_removals_in_row++;
-        remove_trkpt($i--);
+        remove_trkpt($i, $i--);
         # will re-compute speed etc. relative to same previous point as before
     }
     elsif (!$ignore_before) {
