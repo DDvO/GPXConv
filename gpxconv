@@ -376,30 +376,33 @@ sub parse_point {
     my $is_trkpt = $str =~ m/^<trkpt /;
 
     my $lat, my $lon;
-    if ($str =~ s#lat=\s*"(-?[\.\d]+)"\s*lon=\s*"(-?[\.\d]+)"\s*>##s) {
-        $lat     = $1;
-        $lon     = $2;
-    } elsif ($str =~ s#lon=\s*"(-?[\.\d]+)"\s*lat=\s*"(-?[\.\d]+)"\s*>##s) {
-        $lat     = $2;
-        $lon     = $1;
+    abort("FATAL: cannot find lat/lon part of point: $_[0]\n")
+        unless $str =~ s#^(<\w+)(\s+(\w+\s*=\s*"[^\"]*"\s*)+)\s*>#$1>#s;
+    my $lat_lon_str = $2;
+    if ($lat_lon_str =~ m#\slat\s*=\s*"(-?\d*(\.\d+)?)"\s*lon\s*=\s*"(-?\d*(\.\d+)?)"#s) {
+        ($lat, $lon) = ($1, $3);
+    } elsif ($lat_lon_str =~ m#\slon\s*=\s*"(-?\d*(\.\d+)?)"\s*lat\s*=\s*"(-?\d*(\.\d+)?)"#s) {
+        ($lat, $lon) = ($3, $1);
     } else {
-        abort("FATAL: Cannot parse point: $str\n");
+        abort("FATAL: error parsing lat/lon part '$lat_lon_str' of point: $_[0]\n");
     }
     $lat_full_len = max($lat_full_len, length($lat));
     $lon_full_len = max($lon_full_len, length($lon));
 
     my $ele_str = my $ele = "";
-    if ($str =~ s#[ \t]*(<ele>\s*(-?\d*(\.\d+)?)[\.\d]*\s*</ele>)\n?##s) {
-        $ele_str = $1;
-        $ele = $2; # may be empty or 0, ignores anything past any second decimal dot, e.g, takes ".12" on ".12.34" input
+    if ($str =~ s#[ \t]*(<ele>\s*([^\s<]*)\s*</ele>)\n?##s) {
+        ($ele_str, my $ele_inner) = ($1, $2);
+        abort("FATAL: error parsing elevation value '$ele_inner' in point: $_[0]\n")
+            unless $ele_inner =~ m/^\s*(-?\d*(\.\d+)?)(\.\d*)?\s*$/; # ignores any decimals past any second decimal dot, e.g, takes ".12" on ".12.34" input
+        $ele = $1; # may be empty or 0
         $ele_prec_len = max($ele_prec_len, length((sprintf ELE_PRECISION0, $ele)));
         $ele_full_len = max($ele_full_len, length($ele));
-        $ele = "" if !$ele_str && !$sec; # for routes generated, e.g., using Google My Maps
     }
 
     my $tim = "", my $sec = 0;
     if ($str =~ s#[ \t]*(<time>\s*([-:.T\dZ]+)\s*</time>)\n?##s) {
         $tim = $2;
+        abort("FATAL: error parsing time value '$tim' in point: $_[0]\n") unless $tim =~ m/^\d\d\d\d-\d\d-\d\dT\d\d(:\d\d(:\d\d(\.\d{1,})?)?)?Z$/;
         $tim =~ s/\.0+Z/Z/;
         $tim_len = max( $tim_len, length($tim) );
         $sec = str_to_epoch($tim);    # or within a day: $7+60*($6+60*$5); # may be 0
@@ -412,15 +415,7 @@ sub parse_point {
             $tim =~ s/(T\d\d:\d\d)Z/$1:00Z/;
         }
     }
-
-    my $spd = "";
-    if ($str =~ m#<(\w+:)?speed>\s*(-?[\.\d ]+)\s*</(\w+:)?speed>#s) {
-        # we assume that recorded speed takes altitude into account (i.e., is not just horizontal/lateral speed),
-        # see also https://forums.geocaching.com/GC/index.php?/topic/209525-gps-speed-3d-or-2d/
-        $spd = $2;
-        $spd *= 1 / MPS2KMPH unless $1; # usually, speed is given m/s, while our abbreviated extension uses km/h
-        $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
-    }
+    $ele = "" if !$ele_str && $tim eq ""; # for routes generated, e.g., using Google My Maps
 
     my $cmt = "";
     if ($is_trkpt && $str =~ s#[ \t]*(<cmt>.*?</cmt>)\n?##s) {
@@ -432,6 +427,19 @@ sub parse_point {
     if ($str =~ s#[ \t]*(<extensions>.*?</extensions>)\n?##s) {
         $ext = $1;
         $ext =~ s#\n##sg;
+    }
+
+    my $spd = "";
+    if ($ext =~ m#<(\w+:)?speed>([^<]*)</(\w+:)?speed>#s) {
+        abort("FATAL: inconsistent tags '<$1speed>' and '</$3speed>' in speed extension of in point: $_[0]\n") if ($1 // "") ne ($3 // "");
+        my ($prefix, $spd_str) = ($1, $2);
+        abort("FATAL: error parsing speed extension value '$spd_str' in point: $_[0]\n")
+            unless $spd_str =~ m/^\s*(-?\d*(\.\d+)?)(\.\d*)?\s*$/; # ignores any decimals past any second decimal dot, e.g, takes ".12" on ".12.34" input
+        # we assume that recorded speed takes altitude into account (i.e., is not just horizontal/lateral speed),
+        # see also https://forums.geocaching.com/GC/index.php?/topic/209525-gps-speed-3d-or-2d/
+        $spd = $1;
+        $spd *= 1 / MPS2KMPH unless $prefix; # usually, speed is given m/s, while our abbreviated extension uses km/h
+        $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
     }
 
     my $rest = $str;
@@ -788,6 +796,7 @@ sub next_trkpt2() {
     while ($ignore2 && defined($trkpt2 = <M>)) {
         $trkpt2 =~ m#(.*?</trkpt>)#s;
         $trkpt2 = $1;
+        abort("FATAL: cannot find end of trackpoint: <trkpt $_\n") unless $trkpt2;
         ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $cmt2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
     }
     ## debug "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=$sec2 spd=".($spd2 eq "" ? "" : spd_str($spd2)) if $trkpt2;
@@ -896,6 +905,7 @@ for ( my $state = 0,
         if (!$in_merge) {
             m#(.*?</trkpt>)#s;
             my $trkpt = $1;
+            abort("FATAL: cannot find end of trackpoint: <trkpt $_\n") unless $trkpt;
             ( $lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $exts, my $ignore ) = parse_point("<trkpt $trkpt");
             next if $ignore;
             ## debug "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd))."; state = $state";
