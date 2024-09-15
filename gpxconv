@@ -785,7 +785,7 @@ push @RATE, 0;
 
 $/ = "<trkpt ";
 if ($merge) {
-    open M, $merge || abort("FATAL: Cannot open alternative GPX source file $merge: $.\n") if $#TIM < 0;
+    open M, $merge || abort("FATAL: cannot open alternative GPX source file $merge: $.\n") if $#TIM < 0;
     <M>; # first item is before "<trktpt"
 }
 my ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1) if $merge; # current end of gap to be merged
@@ -1363,7 +1363,7 @@ $avg_timediff = $num_pts_mov ? $sum_timediff_mov0 / $num_pts_mov : 0; # used for
 # $sum_timediff_mov will be re-computed thereafter, since points may have been ignored or smoothened
 } # end TODO re-format
 
-abort("FATAL: No trackpoint (possibly after ignoring some)\n") if $#TIM < 0;
+abort("FATAL: no trackpoint (possibly after ignoring some)\n") if $#TIM < 0;
 
 
 ## check waypoints
