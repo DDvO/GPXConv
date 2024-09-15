@@ -1198,7 +1198,7 @@ for ( my $acc, my $rate,
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
 
-    ## debug "sanitizing point $i with lat=$lat lon=$lon ele='$ele' tim='$tim' sec=$sec spd=".($spd eq "" ? "" : spd_str($spd));
+    ## debug "considering sanitization of point $i with lat=$lat lon=$lon ele='$ele' tim='$tim' sec=$sec spd=".($spd eq "" ? "" : spd_str($spd));
     my ($ignore, $ignore_before) = (0, 0);
     sub ignore_trkpt        { ignoring_trkpt(  -1, @_); }
     sub ignore_trkpt_before { ignoring_trkpt($i-1, @_); }
@@ -1207,6 +1207,7 @@ for ( my $acc, my $rate,
         warn_trkpt_i($index, "ignoring", "$Spd_txt because $reason");
     }
 
+    # handle case(s) that do not involve earlier points and lead to removing current point
     if ($ele ne "" && $ele < MIN_PLAUSIBLE_ELE) {
         $num_removals_ele++;
         $ignore = 1;
@@ -1264,6 +1265,7 @@ for ( my $acc, my $rate,
         my $Dec      = $acc ne "" ? sprintf ACC_PRECISION, -$acc : "";
         warn_trkpt("before  ", "$Spd_txt distance between points = $Dis km (more than ".(WARNING_TPT_DIST / 1000).")") if $dis > WARNING_TPT_DIST;
 
+        # handle case(s) that involve (one or) two points before and may lead to removing point before
         $ignore = 1; # tentatively remove point before
         if (MAX_PLAUSIBLE_ANGLE_DIFF < abs($theta_diff)) {
             $num_removals_dir++;
@@ -1279,6 +1281,8 @@ for ( my $acc, my $rate,
             $ignore_before = 1;
             $ignore = 0;
         }
+
+        # handle cases that involves point before may lead to removing current point
         $ignore = 1; # tentatively remove current point
         if ($spd ne "" && $Spd > $MAX_PLAUSIBLE_SPEED) {
             $num_removals_spd++;
