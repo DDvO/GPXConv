@@ -241,7 +241,7 @@ my $min_lat, my $max_lat;
 my $min_lon, my $max_lon;
 
 my ($min_tim, $min_sec) = ("", 0);
-my ($max_tim ,$max_sec) = ("", 0);
+my ($max_tim ,$max_sec) = ("", 0); # $max_tim is not really used
 
 my ($days, $segs);
 my $part;  # will be index, defined   if -days or -segs option is given
@@ -411,10 +411,6 @@ sub parse_point {
             $tim =~ s/(T\d\d)Z/$1:00Z/;
             $tim =~ s/(T\d\d:\d\d)Z/$1:00Z/;
         }
-        $min_tim = $tim if $sec && $sec < $min_sec || $min_tim eq "";
-        $min_sec = $sec if $sec && $sec < $min_sec || $min_sec == 0;
-        $max_tim = $tim if $sec && $sec > $max_sec || $max_tim eq "";
-        $max_sec = $sec if $sec && $sec > $max_sec || $max_sec == 0;
     }
 
     my $spd = "";
@@ -1667,7 +1663,11 @@ for( my $rate, my $spd, my $direction,
     $max_lat = $lat if $i == 0 || $max_lat < $lat;
     $min_lon = $lon if $i == 0 || $min_lon > $lon;
     $max_lon = $lon if $i == 0 || $max_lon < $lon;
-    $max_sec = $sec if            $max_sec < $sec; # may be 0
+    $min_tim = $tim if $sec && $sec < $min_sec || $min_tim eq "";
+    $min_sec = $sec if $sec && $sec < $min_sec || $min_sec == 0;
+    $max_tim = $tim if $sec && $sec > $max_sec || $max_tim eq "";
+    $max_sec = $sec if $sec && $sec > $max_sec || $max_sec == 0;
+
     if ($spd ne "") {
         ($MAX_SPD[$all ], $MAX_SPD_INDEX[$all ]) = ($spd, $i) if (!defined $MAX_SPD[$all ] || $MAX_SPD[$all ] < $spd);
         ($MAX_SPD[$part], $MAX_SPD_INDEX[$part]) = ($spd, $i) if defined $part
@@ -1945,7 +1945,7 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
 
 my $final_text = "\n";
 $final_text .= "total track length   = $Sum_dis km\n";
-$final_text .= "total recording time = $total_time\n";
+$final_text .= "total track duration = $total_time\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mov;
 $final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov && $weight;
 $final_text .= "average moving speed = $Avg_spd km/h\n"      if defined $Avg_spd;
