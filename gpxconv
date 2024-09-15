@@ -1219,7 +1219,7 @@ for ( my $acc, my $rate,
     if ( $SEG[$i] ) { # at segment start
         $acc = $rate = ""; # keep any recorded speed, but reset acceleration and climb/descent rate
     }
-    else {
+    elsif (!$ignore) {
         ( my $diff_ele, $timediff, $rate, $dis, $comp_spd, $acc ) = comp_diffs();
         my ($theta_diff, $Spd2) = (0, "");
         if (!$SEG[$i - 1]) { # previous point not at segment start, implies $i >= 2 here
