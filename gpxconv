@@ -1277,7 +1277,8 @@ for ( my $acc, my $rate,
         }
         if ($ignore) {
             $num_removals_in_row++;
-            remove_trkpt($i - 1, $i--);
+            remove_trkpt($i - 1, $i);
+            $i--;
             # maybe should re-compute speed etc. relative to new previous point
             $ignore_before = 1;
             $ignore = 0;
@@ -1324,7 +1325,8 @@ for ( my $acc, my $rate,
             $num_removals_in_row = 0;
         }
         $num_removals_in_row++;
-        remove_trkpt($i, $i--);
+        remove_trkpt($i, $i);
+        $i--;
         # will re-compute speed etc. relative to same previous point as before
     }
     elsif (!$ignore_before) {
