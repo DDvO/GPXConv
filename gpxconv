@@ -2015,6 +2015,7 @@ $final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mo
 $final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov && $weight;
 $final_text .= "average moving speed = $Avg_spd km/h\n"      if defined $Avg_spd;
 my $end_text = $final_text;
+$final_text .= $Speed_deviation_text;
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
 $final_text .= plural($num_auto_wpts, "automatic waypoint")." pruned\n" if $num_auto_wpts;
 $final_text .= plural($num_ignored_hdrs,    "track header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
@@ -2052,11 +2053,10 @@ my $num_sanitized = $num_removals_ele + $num_removals_dir + $num_removals_spd + 
     + $num_removals_dec + $num_removals_gain + $num_removals_loss + $num_removals_diff;
 my $sanitized_text = $num_sanitized ? plural($num_sanitized, "sanitized trackpoint")." nor " : "";
 my $stats = "GPXConv statistics (not including $sanitized_text"."periods between segments)\n"
-  . point( 0,                "start" )
+  . point(0, "start")
   . $part_points
   . $phase_points
-  . point( $#TIM, "end" )
-  . $Speed_deviation_text
+  . point($#TIM, "end")
   .($phases && $PHASES_REPORT_THRESHOLD > ELE_THRESHOLD ?
     "$ascent__phases_suppressed ascent phases and $descent_phases_suppressed descent phases " .
     "not reported because they are below the threshold of +/-$PHASES_REPORT_THRESHOLD m\n" : "")
