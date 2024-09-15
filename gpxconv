@@ -453,8 +453,8 @@ sub parse_point {
     $ignore = 1 if
         ( $begin_sec && $sec && $sec < $begin_sec && ++$num_ignored_before ||
           $end_sec   && $sec && $end_sec < $sec   && ++$num_ignored_after  ||
-          $max_elem  && $str =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
-          $min_elem  && $str =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below
+          $max_elem  && $_[0] =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
+          $min_elem  && $_[0] =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below
         );
     $ext     =~ s#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>##s if $max_ext &&
         $ext =~ m#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>#s && $1 > $max_ext_limit && ++$num_ext_above;
