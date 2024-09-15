@@ -284,6 +284,26 @@ use Time::gmtime qw( gmtime );
 
 use Scalar::Util qw( looks_like_number );
 
+sub print_line { print STDERR "$_[0]\n"; }
+
+sub warning {
+    print_line("WARNING: $_[0]") if $print_warnings;
+}
+
+sub info {
+    print_line("INFO   : $_[0]") if $print_info;
+}
+
+sub abort {
+    print_line("$_[0]aborting");
+    exit 1;
+}
+
+sub debug {
+    print_line("### DEBUG: $_[0]");
+}
+
+
 # str_to_epoch("1970-01-01T00:00:00Z") = 0; returns undef on error
 # due to parsedate(), allows for weird values, e.g., 2000-01-01T00:00:63Z is taken as 2000-01-01T00:01:03Z
 sub str_to_epoch {
@@ -467,25 +487,6 @@ sub parse_point {
     $ext =~ s#<extensions></extensions>##sg;
 
     return ( $lat, $lon, $ele, $tim, $sec, $spd, $rest, $cmt, $ext, $ignore );
-}
-
-sub print_line { print STDERR "$_[0]\n"; }
-
-sub warning {
-    print_line("WARNING: $_[0]") if $print_warnings;
-}
-
-sub info {
-    print_line("INFO   : $_[0]") if $print_info;
-}
-
-sub abort {
-    print_line("$_[0]aborting");
-    exit 1;
-}
-
-sub debug {
-    print_line("### DEBUG: $_[0]");
 }
 
 sub plural { my ($n, $str) = @_; return "$n $str".($n == 1 ? "" : "s"); }
