@@ -2002,7 +2002,6 @@ my $stats = "GPXConv statistics (not including $sanitized_text"."periods between
 "GPXConv statistics end";
 
 print_line(""); # empty line
-info($stats);
 $HEAD =~
   s|(<trk>\s*(<name>.*?</name>)?)|$1\n<cmt></cmt>|s # add preliminarily empty comment in track
   unless $HEAD =~ m/<trk>.*?<cmt>/s;                # if not already existing
@@ -2010,6 +2009,7 @@ $HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s;    # prepend stats to track comment
 
 ## fill long time gaps as far as needed with intermediate points by linear interpolation
 
+my $num_interpolated_trkpts = 0;
 for ( my $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] ); # needed also for print_trkpt
@@ -2060,11 +2060,16 @@ for ( my $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
             splice @EXT, $i, 0, "";
             $i++;
             $t += $time_inc;
+            $num_interpolated_trkpts++;
         }
     }
     ( $prev_lat, $prev_lon, $prev_ele, $prev_sec, $prev_spd ) =
       ( $lat, $lon, $ele, $sec, $spd );
 }
+
+my $interpolated_text = $num_interpolated_trkpts ? points($num_interpolated_trkpts)." interpolated due to gaps > ".INTERPOLATION_MAX_GAP." seconds\n" : "";
+$stats =~ s/(elevation )/$interpolated_text$1/;
+info($stats);
 
 ## finally write output
 
