@@ -128,6 +128,7 @@ use constant DEFAULT_ELE_CORRECTION => 0; # 47; # if used should be -(average ge
 
 ### other constants
 
+use constant MPS2KMPH       =>    3.6  ; # factor for converting m/s to km/h
 use constant METERS_PER_DEGREE_LAT => 10000 * 1000 / 90; # on Earth, by definition
 use constant LAT_PRECISION  =>   "%.5f"; #  latitude resolution = 0.00001° (<= 1.11 meters)
 use constant LON_PRECISION  =>   "%.5f"; # longitude resolution = 0.00001° (<= 1.11 meters)
@@ -348,8 +349,8 @@ sub ele_string {
 }
 
 my $spd_prec_len = 1; # used only for spd_string
-sub spd_full { return sprintf SPD_PRECISION, 3.6 * $_[0]; }
-sub spd_str { return sprintf SPD_PRECISION0, 3.6 * $_[0]; }
+sub spd_full { return sprintf SPD_PRECISION, MPS2KMPH * $_[0]; }
+sub spd_str { return sprintf SPD_PRECISION0, MPS2KMPH * $_[0]; }
 sub spd_string {
     my $s = spd_str($_[0]);
     return " " x ($spd_prec_len - length($s)) . $s;
@@ -418,10 +419,10 @@ sub parse_point {
 
     my $spd = "";
     if ($str =~ m#<(\w+:)?speed>\s*(-?[\.\d ]+)\s*</(\w+:)?speed>#s) {
-        # we assume that recorded speed takes altitude into accouont (i.e., is not just horizontal/lateral speed),
+        # we assume that recorded speed takes altitude into account (i.e., is not just horizontal/lateral speed),
         # see also https://forums.geocaching.com/GC/index.php?/topic/209525-gps-speed-3d-or-2d/
         $spd = $2;
-        $spd /= 3.6 unless $1; # usuallly, speed is given m/s, while our abbreviated extension uses km/h
+        $spd *= 1 / MPS2KMPH unless $1; # usually, speed is given m/s, while our abbreviated extension uses km/h
         $spd_prec_len = max($spd_prec_len, length(spd_str($spd))); # used only for spd_string
     }
 
@@ -1254,7 +1255,7 @@ for ( my $acc, my $rate,
             warn_trkpt("           before ",
                        "recorded speed is ".spd_string($spd).", computed speed is $Comp_spd km/h ".
                        "deviation is " . spd_string($spd_diff) . " km/h" .
-                       " (more than " . MAX_SPEED_DEVIATION . ")") if $spd_diff > (MAX_SPEED_DEVIATION + 0.5) / 3.6;
+                       " (more than " . MAX_SPEED_DEVIATION . ")") if $spd_diff > (MAX_SPEED_DEVIATION + 0.5) / MPS2KMPH;
         }
         if ($spd eq "" || $timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED) {
             $spd = $comp_spd; # $SPD[$i] will be set later if needed
@@ -1310,7 +1311,7 @@ for ( my $acc, my $rate,
                          " sec (less than $MIN_TIMEDIFF) over a distance of $Dis km") if $timediff > 1.001;
         } else {
             $ignore = 0;
-            if (!$ignore_before && $spd ne "" && $spd >= MIN_SPEED_MOVING / 3.6) # implies $timediff ne ""
+            if (!$ignore_before && $spd ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) # implies $timediff ne ""
             {
                 $sum_timediff_mov0 += $timediff; # used for smoothing
                 $num_pts_mov++;                  # used for smoothing
@@ -1645,7 +1646,7 @@ for( my $rate, my $spd, my $direction,
         $spd = $SPD[$i];
         push @DIST, $dis;
         push @RATE, $rate;
-        if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / 3.6) {
+        if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
             $sum_timediff_mov += $timediff;
         }
         if ( $weight && !$SEG[$i] ) { # not at segment start
@@ -1764,7 +1765,7 @@ my $Max_lat     = lat_str($max_lat);
 my $Max_lon     = lon_str($max_lon);
 my $Sum_dis    = sprintf "%" . DIS_PRECISION, $sum_dis / 1000;
 my $Sum_energy = sprintf "%.0f", $sum_energy / 1000 if $weight;
-my $Avg_spd    = sprintf AVG_PRECISION, 3.6 * $sum_dis / $sum_timediff_mov if $sum_timediff_mov;
+my $Avg_spd    = sprintf AVG_PRECISION, MPS2KMPH * $sum_dis / $sum_timediff_mov if $sum_timediff_mov;
 my $Sum_timediff_mov = timediff_string($sum_timediff_mov);
    $Sum_timediff_mov =~ s/^\s+//;
 my $Speed_deviation_text = $sum_speed ? ("average deviation between recorded and computed speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
