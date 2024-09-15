@@ -1820,7 +1820,7 @@ sub wpt {
     $tim = round_tim($tim);
     my $ele  = correct_ele( $j, $i );
     my $name_or_orig_text = $j >= 0 ? $WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
-    return '<wpt lat="' . lat_string($lat) . '" ' . 'lon="' . lon_string($lon) . '">'
+    return '<wpt lat="' . lat_str($lat) . '" ' . 'lon="' . lon_str($lon) . '">'
         . ( $ele eq "" ? "     " . (" " x $ele_prec_len ) . "      "
             : "<ele>" . ele_string($ele_prec_len, $ele) . "</ele>" )
         . ( $tim eq "" ? "      " . "                    " . "       "
@@ -2071,7 +2071,7 @@ for ( my $i = 0 ; INTERPOLATE_POINTS && $i <= $#TIM ; $i++ ) {
 print $out $HEAD;                     # includes <gpx> <trk> <trkseg>
 for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     ( $tim, $spd ) = ( round_tim($TIM[$i]), $SPD[$i] );
-    print $out '<trkpt lat="' . lat_string($LAT[$i]) . '" lon="' . lon_string($LON[$i]) . '">';
+    print $out '<trkpt lat="' . lat_str($LAT[$i]) . '" lon="' . lon_str($LON[$i]) . '">';
     print $out "<ele>" . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
     print $out "<time>$tim</time>" if $tim;
 
