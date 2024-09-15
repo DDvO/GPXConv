@@ -284,10 +284,13 @@ use Time::gmtime qw( gmtime );
 
 use Scalar::Util qw( looks_like_number );
 
-# str_to_epoch("1970-01-01T00:00:00Z") = 0
+# str_to_epoch("1970-01-01T00:00:00Z") = 0; returns undef on error
+# due to parsedate(), allows for weird values, e.g., 2000-01-01T00:00:63Z is taken as 2000-01-01T00:01:03Z
 sub str_to_epoch {
     my $s = $_[0];
+    return undef unless $s =~ m/^\d\d\d\d-\d\d-\d\dT\d\d(:\d\d(:\d\d(\.\d{1,})?)?)?Z$/; # pre-parse because parsedate() is not very strict
 
+# within a day, may use: seconds + 60 * (minute + 60 * hour)
 # return DateTime::Format::ISO8601->parse_datetime($s)->epoch();
 # # not used due to Perl library bug on Mac OS X: "dyld: lazy symbol binding failed: Symbol not found: _Perl_newSVpvn_flags"
 # # http://www.en8848.com.cn/Reilly%20Books/perl3/cookbook/ch03_08.htm
@@ -301,7 +304,7 @@ sub str_to_epoch {
     $s =~ s/T/ /;
     $s =~ s/Z/+0000/;
     my $sec = Time::ParseDate::parsedate($s);
-    $sec += $1 if $s =~ m/:\d\d(\.\d+)/;    # fractional seconds
+    $sec += $1 if defined $sec && $s =~ m/:\d\d(\.\d+)/; # fractional seconds
     return $sec;
 }
 
@@ -400,13 +403,13 @@ sub parse_point {
     }
 
     my $tim = "", my $sec = 0;
-    if ($str =~ s#[ \t]*(<time>\s*([-:.T\dZ]+)\s*</time>)\n?##s) {
-        $tim = $2;
-        abort("FATAL: error parsing time value '$tim' in point: $_[0]\n") unless $tim =~ m/^\d\d\d\d-\d\d-\d\dT\d\d(:\d\d(:\d\d(\.\d{1,})?)?)?Z$/;
+    if ($str =~ s#[ \t]*(<time>\s*([^\s<]*)\s*</time>)\n?##s) {
+        $tim = my $orig_tim = $2;
         $tim =~ s/\.0+Z/Z/;
         $tim_len = max( $tim_len, length($tim) );
-        $sec = str_to_epoch($tim);    # or within a day: $7+60*($6+60*$5); # may be 0
-        $sec += 0.001 if ($tim =~ m/\.999Z/); # for some reason, at least OruxMaps on Android often reports 0.001 seconds less than a full second
+        $sec = str_to_epoch($tim); # may be 0
+        abort("FATAL: error parsing time value '$orig_tim' in point: $_[0]\n") unless defined $sec;
+        $sec += 0.001 if defined $sec && $tim =~ m/\.999Z/; # for some reason, at least OruxMaps on Android often reports 0.001 seconds less than a full second
         if ( $sec && TIME_CORRECTION ) {
             $sec += TIME_CORRECTION;
             $tim = epoch_to_str($sec);
