@@ -303,10 +303,27 @@ sub debug {
     print_line("### DEBUG: $_[0]");
 }
 
+# https://stackoverflow.com/questions/229009/how-can-i-get-a-call-stack-listing-in-perl
+# alternatively to making explicit individual calls to stacktras, may use: perl -d:Confess
+sub stacktrace {
+    use Devel::StackTrace;
+    debug(Devel::StackTrace->new->as_string);
+    # { # further alternative:
+    #     use Carp qw<longmess>;
+    #   # local $Carp::CarpLevel = -1;
+    #     debug(longmess());
+    # }
+    # { # further alternative:
+    #     for (print STDERR "Stack Trace:\n", my $i = 0; my @call_details = caller($i); $i++) {
+    #         print STDERR $call_details[1].":".$call_details[2]." in function ".$call_details[3]."\n";
+    #     }
+    # }
+}
 
 # str_to_epoch("1970-01-01T00:00:00Z") = 0; returns undef on error
 # due to parsedate(), allows for weird values, e.g., 2000-01-01T00:00:63Z is taken as 2000-01-01T00:01:03Z
 sub str_to_epoch {
+    stacktrace() unless $_[0];
     my $s = $_[0];
     return undef unless $s =~ m/^\d\d\d\d-\d\d-\d\dT\d\d(:\d\d(:\d\d(\.\d{1,})?)?)?Z$/; # pre-parse because parsedate() is not very strict
 
@@ -329,6 +346,7 @@ sub str_to_epoch {
 }
 
 sub epoch_to_str {
+    stacktrace() unless defined $_[0];
 
 # use DateTime; # not used due to Perl library bug on Mac OS X:
                 # "dyld: lazy symbol binding failed: Symbol not found: _Perl_newSVpvn_flags"
@@ -350,12 +368,14 @@ sub epoch_to_str {
 }
 
 sub round_tim { # round to nearest second
+    stacktrace() unless $_[0];
     my $tim = shift;
     # $tim =~ s/(:\d\d)(\.\d+)/$1/;  # strip fractional seconds
     return $tim =~ m/\.(\d+)Z$/ && $1 != 0 ? epoch_to_str(nearest(1, str_to_epoch($tim))) : $tim;
 }
 
 sub timediff_string {
+    stacktrace() if !defined $_[0] || $_[0] eq "";
     my $t = $_[0] + 0.5; # for rounding to nearest second
     my $s = $t % 60;
     $t = ( $t - $s ) / 60;
@@ -365,6 +385,7 @@ sub timediff_string {
 }
 
 sub ele_string {
+    stacktrace() if !defined $_[1] || $_[1] eq "";
     my $len = $_[0];
     my $ele = $_[1];
     $ele = (sprintf ELE_PRECISION0, $ele) if $len >= 0;
@@ -372,8 +393,14 @@ sub ele_string {
 }
 
 my $spd_prec_len = 1; # used only for spd_string
-sub spd_full { return sprintf SPD_PRECISION, MPS2KMPH * $_[0]; }
-sub spd_str { return sprintf SPD_PRECISION0, MPS2KMPH * $_[0]; }
+sub spd_full {
+    stacktrace() if !defined $_[0] || $_[0] eq "";
+    return sprintf SPD_PRECISION, MPS2KMPH * $_[0];
+}
+sub spd_str {
+    stacktrace() if !defined $_[0] || $_[0] eq "";
+    return sprintf SPD_PRECISION0, MPS2KMPH * $_[0];
+}
 sub spd_string {
     my $s = spd_str($_[0]);
     return " " x ($spd_prec_len - length($s)) . $s;
