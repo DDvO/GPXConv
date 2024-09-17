@@ -1493,31 +1493,34 @@ if ( $smoothing ) {
 
 ## perform analysis/statistics
 
+my $num_energy_missing = 0;
 my $energy_missing_ele = 0;
 my $energy_missing_spd = 0;
 sub energy { # calculate energy difference between trackpoints  # TODO simplify provisioning of parameters using index
-    my $t  = $_[0];                # start date and time
-    my $t0 = $_[1];                # start time relative to begin of track in s
-    my $t1 = $_[2];                # end   time relative to begin of track in s
+    my $i  = $_[0];                # index of end of the current span between points with assumed linear movement
+    my $t0 = $_[1];                # start time in s (relative to begin of track)
+    my $t1 = $_[2];                # end   time in s (relative to begin of track)
     my $dt = $t1 - $t0;            # duration in s
     my $d  = $_[3];                # 3-dimensional distance in m
     my $h0 = $_[4];                # altitude before in m
     my $h1 = $_[5];                # altitude after  in m
-    my $default_ele = 500;         # default altitude in m assumed for calculating density
-    if ($h0 eq "" || $h1 eq "" ) {
-        $h0 = $h1 = $default_ele;
-        warning("missing altitude information for calculating energy, at least at $t") unless $energy_missing_ele;
-        $energy_missing_ele = 1;
+    if ($h0 eq "" || $h1 eq "") {
+        # $h0 = $h1 = 500;         # default altitude in m assumed for calculating density
+        warn_trkpt_i($i, "       at least at", "  cannot calculate energy due to missing altitude information") if $energy_missing_ele < 2;
+        $energy_missing_ele++;
+        $num_energy_missing++;
+        return 0;
     }
-    my $dh =  $h1 - $h0;           # altitude difference, or 0 if $default_ele used
+    my $dh =  $h1 - $h0;           # altitude difference (or 0 if default elevation used)
     my $h  = ( $h0 + $h1 ) / 2;    # average altitude, used for air density
     my $v0 = $_[6];                # speed before in m/s
     my $v1 = $_[7];                # speed after  in m/s
-    my $default_spd = 0;           # default speed in m/s assumed for calculating acceleration and air drag
-    if ($v0 eq "" || $v1 eq "") {
-        $v0 = $v1 = $default_spd;
-        warning("missing speed information for calculating energy, at least at $t") if $energy_missing_spd < 2;
+    if ($v0 eq "" || $v1 eq "") { # cannot really happen because time is present, lat/lon are guaranteed to be there, just ele may be missing
+        # $v0 = $v1 = 0;           # default speed in m/s assumed for calculating acceleration and air drag
+        warn_trkpt_i($i, "       at least at", "  cannot calculate energy due to missing speed information") if $energy_missing_spd < 2;
         $energy_missing_spd++;
+        $num_energy_missing++;
+        return 0;
     }
     my $v  = ( $v0 + $v1 ) / 2;    # average speed, used for air drag, assumed with no wind (i.e., calm air)
     my $g = 9.81;                  # gravity constant in m/(s^2)
@@ -1700,15 +1703,15 @@ for( my $rate, my $spd, my $direction,
         if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
             $sum_timediff_mov += $timediff;
         }
-        if ( $weight && !$SEG[$i] ) { # not at segment start
-            my $tim_start = round_tim($TIM[$i - 1]);
-            $tim_start = "<unknown time>" if $tim_start eq ""; # TODO improve, using index
-            my $start_sec = $#TIM < 0 ? 0 : $SEC[0];
-            $sum_energy += energy($tim_start,
-                                  $prev_sec - $start_sec,
-                                  $sec - $start_sec,
-                                  $dis, $prev_ele, $ele,
-                                  $prev_spd, $spd);
+        if ($weight) {
+            unless (defined $sec && defined $prev_sec) {
+                warn_trkpt_i($i, "no time  before/at", "; cannot calculate energy here");
+                $num_energy_missing++;
+            } else {
+                my $start_sec = $SEC[0] // 0; # used just for smaller time arguments to sub energy()
+                $sum_energy += energy($i, $prev_sec - $start_sec, $sec - $start_sec,
+                                      $dis, $prev_ele, $ele, $prev_spd, $spd);
+            }
         }
     }
 
@@ -1881,6 +1884,8 @@ my $Max_lat     = lat_str($max_lat);
 my $Max_lon     = lon_str($max_lon);
 my $Sum_dis    = sprintf "%" . DIS_PRECISION, $sum_dis / 1000;
 my $Sum_energy = sprintf "%.0f", $sum_energy / 1000 if $weight;
+my $no_energy_text = $num_energy_missing ? ", leaving out ".points($num_energy_missing).
+    " where time or altitude information is missing" : "" if $weight;
 my $Avg_spd    = sprintf AVG_PRECISION, MPS2KMPH * $sum_dis / $sum_timediff_mov if $sum_timediff_mov;
 my $Sum_timediff_mov = timediff_string($sum_timediff_mov);
    $Sum_timediff_mov =~ s/^\s+//;
@@ -2058,7 +2063,7 @@ my $final_text = "\n";
 $final_text .= "total track length   = $Sum_dis km\n";
 $final_text .= "total track duration = $total_time\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mov;
-$final_text .= "total biking energy  = $Sum_energy kJ\n"     if $sum_timediff_mov && $weight;
+$final_text .= "total biking energy  = $Sum_energy kJ$no_energy_text\n" if $sum_timediff_mov && $weight;
 $final_text .= "average moving speed = $Avg_spd km/h\n"      if defined $Avg_spd;
 my $end_text = $final_text;
 $final_text .= $Speed_deviation_text;
