@@ -587,6 +587,7 @@ sub remove_trkpt { my ($i, $last) = @_;
 }
 
 sub distance {
+    stacktrace() if !defined $_[0] || !defined $_[1] || !defined $_[2] || !defined $_[3] || !defined $_[4] || !defined $_[5];
     my $lat      = $_[0];
     my $lon      = $_[1];
     my $ele      = $_[2];
@@ -994,7 +995,7 @@ for ( my $state = 0,
         }
 
         my $flags = 0;
-        my $dis = $state == 1 ? 0 : distance_curr( $prev_lat, $prev_lon, $prev_ele );
+        my $dis = $i == 0 || $state == 1 ? 0 : distance_curr($prev_lat, $prev_lon, $prev_ele);
         if ( $state < 3 ) {    # the first point in trkseg
             if ( CARRY_OVER_ELE && $ele ne "" ) {
                 if ( $i > 0 && $ELE[ $i - 1 ] eq "" ) {
