@@ -222,8 +222,8 @@ my @PHASE_DIFF;
 my @PHASE_DIST;
 my @PHASE_SPD;
 my @PHASE_RATE;
-my @PHASE_MAXSPD_INDEX;
-my @PHASE_MAXRATE_INDEX;
+my @PHASE_MAX_SPD_INDEX;
+my @PHASE_MAX_RATE_INDEX;
 my @PHASE_END_INDEX;
 my @DIST;
 my @RATE;
@@ -1575,14 +1575,14 @@ sub push_phase {
         $avg_spd  = $dist / $duration;
         $avg_rate = 3600 * $diff_ele / $duration;
     }
-    push @PHASE_DURATION,      $duration;
-    push @PHASE_DIFF,          $diff_ele;
-    push @PHASE_DIST,          $dist;
-    push @PHASE_SPD,           $avg_spd;
-    push @PHASE_RATE,          $avg_rate;
-    push @PHASE_MAXSPD_INDEX,  $max__spd_index;
-    push @PHASE_MAXRATE_INDEX, $max_rate_index;
-    push @PHASE_END_INDEX,     $end_index;
+    push @PHASE_DURATION,       $duration;
+    push @PHASE_DIFF,           $diff_ele;
+    push @PHASE_DIST,           $dist;
+    push @PHASE_SPD,            $avg_spd;
+    push @PHASE_RATE,           $avg_rate;
+    push @PHASE_MAX_SPD_INDEX,  $max__spd_index;
+    push @PHASE_MAX_RATE_INDEX, $max_rate_index;
+    push @PHASE_END_INDEX,      $end_index;
 }
 
 for( my $rate, my $spd, my $direction,
@@ -1977,22 +1977,22 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
       . ( sprintf "%" . DIS_PRECISION, $PHASE_DIST[$i] / 1000 ) . " km";
     my $duration = $PHASE_DURATION[$i];
     $Len .= "; duration = " . timediff_string($duration) if $duration >= 0;
-    my $max_spd_idx = $PHASE_MAXSPD_INDEX[$i];
+    my $max_spd_idx = $PHASE_MAX_SPD_INDEX[$i];
     my $Spd = phase_text($i)
         . "max speed =  ".spd_full($SPD[$max_spd_idx])." km/h; "
         . "avg speed  = ".spd_full($PHASE_SPD[    $i])." km/h"
         if defined $max_spd_idx;
-    my $max_rate_idx = $PHASE_MAXRATE_INDEX[$i];
+    my $max_rate_idx = $PHASE_MAX_RATE_INDEX[$i];
     my $Rate = phase_text($i)
         . "max rate  =" . (sprintf RAT_PRECISION2, $RATE[$max_rate_idx]) . "  m/h; "
         . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE[$i]     ) . "  m/h"
         if defined $max_rate_idx;
-    $phase_wpts .= wpt(-1, $PHASE_END_INDEX    [$i], $Len );
-    $phase_wpts .= wpt(-1, $PHASE_MAXSPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
-    $phase_wpts .= wpt(-1, $PHASE_MAXRATE_INDEX[$i], $Rate) if defined $max_rate_idx;
-    $phase_points .= point($PHASE_END_INDEX    [$i], $Len );
-    $phase_points .= point($PHASE_MAXSPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
-    $phase_points .= point($PHASE_MAXRATE_INDEX[$i], $Rate) if defined $max_rate_idx;
+    $phase_wpts .= wpt(-1, $PHASE_END_INDEX     [$i], $Len );
+    $phase_wpts .= wpt(-1, $PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
+    $phase_wpts .= wpt(-1, $PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
+    $phase_points .= point($PHASE_END_INDEX     [$i], $Len );
+    $phase_points .= point($PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
+    $phase_points .= point($PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
 }
 
 my $total_time  = defined $max_sec && defined $min_sec ? timediff_string($max_sec - $min_sec) : 0;
