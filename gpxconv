@@ -1473,24 +1473,21 @@ sub average {
       ( weight($diff_time1) + 1 + weight($diff_time2) );
 }
 
-if ( $smoothing ) {
-    for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
-        ( $tim, $sec ) = ( $TIM[$i], $SEC[$i] );
-        if (0 < $i && $i < $#SEC && defined $SEC[$i - 1] && defined $sec && defined $SEC[$i + 1] && !$SEG[$i] && !$SEG[$i + 1])
-        {
-            my $diff_time1 = $sec - $SEC[ $i - 1 ];
-            my $diff_time2 = $SEC[ $i + 1 ] - $sec;
-            if ( max( $diff_time1, $diff_time2 ) <= SMOOTHING_MAX_GAP ) {
-                $LAT[$i] = average( $prev_lat * 0 + $LAT[ $i - 1 ], $LAT[$i], $LAT[ $i + 1 ] , $diff_time1 , $diff_time2 );
-                $LON[$i] = average( $prev_lon * 0 + $LON[ $i - 1 ], $LON[$i], $LON[ $i + 1 ] , $diff_time1 , $diff_time2 );
-                $ELE[$i] = average( $prev_ele * 0 + $ELE[ $i - 1 ], $ELE[$i], $ELE[ $i + 1 ] , $diff_time1 , $diff_time2 )
-                    if $prev_ele ne ""  && $ELE[ $i - 1 ] ne "" && $ELE[$i] ne "" && $ELE[ $i + 1 ] ne "";
-                # speed will be re-computed later
-                # individiual points are not marked as smoothendd; this is done globally
-                $num_smoothened++;
-            }
+if ($smoothing) {
+    for (my $i = 1; $i < $#TIM; $i++) {
+        my $sec = $SEC[$i];
+        my $diff_time1 = diff_defined($sec, $SEC[$i - 1]);
+        my $diff_time2 = diff_defined($SEC[$i + 1], $sec);
+        if (defined $diff_time1 && defined $diff_time2 && !$SEG[$i] && !$SEG[$i + 1] && max($diff_time1, $diff_time2) <= SMOOTHING_MAX_GAP) {
+            my ($prev_ele, $ele, $next_ele) = ($ELE[$i - 1], $ELE[$i], $ELE[$i + 1]);
+            $LAT[$i] = average($LAT[$i - 1], $LAT[$i], $LAT[$i + 1], $diff_time1, $diff_time2);
+            $LON[$i] = average($LON[$i - 1], $LON[$i], $LON[$i + 1], $diff_time1, $diff_time2);
+            $ELE[$i] = average($prev_ele   , $ele    , $next_ele   , $diff_time1, $diff_time2)
+                if $prev_ele ne "" && $ele ne "" && $next_ele ne "";
+            # speed will be recalculated later
+            # individiual points are not marked as smoothendd; this is done globally
+            $num_smoothened++;
         }
-        ( $prev_lat, $prev_lon, $prev_ele ) = ( $LAT[$i], $LON[$i], $ELE[$i] );
     }
 }
 
