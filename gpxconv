@@ -128,7 +128,9 @@ use constant DEFAULT_ELE_CORRECTION => 0; # 47; # if used should be -(average ge
 
 ### other constants
 
-use constant MPS2KMPH       =>    3.6  ; # factor for converting m/s to km/h
+use constant H2S            =>    3600 ; # factor for converting hours to seconds
+use constant M2KM           =>    0.001; # factor for converting m to km
+use constant MPS2KMPH       =>H2S * M2KM;# factor for converting m/s to km/h
 use constant METERS_PER_DEGREE_LAT => 10000 * 1000 / 90; # on Earth, by definition
 use constant LAT_PRECISION  =>   "%.5f"; #  latitude resolution = 0.00001° (<= 1.11 meters)
 use constant LON_PRECISION  =>   "%.5f"; # longitude resolution = 0.00001° (<= 1.11 meters)
@@ -138,7 +140,7 @@ use constant ELE_PRECISION3 =>   "%.3f";
 use constant DIF_PRECISION  => "%+5.0f"; #  altitude difference          resolution = 1 meters
 use constant RAT_PRECISION  => "%+5.0f"; #  altitude ascent/descent rate resolution = 1 meters
 use constant RAT_PRECISION2 => "%+6.0f"; #  altitude ascent/descent rate resolution = 1 meters
-use constant DIS_PRECISION  =>    ".2f"; #  distance resolution = 0.01 km
+use constant DIS_PRECISION  =>   "%.2f"; #  distance resolution = 0.01 km
 use constant SEC_PRECISION  =>   "%.0f"; #   seconds resolution = 1 second
 use constant SPD_PRECISION  =>  "%4.0f"; #     speed resolution = 1 km/h
 use constant AVG_PRECISION  =>   "%.1f"; # avg speed resolution = 0.1 km/h
@@ -392,6 +394,10 @@ sub ele_string {
     $ele = (sprintf ELE_PRECISION0, $ele) if $len >= 0;
     return ( " " x max( 0, abs($len) - length($ele) ) ) . $ele;
 }
+sub dis_string {
+    stacktrace() if !defined $_[0] || $_[0] eq "";
+    return sprintf DIS_PRECISION." km", M2KM * $_[0];
+}
 
 my $spd_prec_len = 1; # used only for spd_string
 sub spd_full {
@@ -570,7 +576,7 @@ sub diff_defined  { return defined $_[0] && defined $_[1] ? $_[0] - $_[1] : unde
 sub diff_nonempty { stacktrace() unless defined $_[0] && defined $_[1];
                     return $_[0] ne ""   && $_[1] ne ""   ? $_[0] - $_[1] : undef; }
 
-sub rate { return defined $_[0] && $_[1] ? 3600 * $_[0] / $_[1] : ""; } # ascent/descent rate in m/h
+sub rate { return defined $_[0] && $_[1] ? H2S * $_[0] / $_[1] : ""; } # ascent/descent rate in m/h
 
 sub recalculate_DIS { my $i = $_[0];
     return if $i <= 0 || $SEG[$i];
@@ -1041,10 +1047,10 @@ for ( my $state = 0,
                 $tim_miss_start = 0;
             }
             if ( $state == 2 ) {
-                my $Dis = sprintf "%4" . DIS_PRECISION, $dis / 1000;
+                my $Dis = dis_string($dis);
                 my $Gap = timediff_string($diff_time);
                 $Gap =~ s/^\s+//;
-                info_trkpt( "further segment at", " after a gap of $Gap and $Dis km" );
+                info_trkpt("further segment at", " after a gap of $Gap and $Dis");
             }
 
             my $resolution;
@@ -1148,12 +1154,13 @@ for ( my $state = 0,
                 my $sec_diff = $sec - $sec_curr;
                 my $sec_gradient = $sec_diff / $tim_miss_length;
                 my $j;
-                ## debug("over ".($tim_miss_length / 1000)." km, sec_diff = $sec_diff);
+                ## debug("over ".dis_string($tim_miss_length).", sec_diff = $sec_diff);
                 for ($j = $tim_miss_start; $j < $i_end; $j++) {
                     $sec_curr += $DIS[$j] * $sec_gradient;
                     $SEC[$j] = $sec_curr;
                     $TIM[$j] = epoch_to_str($sec_curr);
                     recalculate_RAT($j);
+                    debug "#### carrying over missing time recalculate_RAT($j)  rat=$RAT[$j]";   
                     $FLG[$j] |= INTERPOLATED_TIM;
                     ## debug "interpolating missing time at point $j with ele=$ELE[$j] new  time=$TIM[$j] dis=$DIS[$j] rate=".($RAT[$j] // "");
                 }
@@ -1190,8 +1197,8 @@ for ( my $state = 0,
               if $num_no_ele == 1;
         }
         elsif ($num_no_ele) {
-            my $Len = sprintf "%4" . DIS_PRECISION, $ele_gap_length / 1000;
-            warn_trkpt_i($i - 1, "no altitude  up to", " for ".points($num_no_ele)." over a distance of $Len km");
+            my $Len = dis_string($ele_gap_length);
+            warn_trkpt_i($i - 1, "no altitude  up to", " for ".points($num_no_ele)." over a distance of $Len");
             $num_no_ele     = 0;
             $ele_gap_length = 0;
         }
@@ -1201,8 +1208,8 @@ for ( my $state = 0,
             warn_trkpt( "no time         at", "; $time_solution" ) if $num_no_time == 1;
         }
         elsif ($num_no_time) {
-            my $Len = sprintf "%4" . DIS_PRECISION, $time_gap_length / 1000;
-            warn_trkpt_i($i - 1, "no time      up to", " for ".points($num_no_time)." over a distance of $Len km");
+            my $Len = dis_string($time_gap_length);
+            warn_trkpt_i($i - 1, "no time      up to", " for ".points($num_no_time)." over a distance of $Len");
             $num_no_time     = 0;
             $time_gap_length = 0;
         }
@@ -1238,12 +1245,12 @@ for ( my $state = 0,
         close M;
     }
 }
-my $Len = sprintf "%4" . DIS_PRECISION, $ele_gap_length / 1000; # TODO restrict scope
+my $Len = dis_string($ele_gap_length); # TODO restrict scope
 warn_trkpt_i($#TIM, "no altitude  up to",
-             " for " . $num_no_ele . " points over a distance of $Len km") if $num_no_ele > 1;
-$Len = sprintf "%4" . DIS_PRECISION, $time_gap_length / 1000;
+             " for " . $num_no_ele . " points over a distance of $Len") if $num_no_ele > 1;
+$Len = dis_string($time_gap_length);
 warn_trkpt_i($#TIM, "no time      up to",
-             " for " . $num_no_time . " points over a distance of $Len km") if $num_no_time > 1;
+             " for " . $num_no_time . " points over a distance of $Len") if $num_no_time > 1;
 info_trkpt("last   segment end", "") if $#TIM >= 0;
 warn_trkpt("                at",
            " was unable to interpolate missing altitude by end of last segment") if $ele_miss_start;
@@ -1332,11 +1339,11 @@ for ( my $acc, my $rate,
         }
         my $Spd      = $spd ne "" ? spd_string($spd) : "";
         my $Spd_txt  = $spd ne "" ? " at speed = $Spd km/h" : "";
-        my $Dis      = sprintf "%4" . DIS_PRECISION, $dis / 1000;
+        my $Dis      = dis_string($dis);
         my $Rate     = $rate ne "" ? sprintf RAT_PRECISION, $rate : "";
         my $Acc      = $acc ne "" ? sprintf ACC_PRECISION, $acc : "";
         my $Dec      = $acc ne "" ? sprintf ACC_PRECISION, -$acc : "";
-        warn_trkpt("before  ", "$Spd_txt distance between points = $Dis km (more than ".(WARNING_TPT_DIST / 1000).")") if $dis > WARNING_TPT_DIST;
+        warn_trkpt("before  ", "$Spd_txt distance between points = $Dis (more than ".(WARNING_TPT_DIST / 1000).")") if $dis > WARNING_TPT_DIST;
 
         # handle case(s) that involve (one or) two points before and may lead to removing point before
         $ignore = 1; # tentatively remove point before
@@ -1382,7 +1389,7 @@ for ( my $acc, my $rate,
             my $inter = ( $FLG[$i] & INTERPOLATED_TIM ) ? "interpolated " : "";
             $num_removals_diff++;
             ignore_trkpt($Spd, $inter."time difference = ".int($timediff).
-                         " sec (less than $MIN_TIMEDIFF) over a distance of $Dis km") if $timediff > 1.001;
+                         " sec (less than $MIN_TIMEDIFF) over a distance of $Dis") if $timediff > 1.001;
         } else {
             $ignore = 0;
             if (!$ignore_before && $timediff ne "" && $spd ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH)
@@ -1803,10 +1810,10 @@ for (my $i = 1; INTERPOLATE_POINTS && $i <= $#TIM; $i++) {
         my $n_spans = int( $diff_time / INTERPOLATION_MAX_GAP ) +
           ( $diff_time % INTERPOLATION_MAX_GAP == 0 ? 0 : 1 );
         my $time_inc = $diff_time / $n_spans;    # 0 < $time_inc <= INTERPOLATION_MAX_GAP
-        my $Dis      = sprintf "%7" . DIS_PRECISION, $dis / 1000;
+        my $Dis      = dis_string($dis);
         my $dis_inc  = $dis / $n_spans;
         my $N_points = $n_spans - 1;
-        warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of $Dis km; inserting ".points($N_points));
+        warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of $Dis; inserting ".points($N_points));
         # by interpolation every ". (sprintf SEC_PRECISION, $time_inc) ." seconds");
         my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after interpolated points
         my $start = $seg ? 0 : 1;
@@ -1911,7 +1918,7 @@ my $Min_lat     = lat_str($min_lat);
 my $Min_lon     = lon_str($min_lon);
 my $Max_lat     = lat_str($max_lat);
 my $Max_lon     = lon_str($max_lon);
-my $Sum_dis    = sprintf "%" . DIS_PRECISION, $sum_dis / 1000;
+my $Sum_dis    = dis_string($sum_dis);
 my $Sum_energy = sprintf "%.0f", $sum_energy / 1000 if $weight;
 my $no_energy_text = $num_energy_missing ? ", leaving out ".points($num_energy_missing).
     " where time or altitude information is missing" : "" if $weight;
@@ -2002,8 +2009,7 @@ my $phase_points = "";
 for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
     my $type = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
     my $Len = phase_text($i) . "$type   = " . ( sprintf DIF_PRECISION, $PHASE_DIFF[$i] ) . "  m;   "
-      . "distance   =" . ( $PHASE_DIST[$i] / 1000 >= 10 ? "" : " " )
-      . ( sprintf "%" . DIS_PRECISION, $PHASE_DIST[$i] / 1000 ) . " km";
+      . "distance   =".($PHASE_DIST[$i] / 1000 >= 10 ? "" : " ").dis_string($PHASE_DIST[$i]);
     my $duration = $PHASE_DURATION[$i];
     $Len .= "; duration = " . timediff_string($duration) if $duration;
     my $max_spd_idx = $PHASE_MAX_SPD_INDEX[$i];
@@ -2092,7 +2098,7 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
 
 my $final_text = "\n";
-$final_text .= "total track length   = $Sum_dis km\n";
+$final_text .= "total track length   = $Sum_dis\n";
 $final_text .= "total track duration = $total_time\n";
 $final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mov;
 $final_text .= "total biking energy  = $Sum_energy kJ$no_energy_text\n" if $sum_timediff_mov && $weight;
