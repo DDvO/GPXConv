@@ -1359,7 +1359,7 @@ for ( my $acc, my $rate,
         $ignore = 1; # tentatively remove current point
         if ($spd ne "" && $Spd > $MAX_PLAUSIBLE_SPEED) {
             $num_removals_spd++;
-            ignoring_trkpt("", "speed = $Spd km/h more than ".$MAX_PLAUSIBLE_SPEED);
+            ignore_trkpt($Spd, "speed higher than ".$MAX_PLAUSIBLE_SPEED);
         }
         elsif ($acc ne "" &&  $acc > $MAX_PLAUSIBLE_ACCEL && ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
             $num_removals_acc++;
