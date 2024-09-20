@@ -656,6 +656,7 @@ sub comp_diffs()
     return ( $diff_ele // "", $timediff // "", $rate, $dis, $speed, $acc );
 }
 
+
 ### parse command line
 # TODO clean up use of ARGV
 
@@ -1798,64 +1799,6 @@ $lon_prec_len = max(length(lon_str($max_lon)), length(lon_str($min_lon)));
 #$avg_gain = rate($max_ele - $min_ele, $sec_diff);
 
 
-## fill long time gaps as far as needed with intermediate points by linear interpolation
-
-my $num_interpolated_trkpts = 0;
-for (my $i = 1; INTERPOLATE_POINTS && $i <= $#TIM; $i++) {
-    ($lat, $lon, $ele, $tim, $sec, my $dis, $spd) = ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $DIS[$i], $SPD[$i]); # needed also for print_trkpt
-    ## debug "checking gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd));
-    my $diff_time = diff_defined($sec, $SEC[$i - 1]) // 0;
-    # note that this interpolation is done only between adjacent track points that both have time information
-    if ($diff_time > INTERPOLATION_MAX_GAP) {
-        my $n_spans = int( $diff_time / INTERPOLATION_MAX_GAP ) +
-          ( $diff_time % INTERPOLATION_MAX_GAP == 0 ? 0 : 1 );
-        my $time_inc = $diff_time / $n_spans;    # 0 < $time_inc <= INTERPOLATION_MAX_GAP
-        my $Dis      = dis_string($dis);
-        my $dis_inc  = $dis / $n_spans;
-        my $N_points = $n_spans - 1;
-        warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of $Dis; inserting ".points($N_points));
-        # by interpolation every ". (sprintf SEC_PRECISION, $time_inc) ." seconds");
-        my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after interpolated points
-        my $start = $seg ? 0 : 1;
-        my $n_end = $n_spans - ( $seg ? 0 : 1 );
-        my $flags = $FLG[$i];
-
-        # move info on previous ignored points over to first interpolated point
-        my $ign = $IGN[$i];
-        $IGN[$i] = 0;
-        $DIS[$i] = $dis_inc;
-
-# insert equidistant interpolated points,
-# plus in case of new segment: an extra trkpt that equals the end of the previous segment and and one the equals the start of the next segment
-        my $p = $i - 1;                 # previous index
-        my $t = $seg ? 0 : $time_inc;
-        for ( my $n = $start ; $n <= $n_end ; $n++ ) {
-            splice @IGN, $i, 0, $n == $start ? $ign : 0;
-
-# if $n == 0, here is a new segment start, with contents duplicated from segment end just before interpolation
-# if $n == $n_spans, here is a new segment end, with contents duplicated from segment start just after interpolation
-            splice @SEG, $i, 0, $n == 0;
-            splice @FLG, $i, 0, $n == 0 ? $FLG[$p] | DUPLICATED_POINT
-                : $n == $n_spans ? $flags | DUPLICATED_POINT : INTERPOLATED_POINT;
-            splice @LAT, $i, 0, $LAT[$p] + ( $lat - $LAT[$p] ) * $t / $diff_time;
-            splice @LON, $i, 0, $LON[$p] + ( $lon - $LON[$p] ) * $t / $diff_time;
-            splice @ELE, $i, 0, (   $ELE[$p] ne "" && $ele ne ""
-                ? $ELE[$p] + ( $ele - $ELE[$p] ) * $t / $diff_time : "" );
-            splice @TIM, $i, 0, epoch_to_str( $SEC[$p] + $t );
-            splice @SEC, $i, 0, $SEC[$p] + $t;
-            splice @DIS, $i, 0, $dis_inc;
-            splice @RAT, $i, 0, $RAT[$p];
-            splice @SPD, $i, 0, $spd;
-            splice @CMT, $i, 0, "";
-            splice @EXT, $i, 0, "";
-            $i++;
-            $t += $time_inc;
-            $num_interpolated_trkpts++;
-        }
-    }
-}
-
-
 ## optional elevation correction by geoid height
 
 sub neg_geoid_height {    # potentially $updates $found_corr and $ele_corr
@@ -1909,6 +1852,7 @@ sub correct_ele {    # may update $ele_corr; uses $ele_corr
     $ele += $ele_corr + linear_ele_correction($sec) if $ele_corr && $ele ne "" && defined $sec;
     return $ele;
 }
+
 
 ## prepare output header
 
@@ -2097,6 +2041,71 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
 
+
+## fill long time gaps as far as needed with intermediate points by linear interpolation
+
+# must not be called in between computing and using max/min etc. index values as these may get invalidated by inserting points
+my $num_interpolated_trkpts = 0;
+sub interpolate_trkpts {
+    for (my $i = 1; INTERPOLATE_POINTS && $i <= $#TIM; $i++) {
+        ($lat    , $lon    , $ele    , $tim    , $sec    , my $dis    , $spd    ) =
+        ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i],    $DIS[$i], $SPD[$i]); # needed also for print_trkpt
+        ## debug "checking gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd));
+        my $diff_time = diff_defined($sec, $SEC[$i - 1]) // 0;
+        # note that this interpolation is done only between adjacent track points that both have time information
+        if ($diff_time > INTERPOLATION_MAX_GAP) {
+            my $n_spans  = int($diff_time / INTERPOLATION_MAX_GAP) + ($diff_time % INTERPOLATION_MAX_GAP == 0 ? 0 : 1);
+            my $time_inc = $diff_time / $n_spans; # 0 < $time_inc <= INTERPOLATION_MAX_GAP
+            my $Dis      = dis_string($dis);
+            my $dis_inc  = $dis / $n_spans;
+            my $N_points = $n_spans - 1;
+            warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of $Dis; inserting ".points($N_points));
+            # by interpolation every ". (sprintf SEC_PRECISION, $time_inc) ." seconds");
+            my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after interpolated points
+            my $start = $seg ? 0 : 1;
+            my $n_end = $n_spans - ($seg ? 0 : 1);
+            my $flags = $FLG[$i];
+
+            # move info on previous ignored points over to first interpolated point
+            my $ign = $IGN[$i];
+            $IGN[$i] = 0;
+            $DIS[$i] = $dis_inc;
+
+            # insert equidistant interpolated points,
+            # plus in case of new segment: an extra trkpt that equals the end of the previous segment and and one the equals the start of the next segment
+            my $p = $i - 1; # previous index
+            my $t = $seg ? 0 : $time_inc;
+            for (my $n = $start; $n <= $n_end ; $n++) {
+                splice @IGN, $i, 0, $n == $start ? $ign : 0;
+                # if $n == 0, here is a new segment start, with contents duplicated from segment end just before interpolation
+                # if $n == $n_spans, here is a new segment end, with contents duplicated from segment start just after interpolation
+                splice @SEG, $i, 0, $n == 0;
+                splice @FLG, $i, 0, $n == 0 ? $FLG[$p] | DUPLICATED_POINT : $n == $n_spans ? $flags | DUPLICATED_POINT : INTERPOLATED_POINT;
+                splice @LAT, $i, 0, $LAT[$p] + ($lat - $LAT[$p]) * $t / $diff_time;
+                splice @LON, $i, 0, $LON[$p] + ($lon - $LON[$p]) * $t / $diff_time;
+                splice @ELE, $i, 0, ($ELE[$p] ne "" && $ele ne "" ?
+                                     $ELE[$p] + ($ele - $ELE[$p]) * $t / $diff_time : "");
+                splice @TIM, $i, 0, epoch_to_str($SEC[$p] + $t);
+                splice @SEC, $i, 0, $SEC[$p] + $t;
+                splice @DIS, $i, 0, $dis_inc;
+                splice @RAT, $i, 0, $RAT[$p];
+                splice @SPD, $i, 0, $spd;
+                splice @CMT, $i, 0, "";
+                splice @EXT, $i, 0, "";
+                $i++;
+                $t += $time_inc;
+                $num_interpolated_trkpts++;
+            }
+        }
+    }
+    return $num_interpolated_trkpts++;
+}
+
+my $num_interpolated_trkpts = interpolate_trkpts();
+
+
+### generate final output
+
 my $final_text = "\n";
 $final_text .= "total track length   = $Sum_dis\n";
 $final_text .= "total track duration = $total_time\n";
@@ -2161,7 +2170,7 @@ $HEAD =~
 $HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s;    # prepend stats to track comment
 
 
-## finally write output
+### write final output
 
 print $out $HEAD;                     # includes <gpx> <trk> <trkseg>
 for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
