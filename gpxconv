@@ -175,6 +175,7 @@ my $min_ext_limit;
 my $num_ext_below  = 0;
 my $ele_corr         = DEFAULT_ELE_CORRECTION;
 my $smoothing        = ENABLE_SMOOTHING;
+my $num_smoothened   = 0;
 my $phases           = ANALYZE_PHASES;
 my $weight;
 my $prune_wpts       = PRUNE_WPTS;
@@ -1485,7 +1486,8 @@ if ( $smoothing ) {
                 $ELE[$i] = average( $prev_ele * 0 + $ELE[ $i - 1 ], $ELE[$i], $ELE[ $i + 1 ] , $diff_time1 , $diff_time2 )
                     if $prev_ele ne ""  && $ELE[ $i - 1 ] ne "" && $ELE[$i] ne "" && $ELE[ $i + 1 ] ne "";
                 # speed will be re-computed later
-                # individiual points are not marked as smoothed; this is done globally
+                # individiual points are not marked as smoothendd; this is done globally
+                $num_smoothened++;
             }
         }
         ( $prev_lat, $prev_lon, $prev_ele ) = ( $LAT[$i], $LON[$i], $ELE[$i] );
@@ -2089,7 +2091,7 @@ $final_text .= points($num_removals_loss )." ignored due to descent rate more th
 $final_text .= points($num_removals_diff )." ignored due to time difference less than $MIN_TIMEDIFF sec\n"        if $num_removals_diff;
 $final_text .= plural($num_ext_above, "extension")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= plural($num_ext_below, "extension")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
-$final_text .= ($smoothing ? "within each track, points that are at most ${ \SMOOTHING_MAX_GAP } seconds apart have been smoothened\n" : "" ); # not using sub points() here
+$final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "" );
 $final_text .= ($num_interpolated_trkpts ? points($num_interpolated_trkpts)." interpolated due to gaps > ".INTERPOLATION_MAX_GAP." seconds\n" : "");
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
