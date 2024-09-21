@@ -2050,63 +2050,77 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
 ## fill long time gaps as far as needed by inserting intermediate points with linear interpolation of data
 
 # must not be called in between computing and using max/min etc. index values as these may get invalidated by inserting points
-my $num_inserted_trkpts = 0;
 sub insert_points_in_gap {
-    for (my $i = 1; INSERT_POINTS && $i <= $#TIM; $i++) {
-        ($lat    , $lon    , $ele    , $tim    , $sec    , my $dis    , $spd    ) =
-        ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i],    $DIS[$i], $SPD[$i]); # needed also for print_trkpt
-        ## debug "checking gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd));
+    my $num_inserted_trkpts = 0;
+    for (my $i = 1; $i <= $#TIM; $i++) {
+        ($lat    , $lon    , $ele    , $tim    ) =
+        ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]); # needed also for print_trkpt
+        my ($sec    , $dis    , $spd    ) =
+           ($SEC[$i], $DIS[$i], $SPD[$i]);
+        ## debug "checking for gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim spd=".($spd eq "" ? "" : spd_str($spd));
         my $diff_time = diff_defined($sec, $SEC[$i - 1]) // 0;
         # note that this insertion with interpolation is done only between adjacent track points that both have time information
         if ($diff_time > INSERTION_MAX_GAP) {
+            # insert equidistant points with interpolated data, plus
+            # in case of new segment: an extra trkpt that equals the end of the previous segment and one that equals the start of the next segment
             my $n_spans  = int($diff_time / INSERTION_MAX_GAP) + ($diff_time % INSERTION_MAX_GAP == 0 ? 0 : 1);
-            my $time_inc = $diff_time / $n_spans; # 0 < $time_inc <= INSERTION_MAX_GAP
-            my $Dis      = dis_string($dis);
-            my $dis_inc  = $dis / $n_spans;
-            my $N_points = $n_spans - 1;
-            warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of $Dis; inserting ".points($N_points));
-            # by insertion every ". (sprintf SEC_PRECISION, $time_inc) ." seconds");
             my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after inserted points
             my $start = $seg ? 0 : 1;
-            my $n_end = $n_spans - ($seg ? 0 : 1);
-            my $flags = $FLG[$i];
+            my $n_end = $n_spans - $start;
 
-            # move info on previous ignored points over to first inserted point
+            my $p = $i - 1;
+            my $flags_before = $FLG[$p];
+            my $flags_after  = $FLG[$i];
+            my $rate = $RAT[$p];
+            my ($lat_curr, $lon_curr, $ele_curr, $sec_curr) = ($LAT[$p], $LON[$p], $ELE[$p], $SEC[$p]);
+            my $dis_delta  = $dis / $n_spans;
+            my $lat_delta = ($lat - $lat_curr) / $n_spans;
+            my $lon_delta = ($lon - $lon_curr) / $n_spans;
+            my $sec_delta = $diff_time / $n_spans; # 0 < $sec_delta <= INSERTION_MAX_GAP
+            my $ele_delta = diff_nonempty($ele, $ele_curr);
+            $ele_delta /= $n_spans if defined $ele_delta;
+            warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of ".dis_string($dis)."; inserting ".points($n_spans - 1));
+            # "every ". (sprintf SEC_PRECISION, $sec_delta) ." seconds"); 
+
+            # point $i will become the point past the insertion (possibly with duplication before and after segment)
+            # need to move info about previous ignored points from point past the insertion to first new point
             my $ign = $IGN[$i];
+            # for the point that will be the one past the insertion:
             $IGN[$i] = 0;
-            $DIS[$i] = $dis_inc;
+            $DIS[$i] = $dis_delta; # recalculate distance
+            # ascent/decent rate as well as speed stays the same, due to linear interpolation
 
-            # insert equidistant points with interpolated data,
-            # plus in case of new segment: an extra trkpt that equals the end of the previous segment and and one the equals the start of the next segment
-            my $p = $i - 1; # previous index
-            my $t = $seg ? 0 : $time_inc;
-            for (my $n = $start; $n <= $n_end ; $n++) {
-                splice @IGN, $i, 0, $n == $start ? $ign : 0;
-                # if $n == 0, here is a new segment start, with contents duplicated from segment end just before insertion
-                # if $n == $n_spans, here is a new segment end, with contents duplicated from segment start just after insertion
-                splice @SEG, $i, 0, $n == 0;
-                splice @FLG, $i, 0, $n == 0 ? $FLG[$p] | DUPLICATED_POINT : $n == $n_spans ? $flags | DUPLICATED_POINT : INSERTED_POINT;
-                splice @LAT, $i, 0, $LAT[$p] + ($lat - $LAT[$p]) * $t / $diff_time;
-                splice @LON, $i, 0, $LON[$p] + ($lon - $LON[$p]) * $t / $diff_time;
-                splice @ELE, $i, 0, ($ELE[$p] ne "" && $ele ne "" ?
-                                     $ELE[$p] + ($ele - $ELE[$p]) * $t / $diff_time : "");
-                splice @TIM, $i, 0, epoch_to_str($SEC[$p] + $t);
-                splice @SEC, $i, 0, $SEC[$p] + $t;
-                splice @DIS, $i, 0, $dis_inc;
-                splice @RAT, $i, 0, $RAT[$p];
-                splice @SPD, $i, 0, $spd;
-                splice @CMT, $i, 0, "";
-                splice @EXT, $i, 0, "";
-                $i++;
-                $t += $time_inc;
-                $num_inserted_trkpts++;
+            for (my $n = 0; $n <= $n_end; $n++) {
+                if ($n >= $start) {
+                    splice @IGN, $i, 0, $n == $start ? $ign : 0;
+                    # if $n == 0, here is a new segment start, with contents duplicated from segment end just before insertion
+                    # if $n == $n_spans, here is a new segment end, with contents duplicated from segment start just after insertion
+                    splice @SEG, $i, 0, $n == 0;
+                    splice @FLG, $i, 0, $n == 0 ? $flags_before | DUPLICATED_POINT : $n == $n_spans ? $flags_after | DUPLICATED_POINT : INSERTED_POINT;
+                    splice @LAT, $i, 0, $lat_curr;
+                    splice @LON, $i, 0, $lon_curr;
+                    splice @ELE, $i, 0, $ele_curr;
+                    splice @TIM, $i, 0, epoch_to_str($sec_curr);
+                    splice @SEC, $i, 0, $sec_curr;
+                    splice @DIS, $i, 0, $dis_delta;
+                    splice @RAT, $i, 0, $rate;
+                    splice @SPD, $i, 0, $spd;
+                    splice @CMT, $i, 0, "";
+                    splice @EXT, $i, 0, "";
+                    $i++;
+                    $num_inserted_trkpts++;
+                }
+                $lat_curr += $lat_delta;
+                $lon_curr += $lon_delta;
+                $ele_curr += $ele_delta if defined $ele_delta;
+                $sec_curr += $sec_delta;
             }
         }
     }
-    return $num_inserted_trkpts++;
+    return $num_inserted_trkpts;
 }
 
-my $num_inserted_trkpts = insert_points_in_gap();
+my $num_inserted_trkpts = INSERT_POINTS ? insert_points_in_gap() : 0;
 
 
 ### generate final output
