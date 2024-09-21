@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" creator="" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata>
+<name><![CDATA[GPXconv test data]]></name>
+<desc><![CDATA[use like this: gpxconv test.gpx -walk -min_ext value 101 -max_ext value 101 -smooth -weight 50 -phases -segs 1 >test.out 2>test.log; diff test{_reference,}.out; diff test{_reference,}.log]]></desc>
+<link href="https://github.com/DDvO/GPXConv">
+<text>GPXconv test data<value>101</value><value>102</value></text>
+</link>
+<extensions><value>101</value></extensions>
+<extensions>in metadata second extension, which is not really allowed but supported here;
+newlines are kept</extensions>
+	<time>2001-01-01T10:00:00Z</time>
+	<bounds minlat="-0.00900" minlon="0.00000" maxlat="45.90000" maxlon="4.30000"/>
+</metadata>
+
+
+<wpt lat="45.90000" lon="4.30000"><ele> 490</ele><time>2001-01-01T16:00:00Z</time>><name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type><extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions></wpt>
+<wpt lat="44.00001" lon="2.28002">                                                <name>[start]</name></wpt>
+<wpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-01T18:00:00Z</time><name>[max speed = 10 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[min altitude = -10 m]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-01T18:30:01Z</time><name>[max altitude = 525 m]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-01T18:30:01Z</time><name>[total ascent = +155 m; avg rate = +232 m/h with 1 point not having time information]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[total descent = -90 m; avg rate = -49 m/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[max ascent rate = +180 m/h at 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[max descent rate = -180 m/h at 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00800"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><name>[segment 1 min altitude = 50 m]</name></wpt>
+<wpt lat="44.00002" lon="2.00003"><ele>  75</ele>                                 <name>[segment 1 max altitude = 75 m]</name></wpt>
+<wpt lat="44.00000" lon="2.00800"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><name>[segment 1 end]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[segment 2 max speed = 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 2 min altitude = -10 m]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><name>[segment 2 max altitude = 50 m]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[segment 2 total ascent = +30 m; avg rate = +180 m/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 2 total descent = -90 m; avg rate = -49 m/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[segment 2 max ascent rate = +180 m/h at 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 2 max descent rate = -180 m/h at 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 2 end]</name></wpt>
+<wpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 3 min altitude = -10 m]</name></wpt>
+<wpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 3 max altitude = -10 m]</name></wpt>
+<wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 3 end]</name></wpt>
+<wpt lat="45.70000" lon="4.10000"><ele> -10</ele>                                 <name>[segment 4 min altitude = -10 m]</name></wpt>
+<wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-01T16:00:00Z</time><name>[segment 4 max altitude = 90 m]</name></wpt>
+<wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-01T16:00:00Z</time><name>[segment 4 total ascent = +100 m; avg rate unknown due to missing time]</name></wpt>
+<wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-01T16:00:00Z</time><name>[segment 4 end]</name></wpt>
+<wpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-01T18:00:00Z</time><name>[segment 5 max speed = 10 km/h]</name></wpt>
+<wpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-01T18:00:00Z</time><name>[segment 5 min altitude = 500 m]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-01T18:30:01Z</time><name>[segment 5 max altitude = 525 m]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-01T18:30:01Z</time><name>[segment 5 total ascent = +25 m; avg rate = +50 m/h]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-01T18:30:01Z</time><name>[segment 5 max ascent rate = +50 m/h at 2 km/h]</name></wpt>
+<wpt lat="0.00900" lon="0.00000">                                                <name>[segment 5 end]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  20</ele><time>2001-01-01T11:30:00Z</time><name>[1st descent = -30 m; distance = 0.03 km; duration = 1:30:00 h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[1st max speed = 0 km/h; avg speed = 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[1st max rate = -20 m/h; avg rate = -20 m/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2nd ascent = +30 m; distance = 0.03 km; duration = 0:10:00 h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2nd max speed = 0 km/h; avg speed = 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2nd max rate = +180 m/h; avg rate = +180 m/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[3rd descent = -60 m; distance = 0.06 km; duration = 0:20:00 h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[3rd max rate = -180 m/h; avg rate = -180 m/h]</name></wpt>
+<wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-01T16:00:00Z</time><name>[4th ascent = +100 m; distance =27.09 km]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-01T18:30:01Z</time><name>[5th ascent = +25 m; distance = 1.00 km; duration = 0:30:01 h]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-01T18:30:01Z</time><name>[5th max speed = 2 km/h; avg speed = 2 km/h]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-01T18:30:01Z</time><name>[5th max rate = +50 m/h; avg rate = +50 m/h]</name></wpt>
+<wpt lat="0.00900" lon="0.00000">                                                <name>[end; total track length = 63.45 km; total track duration = 8:30:01 h; total moving time = 0:30:01 h; total biking energy = -10 kJ, leaving out 7 points where time or altitude information is missing; average moving speed = 126.8 km/h]</name></wpt>
+<trk>
+<name><![CDATA[2001-01-01_test]]></name>
+<cmt>
+GPXConv statistics (not including periods between segments)
+At lat,lon,ele = 44.00001,2.28002,NONE time = NONE                : start
+At lat,lon,ele = -0.00900,0.00000, 500 time = 2001-01-01T18:00:00Z: max speed        =    10 km/h
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: min altitude     =   -10 m
+At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-01T18:30:01Z: max altitude     =   525 m
+At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-01T18:30:01Z: total  ascent    =  +155 m; avg rate  =  +232 m/h with 1 point not having time information
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: total descent    =   -90 m; avg rate  =   -49 m/h
+At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: max  ascent rate =  +180 m/h at 0 km/h
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: max descent rate =  -180 m/h at 0 km/h
+At lat,lon,ele = 44.00000,2.00800,  50 time = 2001-01-01T10:00:00Z: segment 1 min altitude     =    50 m
+At lat,lon,ele = 44.00002,2.00003,  75 time = NONE                : segment 1 max altitude     =    75 m
+At lat,lon,ele = 44.00000,2.00800,  50 time = 2001-01-01T10:00:00Z: segment 1 end
+At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: segment 2 max speed        =     0 km/h
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 2 min altitude     =   -10 m
+At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T10:00:00Z: segment 2 max altitude     =    50 m
+At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: segment 2 total  ascent    =   +30 m; avg rate  =  +180 m/h
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 2 total descent    =   -90 m; avg rate  =   -49 m/h
+At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: segment 2 max  ascent rate =  +180 m/h at 0 km/h
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 2 max descent rate =  -180 m/h at 0 km/h
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 2 end
+At lat,lon,ele = 45.50000,3.50000, -10 time = 2001-01-01T12:00:00Z: segment 3 min altitude     =   -10 m
+At lat,lon,ele = 45.50000,3.50000, -10 time = 2001-01-01T12:00:00Z: segment 3 max altitude     =   -10 m
+At lat,lon,ele = 45.60000,3.52000, -10 time = NONE                : segment 3 end
+At lat,lon,ele = 45.70000,4.10000, -10 time = NONE                : segment 4 min altitude     =   -10 m
+At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-01T16:00:00Z: segment 4 max altitude     =    90 m
+At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-01T16:00:00Z: segment 4 total  ascent    =  +100 m; avg rate unknown due to missing time
+At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-01T16:00:00Z: segment 4 end
+At lat,lon,ele = -0.00900,0.00000, 500 time = 2001-01-01T18:00:00Z: segment 5 max speed        =    10 km/h
+At lat,lon,ele = -0.00900,0.00000, 500 time = 2001-01-01T18:00:00Z: segment 5 min altitude     =   500 m
+At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-01T18:30:01Z: segment 5 max altitude     =   525 m
+At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-01T18:30:01Z: segment 5 total  ascent    =   +25 m; avg rate  =   +50 m/h
+At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-01T18:30:01Z: segment 5 max  ascent rate =   +50 m/h at 2 km/h
+At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : segment 5 end
+At lat,lon,ele = 44.00000,2.00000,  20 time = 2001-01-01T11:30:00Z: 1st descent   =   -30  m;   distance   = 0.03 km; duration = 1:30:00 h
+At lat,lon,ele = 44.00000,2.00000,  40 time = 2001-01-01T10:30:00Z: 1st max speed =     0 km/h; avg speed  =    0 km/h
+At lat,lon,ele = 44.00000,2.00000,  40 time = 2001-01-01T10:30:00Z: 1st max rate  =   -20  m/h; avg rate   =  -20  m/h
+At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd ascent    =   +30  m;   distance   = 0.03 km; duration = 0:10:00 h
+At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd max speed =     0 km/h; avg speed  =    0 km/h
+At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd max rate  =  +180  m/h; avg rate   = +180  m/h
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: 3rd descent   =   -60  m;   distance   = 0.06 km; duration = 0:20:00 h
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: 3rd max rate  =  -180  m/h; avg rate   = -180  m/h
+At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-01T16:00:00Z: 4th ascent    =  +100  m;   distance   =27.09 km
+At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-01T18:30:01Z: 5th ascent    =   +25  m;   distance   = 1.00 km; duration = 0:30:01 h
+At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-01T18:30:01Z: 5th max speed =     2 km/h; avg speed  =    2 km/h
+At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-01T18:30:01Z: 5th max rate  =   +50  m/h; avg rate   =  +50  m/h
+At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
+total track length   = 63.45 km
+total track duration = 8:30:01 h
+total moving time    = 0:30:01 h
+total biking energy  = -10 kJ, leaving out 7 points where time or altitude information is missing
+average moving speed = 126.8 km/h
+1 automatic waypoint pruned
+1 track header ignored (apart from any included waypoints)
+0 extension elements with name 'value' and value below 101 pruned
+2 extension elements with name 'value' and value above 101 pruned
+0 points being at most 60 seconds apart smoothened
+4 points inserted and 2 points duplicated due to gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end
+trk comment</cmt>
+<desc><![CDATA[<p>Original start time: 01/01/2001 00:00<br/>Original finish time: 01/01/2001 18:30<br/>Distance: 76.9 km (08:30)]]></desc>
+<link>trk link</link>
+<type>Driving</type>
+<extensions>
+<om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0">
+<om:ext type="TYPE" subtype="0">17</om:ext>
+<om:ext type="DIFFICULTY">0</om:ext>
+</om:oruxmapsextensions>
+</extensions>
+<trkseg>
+<trkpt lat="44.00001" lon="2.28002"><cmt>for some reason, lat gets rounded down to 44.00001, lon upwards to 2.2801; initially no elevation and time</cmt></trkpt>
+<trkpt lat="44.00002" lon="2.00003"><ele>  75</ele><extensions><value>101</value></extensions><extensions> in trkpt second extension, which is not really allowed but supported here</extensions></trkpt>
+<trkpt lat="44.00000" lon="2.00800"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><cmt>descent is not counted because it is less than 25</cmt></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><cmt>ele=50.00 and time=2001-01-01T10:00:00Z to be carried over from previous segment</cmt><src>substituted altitude; substituted time</src></trkpt>
+<trkpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><cmt>elevation 40 and time 2001-01-01T10:30:00Z to be interpolated</cmt><src>interpolated altitude; interpolated time; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="44.00000" lon="2.00000"><ele>  30</ele><time>2001-01-01T11:00:00Z</time><cmt>elevation 30 to be interpolated; not time gaps to be filled</cmt><src>interpolated altitude; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="44.00000" lon="2.00000"><ele>  20</ele><time>2001-01-01T11:30:00Z</time><cmt>first descent that is counted: -30</cmt><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><cmt>time 2001-01-01T11:40:00Z to be interpolated; first ascent 30</cmt><src>interpolated time; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><cmt>ele=-10 and time=2001-01-01T12:00:00Z to be carried over from next segment; second descent -60</cmt><src>substituted altitude; substituted time; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time></trkpt>
+<trkpt lat="45.60000" lon="3.52000"><ele> -10</ele><cmt>no possibility to carry over elevation or time</cmt><src>substituted altitude</src></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="45.70000" lon="4.10000"><ele> -10</ele><cmt>better not carry over elevation -10 from last available value in segment before; no possibility to carry over time</cmt></trkpt>
+<trkpt lat="45.80200" lon="4.20000"><ele>  41</ele><cmt>iterpolated elevation 41, no time</cmt><src>interpolated altitude</src></trkpt>
+<trkpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-01T16:00:00Z</time><cmt>second ascent 100</cmt></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-01T16:00:00Z</time><src>bridging time gap: duplicated point before</src><extensions><speed>10</speed></extensions></trkpt>
+<trkpt lat="34.42275" lon="3.22500"><ele> 192</ele><time>2001-01-01T16:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix><extensions><speed>10</speed></extensions></trkpt>
+<trkpt lat="22.94550" lon="2.15000"><ele> 295</ele><time>2001-01-01T17:00:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix><extensions><speed>10</speed></extensions></trkpt>
+<trkpt lat="11.46825" lon="1.07500"><ele> 398</ele><time>2001-01-01T17:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix><extensions><speed>10</speed></extensions></trkpt>
+<trkpt lat="-0.00900" lon="-0.00000"><ele> 500</ele><time>2001-01-01T18:00:00Z</time><src>bridging time gap: duplicated point after</src><extensions><speed>10</speed></extensions></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-01T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted and 2 to be duplicated; gpxtpx:speed ignored</cmt><extensions><speed>10</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>11</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+<trkpt lat="-0.00450" lon="0.00000"><ele> 512</ele><time>2001-01-01T18:15:01Z</time><src>bridging time gap: inserted point</src><fix>none</fix><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-01T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before, so point to be inserted; third ascent should be counted: 25; all recorded speed ignored except for plausibility check</cmt><src>computed speed</src><extensions><speed> 2</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>10</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+<trkpt lat="0.00900" lon="0.00000"><cmt>at the end no elevation and time</cmt><extensions><gpxtpx:TrackPointExtension><gpxtpx:some>text</gpxtpx:some></gpxtpx:TrackPointExtension></extensions></trkpt>
+</trkseg>
+</trk>
+</gpx>
