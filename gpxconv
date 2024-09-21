@@ -73,8 +73,8 @@ use constant DISABLE_TRKPT_SRC    => 0; # do not add 'src' entries to trackpoint
 use constant DISABLE_TRKPT_FIX    => 0; # do not add 'fix' entries to trackpoints, on points inserted with interpolated data
 
 # control filling in missing altitude and/or time
-use constant CARRY_OVER_ELE    => 1; # copy altitude from last available value or begin of following segment
-use constant CARRY_OVER_TIME   => 1; # copy time from end of previous segment or begin of following segment
+use constant CARRY_OVER_ELE    => 1; # copy missing altitude from end of previous segment or begin of following segment # better not: last available value (prev_avail_ele)
+use constant CARRY_OVER_TIME   => 1; # copy missing time     from end of previous segment or begin of following segment
 use constant FILL_MISSING_ELE  => 1; # interpolate missing altitude
 use constant FILL_MISSING_TIME => 1; # interpolate missing time
 
@@ -1012,6 +1012,7 @@ for ( my $state = 0,
         my $flags = 0;
         my $dis = $i == 0 || $state == 1 ? 0 : distance_curr($prev_lat, $prev_lon, $prev_ele);
         if ( $state < 3 ) {    # the first point in trkseg
+            $prev_avail_ele = "";
             if ( CARRY_OVER_ELE && $ele ne "" ) {
                 if ( $i > 0 && $ELE[ $i - 1 ] eq "" ) {
                     # fill in altitude in last point of segment before
@@ -1056,11 +1057,11 @@ for ( my $state = 0,
 
             my $resolution;
             if ( $ele eq "" ) {
-                if ( $prev_avail_ele eq "" ) { # $prev_ele
+                if ( $i == 0 || $prev_ele eq "" ) { # $prev_avail_ele
                     $resolution = " and no previous value available";
                 }
                 elsif (CARRY_OVER_ELE) {
-                    $ele = $prev_avail_ele; # $prev_ele; # will become $ELE[$i]
+                    $ele = $prev_ele; # $prev_avail_ele; # will become $ELE[$i]
                     $resolution = "; using previous available value";
                     $flags |= SUBSTITUTED_ELE;
                 }
