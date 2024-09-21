@@ -1143,6 +1143,7 @@ for ( my $state = 0,
             }
             $ele_miss_start = 0;
         }
+        # note: cannot interpolate missing time within stretch of missing altitude with all same lat/lon; would need another pass
         if ($tim ne "" && $tim_miss_start) {    # fill in missing time by interpolation
             my $i_end = $i;
             if ( $state < 3 )
@@ -1152,14 +1153,16 @@ for ( my $state = 0,
             else {   # state == 3, further (i.e., not the first) point in trkseg
                 $tim_miss_length += $dis;
             }
-            if ($tim_miss_length > 0) {
-                my $sec_curr = $SEC[$tim_miss_start - 1]; # corresponds to $prev_tim
-                my $sec_diff = $sec - $sec_curr;
-                my $sec_gradient = $sec_diff / $tim_miss_length;
+            my $sec_curr = $SEC[$tim_miss_start - 1]; # corresponds to $prev_tim
+            my $sec_diff = $sec - $sec_curr;
+            # $tim_miss_length == 0 is special case of missing time over a stretch with all same position;
+            # since altitude is interpolated in same iteration, a stretch with all same lat/lon looks like all same position
+            my $sec_gradient = $tim_miss_length > 0 ? $sec_diff / $tim_miss_length : $sec_diff / ($i - $tim_miss_start + 1);
+            if ($sec_gradient != 0) {
                 my $j;
                 ## debug("over ".dis_string($tim_miss_length).", sec_diff = $sec_diff);
                 for ($j = $tim_miss_start; $j < $i_end; $j++) {
-                    $sec_curr += $DIS[$j] * $sec_gradient;
+                    $sec_curr += ($tim_miss_length > 0 ? $DIS[$j] : 1) * $sec_gradient;
                     $SEC[$j] = $sec_curr;
                     $TIM[$j] = epoch_to_str($sec_curr);
                     recalculate_RAT($j);
