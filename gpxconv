@@ -1118,12 +1118,14 @@ for ( my $state = 0,
             else {   # state == 3, further (i.e., not the first) point in trkseg
                 $ele_miss_length += $dis;
             }
-            if ($ele_miss_length > 0) {
-                my $ele_curr = $ELE[$ele_miss_start - 1]; # $prev_avail_ele
-                my $ele_gradient = ($ele - $ele_curr) / $ele_miss_length;
+            my $ele_curr = $ELE[$ele_miss_start - 1]; # $prev_avail_ele
+            my $ele_diff = $ele - $ele_curr;
+            # $ele_miss_length == 0 is special case of missing altitude over a stretch with all same lat/lon
+            my $ele_gradient = $ele_miss_length > 0 ? $ele_diff / $ele_miss_length : $ele_diff / ($i - $ele_miss_start + 1);
+            if ($ele_gradient != 0) {
                 my $j;
                 for ($j = $ele_miss_start; $j < $i_end; $j++) {
-                    $ele_curr += $DIS[$j] * $ele_gradient;
+                    $ele_curr += ($ele_miss_length > 0 ? $DIS[$j] : 1) * $ele_gradient;
                     $ELE[$j] = sprintf ELE_PRECISION3, $ele_curr;
                     $ele_full_len = max($ele_full_len, length($ELE[$j]));
                     recalculate_DIS($j);
