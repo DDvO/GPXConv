@@ -12,7 +12,7 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
 * Optionally filters out points with an element value below or above given limits.
 * Optionally prunes comments, extensions, or elements with value below or above given limits.
 * Optionally fills in altitude and time data by interpolation within segments.
-* Optionally interpolates points in long gaps (default 1800 seconds sufficient for exiftool).
+* Optionally inserts interpolated points in long gaps (default 1800 seconds sufficient for exiftool).
 * Optionally corrects elevation and and smoothens tracks.
   (Orthometric height = GPS ellipsoidal height - geoid height,
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)

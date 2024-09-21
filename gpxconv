@@ -13,7 +13,7 @@
 # Optionally filters out points with an element value below or above given limits.
 # Optionally prunes comments, extensions, or elements with value below or above given limits.
 # Optionally fills in altitude and time data by interpolation within segments.
-# Optionally interpolates points in long gaps (default 1800 seconds sufficient for exiftool).
+# Optionally inserts interpolated points in long gaps (default 1800 seconds sufficient for exiftool).
 # Optionally corrects elevation and smoothens tracks.
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
@@ -69,7 +69,7 @@ use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions
 use constant INCLUDE_COMP_SPEED   => 1; # include speed extensions with computed speed
 use constant DISABLE_TRKPT_CMT    => 0; # do not add 'cmt' entries to trackpoints, e.g., comments on ignored points
 use constant DISABLE_TRKPT_SRC    => 0; # do not add 'src' entries to trackpoints, e.g., on time gaps and interpolated data
-use constant DISABLE_TRKPT_FIX    => 0; # do not add 'fix' entries to trackpoints, e.g., on points added by interpolation
+use constant DISABLE_TRKPT_FIX    => 0; # do not add 'fix' entries to trackpoints, on points inserted with interpolated data
 
 # control filling in missing altitude and/or time
 use constant CARRY_OVER_ELE    => 1; # copy altitude from last available value or begin of following segment
@@ -93,10 +93,10 @@ use constant MERGE_FILL_GAP    => 60; # minimum gap duration in seconds to be fi
 use constant ENABLE_SMOOTHING  =>  0; # by default disable smoothing
 use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackpoint to be smoothened and its neighbors
 
-# control interpolation of points over long (time) gaps
-use constant INTERPOLATE_POINTS    =>    1; # enable inserting interpolated points in long time gaps
-use constant INTERPOLATION_MAX_GAP => 1800; # length of gap in seconds between consecutive trackpoints before
-# interpolation should be used (1800 for exiftool default GeoMaxIntSecs; for TrailGuru 3600 would be sufficient)
+# control insertion of points within long (time) gaps
+use constant INSERT_POINTS       =>    1; # enable inserting points with interpolated data in long time gaps
+use constant INSERTION_MAX_GAP   => 1800; # length of gap in seconds between consecutive trackpoints before
+# insertion should be used (1800 for exiftool default GeoMaxIntSecs; for TrailGuru 3600 would be sufficient)
 
 # warning output control
 use constant PRINT_WARNINGS      =>    1; # whether printing warnings is enabled by default
@@ -149,7 +149,7 @@ use constant ACC_PRECISION  =>   "%.1f"; # acceleration resolution = 0.1 m/s/s
 
 # trkpt flags
 use constant DUPLICATED_POINT   => 1 << 0;
-use constant INTERPOLATED_POINT => 1 << 1;
+use constant INSERTED_POINT     => 1 << 1;
 use constant INTERPOLATED_ELE   => 1 << 2;
 use constant INTERPOLATED_TIM   => 1 << 3;
 use constant SUBSTITUTED_ELE    => 1 << 4;
@@ -1487,7 +1487,7 @@ for ( my $j = 0 ; $j <= $#WSEC ; $j++ ) {
         my $ele1 = $ELE[$i1] eq "" ? $ele2 : $ELE[$i1];
         $ele  = $ele1 eq "" || $ele2 eq "" ? "" : $ele1 + ( $ele2 - $ele1 ) * $linear_factor;
         my $dis = distance_curr( $WLAT[$j], $WLON[$j], $WELE[$j] );
-        $tim = "NO"; # do not print time for interpolated point, since done already for wpt
+        $tim = "NO"; # do not print time for interpolated positon, since done already for wpt
         my $Dis = sprintf "%.0f", $dis;
         warn_trkpt("according to its time information, waypoint '$WSTR[$j]\n' appears not close to track "
               . "(interpolated distance = $Dis m > " . WARNING_WPT_DIST . "); "
@@ -2047,45 +2047,45 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
 
 
-## fill long time gaps as far as needed with intermediate points by linear interpolation
+## fill long time gaps as far as needed by inserting intermediate points with linear interpolation of data
 
 # must not be called in between computing and using max/min etc. index values as these may get invalidated by inserting points
-my $num_interpolated_trkpts = 0;
-sub interpolate_trkpts {
-    for (my $i = 1; INTERPOLATE_POINTS && $i <= $#TIM; $i++) {
+my $num_inserted_trkpts = 0;
+sub insert_points_in_gap {
+    for (my $i = 1; INSERT_POINTS && $i <= $#TIM; $i++) {
         ($lat    , $lon    , $ele    , $tim    , $sec    , my $dis    , $spd    ) =
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i],    $DIS[$i], $SPD[$i]); # needed also for print_trkpt
         ## debug "checking gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd));
         my $diff_time = diff_defined($sec, $SEC[$i - 1]) // 0;
-        # note that this interpolation is done only between adjacent track points that both have time information
-        if ($diff_time > INTERPOLATION_MAX_GAP) {
-            my $n_spans  = int($diff_time / INTERPOLATION_MAX_GAP) + ($diff_time % INTERPOLATION_MAX_GAP == 0 ? 0 : 1);
-            my $time_inc = $diff_time / $n_spans; # 0 < $time_inc <= INTERPOLATION_MAX_GAP
+        # note that this insertion with interpolation is done only between adjacent track points that both have time information
+        if ($diff_time > INSERTION_MAX_GAP) {
+            my $n_spans  = int($diff_time / INSERTION_MAX_GAP) + ($diff_time % INSERTION_MAX_GAP == 0 ? 0 : 1);
+            my $time_inc = $diff_time / $n_spans; # 0 < $time_inc <= INSERTION_MAX_GAP
             my $Dis      = dis_string($dis);
             my $dis_inc  = $dis / $n_spans;
             my $N_points = $n_spans - 1;
             warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of $Dis; inserting ".points($N_points));
-            # by interpolation every ". (sprintf SEC_PRECISION, $time_inc) ." seconds");
-            my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after interpolated points
+            # by insertion every ". (sprintf SEC_PRECISION, $time_inc) ." seconds");
+            my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after inserted points
             my $start = $seg ? 0 : 1;
             my $n_end = $n_spans - ($seg ? 0 : 1);
             my $flags = $FLG[$i];
 
-            # move info on previous ignored points over to first interpolated point
+            # move info on previous ignored points over to first inserted point
             my $ign = $IGN[$i];
             $IGN[$i] = 0;
             $DIS[$i] = $dis_inc;
 
-            # insert equidistant interpolated points,
+            # insert equidistant points with interpolated data,
             # plus in case of new segment: an extra trkpt that equals the end of the previous segment and and one the equals the start of the next segment
             my $p = $i - 1; # previous index
             my $t = $seg ? 0 : $time_inc;
             for (my $n = $start; $n <= $n_end ; $n++) {
                 splice @IGN, $i, 0, $n == $start ? $ign : 0;
-                # if $n == 0, here is a new segment start, with contents duplicated from segment end just before interpolation
-                # if $n == $n_spans, here is a new segment end, with contents duplicated from segment start just after interpolation
+                # if $n == 0, here is a new segment start, with contents duplicated from segment end just before insertion
+                # if $n == $n_spans, here is a new segment end, with contents duplicated from segment start just after insertion
                 splice @SEG, $i, 0, $n == 0;
-                splice @FLG, $i, 0, $n == 0 ? $FLG[$p] | DUPLICATED_POINT : $n == $n_spans ? $flags | DUPLICATED_POINT : INTERPOLATED_POINT;
+                splice @FLG, $i, 0, $n == 0 ? $FLG[$p] | DUPLICATED_POINT : $n == $n_spans ? $flags | DUPLICATED_POINT : INSERTED_POINT;
                 splice @LAT, $i, 0, $LAT[$p] + ($lat - $LAT[$p]) * $t / $diff_time;
                 splice @LON, $i, 0, $LON[$p] + ($lon - $LON[$p]) * $t / $diff_time;
                 splice @ELE, $i, 0, ($ELE[$p] ne "" && $ele ne "" ?
@@ -2099,14 +2099,14 @@ sub interpolate_trkpts {
                 splice @EXT, $i, 0, "";
                 $i++;
                 $t += $time_inc;
-                $num_interpolated_trkpts++;
+                $num_inserted_trkpts++;
             }
         }
     }
-    return $num_interpolated_trkpts++;
+    return $num_inserted_trkpts++;
 }
 
-my $num_interpolated_trkpts = interpolate_trkpts();
+my $num_inserted_trkpts = insert_points_in_gap();
 
 
 ### generate final output
@@ -2141,7 +2141,7 @@ $final_text .= points($num_removals_diff )." ignored due to time difference less
 $final_text .= plural($num_ext_above, "extension")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= plural($num_ext_below, "extension")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
 $final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "" );
-$final_text .= ($num_interpolated_trkpts ? points($num_interpolated_trkpts)." interpolated due to gaps > ".INTERPOLATION_MAX_GAP." seconds\n" : "");
+$final_text .= ($num_inserted_trkpts ? points($num_inserted_trkpts)." inserted due to gaps > ".INSERTION_MAX_GAP." seconds\n" : "");
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
 
@@ -2198,10 +2198,10 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     print $out $cmt if $cmt ne "";
 
     if (!DISABLE_TRKPT_SRC) {
-        my $src = $FLG[$i] & INTERPOLATED_POINT ? "bridging time gap: interpolated point"
+        my $src = $FLG[$i] & INSERTED_POINT ? "bridging time gap: inserted point"
             : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
-            . ($i > 0 && ($FLG[$i - 1] & INTERPOLATED_POINT) != 0 ? "after" : "before") : "";
-        # cannot place interpolation info in <trkseg> element because it cannot hold a comment
+            . ($i > 0 && ($FLG[$i - 1] & INSERTED_POINT) != 0 ? "after" : "before") : "";
+        # cannot place info on interpolation etc. in <trkseg> element because it cannot hold a comment
         $src .= ( $src eq "" ? "" : "; " ) . "interpolated altitude"  if $FLG[$i] & INTERPOLATED_ELE;
         $src .= ( $src eq "" ? "" : "; " ) . "interpolated time"      if $FLG[$i] & INTERPOLATED_TIM;
         $src .= ( $src eq "" ? "" : "; " ) . "substituted altitude"   if $FLG[$i] & SUBSTITUTED_ELE;
@@ -2209,9 +2209,9 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
         $src .= ( $src eq "" ? "" : "; " ) . "computed speed"         if $FLG[$i] & COMPUTED_SPEED && INCLUDE_COMP_SPEED;
         print $out "<src>$src</src>" if !DISABLE_TRKPT_SRC && $src ne "";
     }
-    if ( ( $FLG[$i] & INTERPOLATED_POINT ) != 0 && !DISABLE_TRKPT_FIX) {
+    if ( ( $FLG[$i] & INSERTED_POINT ) != 0 && !DISABLE_TRKPT_FIX) {
         my $fix = "none";   # TODO check
-        # was before: my $fix = $flags == 0 ? "": ( $FLG[$i] & ( INTERPOLATED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM ) == 0 ? "2d" : "none" );
+        # was before: my $fix = $flags == 0 ? "": ( $FLG[$i] & ( INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM ) == 0 ? "2d" : "none" );
         print $out "<fix>$fix</fix>";
     }
     my $exts = $EXT[$i];
