@@ -1014,12 +1014,13 @@ for ( my $state = 0,
         if ( $state < 3 ) {    # the first point in trkseg
             if ( CARRY_OVER_ELE && $ele ne "" ) {
                 if ( $i > 0 && $ELE[ $i - 1 ] eq "" ) {
+                    # fill in altitude in last point of segment before
                     $FLG[ $i - 1 ] |= SUBSTITUTED_ELE;
                     $ELE[ $i - 1 ] = $prev_ele = $ele;
                     recalculate_DIS($i - 1);
                     recalculate_RAT($i - 1);
                     $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # recalculation
-                    debug "CARRY_OVER_ELE recalculate_RAT($i - 1) $RAT[$i-1]";
+                    $ele_miss_length += $DIS[$i - 1] if $ele_miss_start;
                     warn_trkpt_i($i - 1, "at segment end    ",
                                  " no altitude was given; using value from begin of next segment");
                 }
@@ -1031,10 +1032,12 @@ for ( my $state = 0,
             }
             if ( CARRY_OVER_TIME && $tim ne "" ) {
                 if ( $i > 0 && $TIM[ $i - 1 ] eq "" ) {
+                    # fill in time in last point of segment before
                     $FLG[ $i - 1 ] |= SUBSTITUTED_TIM;
                     $TIM[ $i - 1 ] = $tim;
                     $SEC[ $i - 1 ] = $sec;
                     recalculate_RAT($i - 1);
+                    $tim_miss_length += $DIS[$i - 1] if $tim_miss_start;
                     warn_trkpt_i($i - 1, "at segment end    ",
                                  " no time     was given; using value from begin of next segment");
                 }
@@ -1163,7 +1166,6 @@ for ( my $state = 0,
                     $SEC[$j] = $sec_curr;
                     $TIM[$j] = epoch_to_str($sec_curr);
                     recalculate_RAT($j);
-                    debug "#### carrying over missing time recalculate_RAT($j)  rat=$RAT[$j]";   
                     $FLG[$j] |= INTERPOLATED_TIM;
                     ## debug "interpolating missing time at point $j with ele=$ELE[$j] new  time=$TIM[$j] dis=$DIS[$j] rate=".($RAT[$j] // "");
                 }
