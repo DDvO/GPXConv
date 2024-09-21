@@ -141,7 +141,8 @@ use constant ELE_PRECISION3 =>   "%.3f";
 use constant DIF_PRECISION  => "%+5.0f"; #  altitude difference          resolution = 1 meters
 use constant RAT_PRECISION  => "%+5.0f"; #  altitude ascent/descent rate resolution = 1 meters
 use constant RAT_PRECISION2 => "%+6.0f"; #  altitude ascent/descent rate resolution = 1 meters
-use constant DIS_PRECISION  =>   "%.2f"; #  distance resolution = 0.01 km
+use constant DIS_PRECISION  =>   "%.3f"; #  distance resolution = 0.001 km
+use constant DIS_PRECISION2 =>  "%6.3f"; #  distance resolution = 0.001 km
 use constant SEC_PRECISION  =>   "%.0f"; #   seconds resolution = 1 second
 use constant SPD_PRECISION  =>  "%4.0f"; #     speed resolution = 1 km/h
 use constant AVG_PRECISION  =>   "%.1f"; # avg speed resolution = 0.1 km/h
@@ -378,15 +379,16 @@ sub round_tim { # round to nearest second
     return $tim =~ m/\.(\d+)Z$/ && $1 != 0 ? epoch_to_str(nearest(1, str_to_epoch($tim))) : $tim;
 }
 
-sub timediff_string {
-    stacktrace() if !defined $_[0] || $_[0] eq "";
-    my $t = $_[0] + 0.5; # for rounding to nearest second
+sub timediff_str {
+    stacktrace() if !defined $_[1] || $_[1] eq "";
+    my $t = $_[1] + 0.5; # for rounding to nearest second
     my $s = $t % 60;
     $t = ( $t - $s ) / 60;
     my $m = $t % 60;
     $t = ( $t - $m ) / 60;
-    return sprintf( "%2d:%02d:%02d h", $t, $m, $s );
+    return sprintf($_[0].":%02d:%02d h", $t, $m, $s);
 }
+sub timediff_string { return timediff_str("%d", $_[0]); }
 
 sub ele_string {
     stacktrace() if !defined $_[1] || $_[1] eq "";
@@ -395,10 +397,11 @@ sub ele_string {
     $ele = (sprintf ELE_PRECISION0, $ele) if $len >= 0;
     return ( " " x max( 0, abs($len) - length($ele) ) ) . $ele;
 }
-sub dis_string {
-    stacktrace() if !defined $_[0] || $_[0] eq "";
-    return sprintf DIS_PRECISION." km", M2KM * $_[0];
+sub dis_str {
+    stacktrace() if !defined $_[1] || $_[1] eq "";
+    return sprintf $_[0]." km", M2KM * $_[1];
 }
+sub dis_string { return dis_str(DIS_PRECISION, $_[0]); }
 
 my $spd_prec_len = 1; # used only for spd_string
 sub spd_full {
@@ -2083,8 +2086,8 @@ sub insert_points_in_gap {
             my $sec_delta = $diff_time / $n_spans; # 0 < $sec_delta <= INSERTION_MAX_GAP
             my $ele_delta = diff_nonempty($ele, $ele_curr);
             $ele_delta /= $n_spans if defined $ele_delta;
-            warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of ".dis_string($dis).
-                       "; inserting ".points($n_spans - 1)." every ".(sprintf SEC_PRECISION, $sec_delta)." seconds");
+            warn_trkpt("before", "  long time gap = ".timediff_str("%2d", $diff_time)." over a distance of ".dis_str(DIS_PRECISION2, $dis).
+                       "; inserting ".points($n_spans - 1)." after each ".(sprintf SEC_PRECISION, $sec_delta)." seconds");
 
             # point $i will become the point past the insertion (possibly with duplication before and after segment)
             # need to move info about previous ignored points from point past the insertion to first new point
