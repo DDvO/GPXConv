@@ -10,7 +10,7 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
 * Reports missing data and by default ignores points containing implausible data.
 * Optionally filters out points before or after given time limits.
 * Optionally filters out points with an element value below or above given limits.
-* Optionally prunes comments, extensions, or elements with value below or above given limits.
+* Optionally prunes comments, extensions, or extension elements with value below or above given limits.
 * Optionally fills in altitude and time data by interpolation within segments.
 * Optionally inserts interpolated points in long gaps (default 1800 seconds sufficient for exiftool).
 * Optionally corrects elevation and and smoothens tracks.
@@ -36,10 +36,10 @@ Command-line options:
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
-  -max <name> <limit>          - ignore points with element value above limit
   -min <name> <limit>          - ignore points with element value below limit
-  -max_ext <name> <limit>      - prune extension elements with value above limit
+  -max <name> <limit>          - ignore points with element value above limit
   -min_ext <name> <limit>      - prune extension elements with value below limit
+  -max_ext <name> <limit>      - prune extension elements with value above limit
   -prune_wpts                  - remove waypoints
   -prune_cmts                  - remove comments
   -prune_exts                  - remove track, waypoint, and trackpoint extensions

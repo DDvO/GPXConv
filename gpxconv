@@ -11,7 +11,7 @@
 # Reports missing data and by default sanitizes points containing implausible data.
 # Optionally filters out points before or after given time limits.
 # Optionally filters out points with an element value below or above given limits.
-# Optionally prunes comments, extensions, or elements with value below or above given limits.
+# Optionally prunes comments, extensions, or extension elements with value below or above given limits.
 # Optionally fills in altitude and time data by interpolation within segments.
 # Optionally inserts interpolated points in long gaps (default 1800 seconds sufficient for exiftool).
 # Optionally corrects elevation and smoothens tracks.
@@ -36,10 +36,10 @@ Command-line options:
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
-  -max <name> <limit>          - ignore points with element value above limit
-  -min <name> <limit>          - ignore points with element value below limit
-  -max_ext <name> <limit>      - prune extension elements with value above limit
+  -min <name> <limit>          - filter out points with element value below limit
+  -max <name> <limit>          - filter out points with element value above limit
   -min_ext <name> <limit>      - prune extension elements with value below limit
+  -max_ext <name> <limit>      - prune extension elements with value above limit
   -prune_wpts                  - remove waypoints
   -prune_cmts                  - remove comments
   -prune_exts                  - remove extensions
@@ -481,8 +481,7 @@ sub parse_point {
     }
 
     my $ext = "";
-    if ($str =~ s#[ \t]*(<extensions>.*?</extensions>)\n?##s) {
-        $ext = $1;
+    while ($str =~ s#[ \t]*(<extensions>.*?</extensions>)\n?#($ext .= $1, "")#es) {
         $ext =~ s#\n##sg;
     }
 
@@ -513,10 +512,6 @@ sub parse_point {
           $max_elem  && $_[0] =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
           $min_elem  && $_[0] =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below
         );
-    $ext     =~ s#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>##s if $max_ext &&
-        $ext =~ m#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>#s && $1 > $max_ext_limit && ++$num_ext_above;
-    $ext     =~ s#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>##s if $min_ext &&
-        $ext =~ m#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>#s && $1 < $min_ext_limit && ++$num_ext_below;
     $ext =~ s#<gpxtpx:TrackPointExtension></gpxtpx:TrackPointExtension>##sg;
     $ext =~ s#<extensions></extensions>##sg;
 
@@ -767,8 +762,8 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     splice @ARGV, $i, 1;        # remove from ARGV the option just handled
 }
 if ( $prune_exts ) {
-    warning("-max_ext option has little effect since -prune_exts is given") if $max_ext;
     warning("-min_ext option has little effect since -prune_exts is given") if $min_ext;
+    warning("-max_ext option has little effect since -prune_exts is given") if $max_ext;
 }
 $parts = 1 unless defined $parts;
 my $all = $parts - 1;
@@ -875,6 +870,13 @@ for ( my $state = 0,
     $num_pruned_descs += s#[ \t]*<desc>.+?</desc>\n?##sg             if PRUNE_DESCS;
     $num_pruned_links += s#[ \t]*<link.*?>.+?</link>\n?##sg          if PRUNE_LINKS;
     $num_pruned_exts  += s#[ \t]*<extensions>.*?</extensions>\n?##sg if $prune_exts;
+    if (!$prune_exts && ($min_ext || $max_ext)) {
+        s@(<extensions>)(.*?)(</extensions>\n?)@ my ($start, $ext, $end) = ($1, $2, $3);
+            $ext =~ s#(<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>)#$2 < $min_ext_limit ? ($num_ext_below++, "") : $1#esg if $min_ext;
+            $ext =~ s#(<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>)#$2 > $max_ext_limit ? ($num_ext_above++, "") : $1#esg if $max_ext;
+            $ext eq "" ? "" : "$start$ext$end"
+        @esg;
+    }
 
     #collect waypoints, possibly in later infile(s) headers
     my $prev_wpt_time_stripped = "";
@@ -911,12 +913,6 @@ for ( my $state = 0,
 
     if ( $state == 0 ) {
         # processing first header (of first input file)
-
-        # well, the following extension pruning may affect also header elements outside extensions
-        s#[ \t]*<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>\n?##s if $max_ext
-           && m#<$max_ext>\s*(-?[\.\d]+)\s*</$max_ext>#s && $1 > $max_ext_limit && ++$num_ext_above;
-        s#[ \t]*<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>\n?##s if $min_ext
-           && m#<$min_ext>\s*(-?[\.\d]+)\s*</$min_ext>#s && $1 < $min_ext_limit && ++$num_ext_below;
 
         if (s#\nGPXConv statistics (.*?)GPXConv statistics end\n##s)
         {    #remove any earlier statistics section
@@ -2162,8 +2158,8 @@ $final_text .= points($num_removals_dec  )." ignored due to deceleration more th
 $final_text .= points($num_removals_gain )." ignored due to ascent rate more than $MAX_PLAUSIBLE_ELE_GAIN m/s\n"  if $num_removals_gain;
 $final_text .= points($num_removals_loss )." ignored due to descent rate more than $MAX_PLAUSIBLE_ELE_LOSS m/s\n" if $num_removals_loss;
 $final_text .= points($num_removals_diff )." ignored due to time difference less than $MIN_TIMEDIFF sec\n"        if $num_removals_diff;
-$final_text .= plural($num_ext_above, "extension")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
-$final_text .= plural($num_ext_below, "extension")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
+$final_text .= plural($num_ext_below, "extension element")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
+$final_text .= plural($num_ext_above, "extension element")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "" );
 $final_text .= points($num_inserted_trkpts)." inserted and ".points($num_duplicated_trkpts)." duplicated ".
     "due to gaps > ".INSERTION_MAX_GAP." seconds\n" if INSERT_POINTS;
