@@ -1760,7 +1760,7 @@ for( my $rate, my $spd, my $direction,
         }
         if ($weight) {
             unless (defined $sec && defined $prev_sec) {
-                warn_trkpt_i($i, "no time  before/at", "; cannot calculate energy here");
+                warn_trkpt_i($i, "no time     ".(defined $sec ? "before" : "    at"), "; cannot calculate energy here");
                 $num_energy_missing++;
             } else {
                 my $start_sec = $SEC[0] // 0; # used just for smaller time arguments to sub energy()
