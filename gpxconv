@@ -2051,7 +2051,7 @@ for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
 
 # must not be called in between computing and using max/min etc. index values as these may get invalidated by inserting points
 sub insert_points_in_gap {
-    my $num_inserted_trkpts = 0;
+    my ($num_inserted_trkpts, $num_duplicated_trkpts) = (0, 0);
     for (my $i = 1; $i <= $#TIM; $i++) {
         ($lat    , $lon    , $ele    , $tim    ) =
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]); # needed also for print_trkpt
@@ -2079,8 +2079,8 @@ sub insert_points_in_gap {
             my $sec_delta = $diff_time / $n_spans; # 0 < $sec_delta <= INSERTION_MAX_GAP
             my $ele_delta = diff_nonempty($ele, $ele_curr);
             $ele_delta /= $n_spans if defined $ele_delta;
-            warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of ".dis_string($dis)."; inserting ".points($n_spans - 1));
-            # "every ". (sprintf SEC_PRECISION, $sec_delta) ." seconds"); 
+            warn_trkpt("before", "  long time gap = ".timediff_string($diff_time)." over a distance of ".dis_string($dis).
+                       "; inserting ".points($n_spans - 1)." every ".(sprintf SEC_PRECISION, $sec_delta)." seconds");
 
             # point $i will become the point past the insertion (possibly with duplication before and after segment)
             # need to move info about previous ignored points from point past the insertion to first new point
@@ -2092,11 +2092,22 @@ sub insert_points_in_gap {
 
             for (my $n = 0; $n <= $n_end; $n++) {
                 if ($n >= $start) {
+                    my $flags;
+                    if ($n == 0) {
+                        # place a new segment start, with contents to be duplicated from previous point (at segment end just before)
+                        $flags = $flags_before | DUPLICATED_POINT;
+                        $num_duplicated_trkpts++;
+                    } elsif ($n == $n_spans) {
+                        $flags = $flags_after | DUPLICATED_POINT;
+                        # place a new segment end, with contents duplicated from next point at segment start just after insertion
+                        $num_duplicated_trkpts++;
+                    } else {
+                        $flags = INSERTED_POINT;
+                        $num_inserted_trkpts++;
+                    }
                     splice @IGN, $i, 0, $n == $start ? $ign : 0;
-                    # if $n == 0, here is a new segment start, with contents duplicated from segment end just before insertion
-                    # if $n == $n_spans, here is a new segment end, with contents duplicated from segment start just after insertion
                     splice @SEG, $i, 0, $n == 0;
-                    splice @FLG, $i, 0, $n == 0 ? $flags_before | DUPLICATED_POINT : $n == $n_spans ? $flags_after | DUPLICATED_POINT : INSERTED_POINT;
+                    splice @FLG, $i, 0, $flags;
                     splice @LAT, $i, 0, $lat_curr;
                     splice @LON, $i, 0, $lon_curr;
                     splice @ELE, $i, 0, $ele_curr;
@@ -2108,7 +2119,6 @@ sub insert_points_in_gap {
                     splice @CMT, $i, 0, "";
                     splice @EXT, $i, 0, "";
                     $i++;
-                    $num_inserted_trkpts++;
                 }
                 $lat_curr += $lat_delta;
                 $lon_curr += $lon_delta;
@@ -2117,10 +2127,10 @@ sub insert_points_in_gap {
             }
         }
     }
-    return $num_inserted_trkpts;
+    return ($num_inserted_trkpts, $num_duplicated_trkpts);
 }
 
-my $num_inserted_trkpts = INSERT_POINTS ? insert_points_in_gap() : 0;
+my ($num_inserted_trkpts, $num_duplicated_trkpts) = INSERT_POINTS ? insert_points_in_gap() : (0, 0);
 
 
 ### generate final output
@@ -2155,7 +2165,8 @@ $final_text .= points($num_removals_diff )." ignored due to time difference less
 $final_text .= plural($num_ext_above, "extension")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= plural($num_ext_below, "extension")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
 $final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "" );
-$final_text .= ($num_inserted_trkpts ? points($num_inserted_trkpts)." inserted due to gaps > ".INSERTION_MAX_GAP." seconds\n" : "");
+$final_text .= points($num_inserted_trkpts)." inserted and ".points($num_duplicated_trkpts)." duplicated ".
+    "due to gaps > ".INSERTION_MAX_GAP." seconds\n" if INSERT_POINTS;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
 
