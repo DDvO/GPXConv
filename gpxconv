@@ -202,14 +202,14 @@ my @SEG;
 my @FLG;
 my @LAT;
 my @LON;
-my @ELE;
-my @TIM;
-my @SEC; # computed from @TIM, possibly adapted
-my @DIS; # derived from LAT, LON, and optionally ELE, also from point before
-my @RAT; # derived from optionally ELE and SEC, also from point before
-my @SPD; # as recorded or computed
-my @CMT;
-my @EXT;
+my @ELE; # or "" if not avialable
+my @TIM; # or "" if not avialable
+my @SEC; # computed from @TIM, possibly adapted, or undefined if not avialable
+my @DIS; # derived from LAT and LON, and ELE if available, also from point before
+my @RAT; # derived from optionally ELE and SEC, also from point before, or "" if not avialable
+my @SPD; # as recorded or computed, or "" if not avialable
+my @CMT; # or ""
+my @EXT; # or ""
 
 # waypoint data
 
@@ -1133,7 +1133,7 @@ for ( my $state = 0,
                     recalculate_RAT($j);
                     # not changing $ele nor $prev_ele such that below time interpolation is not affected
                     $FLG[$j] |= INTERPOLATED_ELE;
-                    ## debug "interpolating missing ele at point $j $tim: new ele=$ELE[$j] dis=$DIS[$j] rate=".($RAT[$j] // "");
+                    ## debug "interpolating missing ele at point $j $tim: new ele=$ELE[$j] dis=$DIS[$j] rate=$RAT[$j]";
                 }
                 if ($i_end < $i) {
                     recalculate_DIS($j);
@@ -2063,8 +2063,8 @@ sub insert_points_in_gap {
     for (my $i = 1; $i <= $#TIM; $i++) {
         ($lat    , $lon    , $ele    , $tim    ) =
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]); # needed also for print_trkpt
-        my ($sec    , $dis    , $spd    ) =
-           ($SEC[$i], $DIS[$i], $SPD[$i]);
+        my ($sec    , $dis    ) =
+           ($SEC[$i], $DIS[$i]);
         ## debug "checking for gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim spd=".($spd eq "" ? "" : spd_str($spd));
         my $diff_time = diff_defined($sec, $SEC[$i - 1]) // 0;
         # note that this insertion with interpolation is done only between adjacent track points that both have time information
@@ -2079,7 +2079,6 @@ sub insert_points_in_gap {
             my $p = $i - 1;
             my $flags_before = $FLG[$p];
             my $flags_after  = $FLG[$i];
-            my $rate = $RAT[$p];
             my ($lat_curr, $lon_curr, $ele_curr, $sec_curr) = ($LAT[$p], $LON[$p], $ELE[$p], $SEC[$p]);
             my $dis_delta  = $dis / $n_spans;
             my $lat_delta = ($lat - $lat_curr) / $n_spans;
@@ -2122,8 +2121,8 @@ sub insert_points_in_gap {
                     splice @TIM, $i, 0, epoch_to_str($sec_curr);
                     splice @SEC, $i, 0, $sec_curr;
                     splice @DIS, $i, 0, $dis_delta;
-                    splice @RAT, $i, 0, $rate;
-                    splice @SPD, $i, 0, $spd;
+                    splice @RAT, $i, 0, "";
+                    splice @SPD, $i, 0, "";
                     splice @CMT, $i, 0, "";
                     splice @EXT, $i, 0, "";
                     $i++;
