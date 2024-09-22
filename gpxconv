@@ -257,7 +257,7 @@ my (@LAST_GAIN_INDEX, @LAST_LOSS_INDEX, @PART_END_INDEX);
 my (@SUM__ASCENT, @TIME__ASCENT, @MISSING__ASCENT_TIME,
     @SUM_DESCENT, @TIME_DESCENT, @MISSING_DESCENT_TIME);
 
-my $sum_dis         = 0;
+my ($sum_dis, $sum_dis_mov) = (0, 0);
 my $avg_timediff;
 
  # for calculating relative deviation between recorded and computed speed
@@ -1756,6 +1756,7 @@ for( my $rate, my $spd, my $direction,
         }
         $spd = $SPD[$i];
         if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
+            $sum_dis_mov += $dis;
             $sum_timediff_mov += $timediff;
         }
         if ($weight) {
@@ -1878,7 +1879,7 @@ my $Sum_dis    = dis_string($sum_dis);
 my $Sum_energy = sprintf "%.0f", $sum_energy / 1000 if $weight;
 my $no_energy_text = $num_energy_missing ? ", leaving out ".points($num_energy_missing).
     " where time or altitude information is missing" : "" if $weight;
-my $Avg_spd    = sprintf AVG_PRECISION, MPS2KMPH * $sum_dis / $sum_timediff_mov if $sum_timediff_mov;
+my $Avg_spd    = sprintf AVG_PRECISION, MPS2KMPH * $sum_dis_mov / $sum_timediff_mov if $sum_timediff_mov;
 my $Sum_timediff_mov = timediff_string($sum_timediff_mov);
    $Sum_timediff_mov =~ s/^\s+//;
 my $Speed_deviation_text = $sum_speed ? ("average deviation between recorded and computed speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
