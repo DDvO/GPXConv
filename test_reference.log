@@ -100,9 +100,9 @@ At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max rate
 At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
 total track length   = 63.45 km
 total track duration = 32:30:01 h
-total moving time    = 0:30:01 h
+total moving time    = 0:30:01 h, with speed being at least 1 km/h
+average moving speed = 2.0 km/h
 total biking energy  = -10 kJ, leaving out 7 points where time or altitude information is missing
-average moving speed = 126.8 km/h
 1 automatic waypoint pruned
 1 track header ignored (apart from any included waypoints)
 0 extension elements with name 'value' and value below 101 pruned

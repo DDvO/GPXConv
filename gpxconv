@@ -83,7 +83,6 @@ use constant MAX_TIMEDIFF_RECORDED_SPEED => 2; # maximum number of seconds for w
 
 # analysis control
 use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
-use constant MIN_SPEED_MOVING =>  1; # threshold for detecting movement (in km/h)
 use constant ANALYZE_PHASES   =>  0; # by default do not analyze ascent/descent phases
 use constant ELE_THRESHOLD    => 25; # threshold for detecting/accepting ascent or descent (in m);
                                      # should be larger than short-term altitude measurement error
@@ -1876,12 +1875,6 @@ my $Min_lon     = lon_str($min_lon);
 my $Max_lat     = lat_str($max_lat);
 my $Max_lon     = lon_str($max_lon);
 my $Sum_dis    = dis_string($sum_dis);
-my $Sum_energy = sprintf "%.0f", $sum_energy / 1000 if $weight;
-my $no_energy_text = $num_energy_missing ? ", leaving out ".points($num_energy_missing).
-    " where time or altitude information is missing" : "" if $weight;
-my $Avg_spd    = sprintf AVG_PRECISION, MPS2KMPH * $sum_dis_mov / $sum_timediff_mov if $sum_timediff_mov;
-my $Sum_timediff_mov = timediff_string($sum_timediff_mov);
-   $Sum_timediff_mov =~ s/^\s+//;
 my $Speed_deviation_text = $sum_speed ? ("average deviation between recorded and computed speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
                                          int(0.5 + 100 * $sum_speed_deviation / ($sum_speed / 2))." %\n") : "";
 
@@ -2146,9 +2139,18 @@ my ($num_inserted_trkpts, $num_duplicated_trkpts) = INSERT_POINTS ? insert_point
 my $final_text = "\n";
 $final_text .= "total track length   = $Sum_dis\n";
 $final_text .= "total track duration = $total_time\n";
-$final_text .= "total moving time    = $Sum_timediff_mov\n"  if $sum_timediff_mov;
-$final_text .= "total biking energy  = $Sum_energy kJ$no_energy_text\n" if $sum_timediff_mov && $weight;
-$final_text .= "average moving speed = $Avg_spd km/h\n"      if defined $Avg_spd;
+if ($sum_timediff_mov) {
+    my $Sum_timediff_mov = timediff_string($sum_timediff_mov);
+    my $Avg_spd_mov = sprintf AVG_PRECISION, MPS2KMPH * $sum_dis_mov / $sum_timediff_mov;
+    $final_text .= "total moving time    = $Sum_timediff_mov, with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
+    $final_text .= "average moving speed = $Avg_spd_mov km/h\n";
+}
+if ($weight) {
+    my $Sum_energy = sprintf "%.0f", $sum_energy / 1000;
+    my $no_energy_text = $num_energy_missing ? ", leaving out ".points($num_energy_missing).
+        " where time or altitude information is missing" : "" if $weight;
+    $final_text .= "total biking energy  = $Sum_energy kJ$no_energy_text\n";
+}
 my $end_text = $final_text;
 $final_text .= $Speed_deviation_text;
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
