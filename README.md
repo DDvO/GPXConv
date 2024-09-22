@@ -31,8 +31,8 @@ Command-line options:
   -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
   -smooth                      - smoothen tracks
   -phases                      - analyze and provide statistics for ascent/descent phases
-  -segs <n>                    - produce additional statistics per segment, start with n
-  -days <n>                    - produce additional statistics per day, counted from n
+  -segs <n>..[<m>][(+|-)<d>]   - add statistics per segment n..m, adapt their numbers +/-d
+  -days <n>..[<m>][(+|-)<d>]   - add statistics per day n..m, may adapt their numbers +/-d
   -merge <file>                - complete gaps in infile(s) by data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time

@@ -2,7 +2,7 @@
 <gpx creator="" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
 <metadata>
 <name><![CDATA[GPXconv test data]]></name>
-<desc><![CDATA[use like this: gpxconv test.gpx -walk -min_ext value 101 -max_ext value 101 -smooth -weight 50 -phases -segs 1 >test.out 2>test.log; diff test{_reference,}.out; diff test{_reference,}.log]]></desc>
+<desc><![CDATA[use like this: gpxconv test.gpx -walk -min_ext value 101 -max_ext value 101 -smooth -weight 50 -phases -segs 2..4+100 >test.out 2>test.log; diff test{_reference,}.out; diff test{_reference,}.log]]></desc>
 <link href="https://github.com/DDvO/GPXConv">
 <text>GPXconv test data<value>101</value><value>102</value></text>
 </link>
@@ -16,14 +16,14 @@ newlines are kept</extensions>
 <name><![CDATA[0001234]]></name><cmt>this automatic wpt will be pruned by default</cmt><desc><![CDATA[<p><br /><h3>Name: WP1</h3>]]></desc><sym>Waypoint</sym><type>Starting Point</type>
 <extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
 </wpt>
-<wpt lat="45.90" lon="4.30"><ele>490</ele><time>2001-01-01T16Z</time>
+<wpt lat="45.90" lon="4.30"><ele>490</ele><time>2001-01-02T16Z</time>
 <name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type>
 <extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
 </wpt>
 
 
 <trk>
-<name><![CDATA[2001-01-01_test]]></name>
+<name><![CDATA[2001-01-01..02_test]]></name>
 <cmt>trk comment</cmt>
 <desc><![CDATA[<p>Original start time: 01/01/2001 00:00<br/>Original finish time: 01/01/2001 18:30<br/>Distance: 76.9 km (08:30)]]></desc>
 <link>trk link</link>
@@ -61,14 +61,14 @@ newlines are kept</extensions>
  </trkseg>
 
  <trkseg>
-  <trkpt lat="45.70" lon="4.10"><ele>-10</ele><cmt>better not carry over elevation -10 from last available value in segment before; no possibility to carry over time</cmt></trkpt>
+  <trkpt lat="45.70" lon="4.10"><ele>-10</ele><cmt>better not carry over elevation -10 from last available value in segment before; no possibility to carry over time, long time gap not filled</cmt></trkpt>
   <trkpt lat="45.802"lon="4.20"><cmt>iterpolated elevation 41, no time</cmt></trkpt>
-  <trkpt lat="45.90" lon="4.30"><ele>90</ele><time>2001-01-01T16:00:00Z</time><cmt>second ascent 100</cmt></trkpt>
+  <trkpt lat="45.90" lon="4.30"><ele>90</ele><time>2001-01-02T16:00:00Z</time><cmt>second ascent 100</cmt></trkpt>
  </trkseg>
 
  <trkseg>
-  <trkpt lat="-0.009" lon="0"><ele>500</ele><time>2001-01-01T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted and 2 to be duplicated; gpxtpx:speed ignored</cmt><extensions><speed>10</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>11</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
-  <trkpt lat= "0.000" lon="0"><ele>525</ele><time>2001-01-01T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before, so point to be inserted; third ascent should be counted: 25; all recorded speed ignored except for plausibility check</cmt><extensions><speed>20</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>10</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>  
+  <trkpt lat="-0.009" lon="0"><ele>500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted and 2 to be duplicated; gpxtpx:speed ignored</cmt><extensions><speed>10</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>11</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+  <trkpt lat= "0.000" lon="0"><ele>525</ele><time>2001-01-02T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before, so point to be inserted; third ascent should be counted: 25; all recorded speed ignored except for plausibility check</cmt><extensions><speed>20</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>10</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
   <trkpt lat= "0.009" lon="0"><cmt>at the end no elevation and time</cmt><extensions><gpxtpx:TrackPointExtension><gpxtpx:some>text</gpxtpx:some></gpxtpx:TrackPointExtension></extensions></trkpt>
  </trkseg>
 </trk>

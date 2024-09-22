@@ -31,8 +31,8 @@ Command-line options:
   -no_sanitize                 - do not sanitize trackpoints with implausible data
   -smooth                      - smoothen tracks
   -phases                      - analyze and provide statistics for ascent/descent phases
-  -segs <n>                    - produce additional statistics per segment, start with n
-  -days <n>                    - produce additional statistics per day, counted from n
+  -segs <n>..[<m>][(+|-)<d>]   - add statistics per segment n..m, adapt their numbers +/-d
+  -days <n>..[<m>][(+|-)<d>]   - add statistics per day n..m, may adapt their numbers +/-d
   -merge <file>                - complete gaps in infile(s) by data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
@@ -248,10 +248,9 @@ my $min_lon, my $max_lon;
 my ($min_sec, $max_sec);
 my ($min_tim, $max_tim) = ("", ""); # $max_tim is not really used
 
-my ($days, $segs);
-my $part;  # will be index, defined   if -days or -segs option is given
-my $parts; # will be the argument of the -days or -segs option if given, else 1
-# in the following arrays, index ($parts - 1) will be used for the overall values
+my ($segs, $days);
+my ($part, $part_start, $part_end, $part_offset);
+# in the following arrays, index ($part_start - 1) will be used for the overall values
 my (@MAX_SPD      , @MIN_ELE      , @MAX_ELE      , @MAX_GAIN      , @MAX_LOSS      ); # TODO remove these redundant arrays (GAIN/LOSS via RAT)
 my (@MAX_SPD_INDEX, @MIN_ELE_INDEX, @MAX_ELE_INDEX, @MAX_GAIN_INDEX, @MAX_LOSS_INDEX);
 my (@LAST_GAIN_INDEX, @LAST_LOSS_INDEX, @PART_END_INDEX);
@@ -690,18 +689,18 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
         $merge = $arg1;
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
-    elsif ($opt eq "-segs") {
-        abort("cannot use both -days and -$opt option\n") if defined $days;
-        abort("missing number argument for -$opt option\n") if $#ARGV - $i < 1;
-        abort("not an integer argument for -$opt option: $arg1\n") unless $arg1 =~ m/^\d+$/;
-        $segs = $parts = $arg1;
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
-    }
-    elsif ($opt eq "-days") {
-        abort("cannot use both -segs adn -$opt option\n") if defined $segs;
-        abort("missing number argument for -$opt option\n") if $#ARGV - $i < 1;
-        abort("not an integer argument for -$opt option: $arg1\n") unless $arg1 =~ m/^\d+$/;
-        $days = $parts = $part = $arg1;
+    elsif ($opt eq "-segs" || $opt eq "-days") {
+        abort("missing argument for -$opt option\n") if $#ARGV - $i < 1;
+        abort("argument '$arg1' of -$opt option is not of the form <n>..[<m>][(+|-)<d>] with natural numbers n, m, and integer d\n")
+            unless $arg1 =~ m/^(\d+)\.\.(\d+)?([-+]\d+)?+$/ && $1 > 0;
+        if ($opt eq "-segs") {
+            abort("cannot use both -days and -$opt option\n") if $days;
+            $segs = $arg1;
+        } else {
+            abort("cannot use both -segs and -$opt option\n") if $segs;
+            $days = $arg1;
+        }
+        ($part_start, $part_end, $part_offset) = ($1, $2, $3); # $part_end < $part_start will lead to empty selection, just like without $opt
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ( $opt eq "-weight" ) {
@@ -769,8 +768,6 @@ if ( $prune_exts ) {
     warning("-min_ext option has little effect since -prune_exts is given") if $min_ext;
     warning("-max_ext option has little effect since -prune_exts is given") if $max_ext;
 }
-$parts = 1 unless defined $parts;
-my $all = $parts - 1;
 
 if ( $activity eq "-swim" ) {
     $MIN_TIMEDIFF           = 4;
@@ -1643,30 +1640,33 @@ sub push_phase {
     push @PHASE_END_INDEX,      $end_index;
 }
 
+$part_start = 1 unless defined $part_start;
+$part_offset = 0 unless defined $part_offset;
+my $all = $part_start - 1;
+my $part_or_all = $all;
+sub next_part {
+    $part = $part_or_all = $_[0] if $_[0] >= $part_start;
+    ($part, $part_or_all) = (undef, $all) if defined $part_end && $_[0] > $part_end;
+}
+my $seg = 0 if $segs;
+my $day = 0, my $prev_date, my $date if $days;
 for( my $rate, my $spd, my $direction,
      my $prev_turn_index, my $prev_turn_ele, my $prev_turn_sec,
      my $local_max_index = 0, my $local_min_index = 0,
      my $local_max_sec, my $local_min_sec,
      my $local_max_ele = "", my $local_min_ele = "",
-     my $prev_date = "", my $date,
-     my $seg = 0, my $part_or_all = $all,
      my $i = 0 ; $i < $#TIM + 1 ; $i++ ) {
     if ( $i <= $#TIM ) {
         ( $lat, $lon, $ele, $tim, $sec, $spd ) =
           ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
-        $date = $tim =~ m/(.?)T/ ? $1 : "";
-        if (defined $days) {
-            $part++ if $date ne "" && $prev_date ne "" && $date ne $prev_date;
-            $part_or_all = $part;
-        }
+        $date = $1 if $days && $tim =~ m/^(.*?)T/;
+        next_part(++$day) if $days && ($i == 0 || defined $date && defined $prev_date && $date ne $prev_date); # assuming that dates, as far as available, are ascending
     }
     else {
         $ele = $prev_turn_ele;
     }
     if ($SEG[$i]) { # track segment start (which includes the start: $i == 0)
-        $seg++;
-        $part = $part_or_all = $seg if defined $segs && $seg >= $segs;
-
+        next_part(++$seg) if defined $segs;
         # (re-)start climb phase recognition
         $direction       = 0;
         $prev_turn_ele   = $local_max_ele   = $local_min_ele = "";
@@ -1989,8 +1989,9 @@ for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
 my $total_time  = defined $max_sec && defined $min_sec ? timediff_string($max_sec - $min_sec) : 0;
 my $part_wpts   = ""; # also used for overall statistics
 my $part_points = ""; # also used for overall statistics
-for (my $i = $all; $i <= (defined $part ? $part : $all); $i++) {
-    my $Part = $i == $all ? "" : (defined $segs ? "segment" : "day")." ".(' ' x (length($part) - length($i)))."$i ";
+my $part_last = defined $part_start ? $part_end // $part : $all;
+for (my $i = $all; $i <= $part_last; $i++) {
+    my $Part = $i == $all ? "" : (defined $segs ? "segment" : "day")." ".(' ' x (length($part_last) - length($i))).($i + $part_offset)." ";
     my $Min_ele      = defined $MIN_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]) : "";
     my $Max_ele      = defined $MAX_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]) : "";
     my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? " ".spd_full($SPD[$MAX_SPD_INDEX [$i]]) : "";
