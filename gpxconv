@@ -2202,10 +2202,10 @@ my $stats = "GPXConv statistics (not including $sanitized_text"."periods between
 print_line(""); # empty line
 info($stats);
 
-$HEAD =~
-  s|(<trk>\s*(<name>.*?</name>)?)|$1\n<cmt></cmt>|s # add preliminarily empty comment in track
-  unless $HEAD =~ m/<trk>.*?<cmt>/s;                # if not already existing
-$HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s;    # prepend stats to track comment
+abort("FATAL: end of track header not found\n") unless $HEAD =~ m/<trk>(.*?)<trkseg>/s;
+# add preliminarily empty comment in track; # if not already existing:
+abort("FATAL: end of track header not found\n") unless $1 =~ m/<cmt>/ || $HEAD =~ s|(<trk>(\s*<name>.*?</name>)?)|$1\n<cmt></cmt>|s;
+$HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
 
 
 ### write final output
