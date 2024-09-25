@@ -1,15 +1,13 @@
 INFO   : initial track, from file test.gpx
 INFO   : first   segment at <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                
 WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                 no altitude given and no previous value available
-WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                 no time      given and no previous value available
-WARNING: no altitude     at <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                ; cannot calculate ascent/descent
-WARNING: no time         at <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                ; cannot calculate speed and acceleration
+WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                 no time     given and no previous value available
 WARNING: no altitude  up to <trkpt lat="44.000015" lon="2.280015" <ele> NONE <time>NONE                 for 1 point over a distance of 0.00 km
 WARNING: no time      up to <trkpt lat="44.00002"  lon="2.00003"  <ele>74.99 <time>NONE                 for 2 points over a distance of 22.38 km
 INFO   : end of  segment at <trkpt lat="44.000"    lon="2.008"    <ele>50.00 <time>2001-01-01T10:00:00Z
 INFO   : further segment at <trkpt lat="44"        lon="2"        <ele> NONE <time>NONE                 after a gap of 0:00:00 h and 0.64 km
 WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 <time>NONE                 no altitude was given; using previous available value
-WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 <time>2001-01-01T10:00:00Z no time      was given; using previous value
+WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 <time>2001-01-01T10:00:00Z no time     was given; using previous value
 WARNING: no altitude     at <trkpt lat="44"        lon="2"        <ele> NONE <time>NONE                ; trying to interpolate altitude
 WARNING: no time         at <trkpt lat="44"        lon="2"        <ele> NONE <time>NONE                ; trying to interpolate time
 WARNING: no time      up to <trkpt lat="44"        lon="2"        <ele> NONE <time>2001-01-01T10:30:00Z for 1 point over a distance of 0.00 km
@@ -29,7 +27,7 @@ INFO   : end of  segment at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE <t
 WARNING: at segment end     <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 no altitude was given; using value from begin of next segment
 WARNING:              up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 was unable to interpolate missing time within segment
 INFO   : further segment at <trkpt lat="45.70"     lon="4.10"     <ele> -10   <time>NONE                 after a gap of 0:00:00 h and 46.40 km
-WARNING: at segment start   <trkpt lat="45.70"     lon="4.10"     <ele> -10   <time>NONE                 no time      given and no previous value available
+WARNING: at segment start   <trkpt lat="45.70"     lon="4.10"     <ele> -10   <time>NONE                 no time     given and no previous value available
 WARNING: no altitude  up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 for 1 point over a distance of 11.22 km
 WARNING: no altitude     at <trkpt lat="45.802"    lon="4.20"     <ele>  NONE <time>NONE                ; trying to interpolate altitude
 WARNING: no altitude  up to <trkpt lat="45.802"    lon="4.20"     <ele>40.688 <time>NONE                 for 1 point over a distance of 13.73 km
