@@ -855,15 +855,13 @@ if ($merge && !next_trkpt2()) {
 }
 
 # TODO before further complicating input handling, split file reading and parsing from any further processing
-for ( my $state = 0,
-      my $prev_avail_sec, my $prev_avail_ele  = "", my $ele_miss_length = 0, my $tim_miss_length = 0,
-      my $i = 0;
-      $in_merge ? (next_trkpt2() ? 1
-                   : ($in_merge = -$in_merge, $in_merge != -2 && defined($_ = <>))) # EOF in $merge
-                : (defined($_ = <>) ||
-                   # EOF in infile(s)
-                   ($merge && (info("infile(s) ended before alternative input"), 1)
-                       ? ($in_merge = 2, 1) : 0));
+for (my $state = 0,
+     my $prev_avail_sec, my $prev_avail_ele  = "", my $ele_miss_length = 0, my $tim_miss_length = 0,
+     my $i = 0;
+     $in_merge ? (next_trkpt2() ? 1 : ($in_merge = -$in_merge, $in_merge != -2 && defined($_ = <>))) # EOF in $merge
+               : (defined($_ = <>) ||
+                  # in case EOF in infile(s):
+                  ($merge && (info("infile(s) ended before alternative input"), 1) ? ($in_merge = 2, 1) : 0));
     ) {
     # anywhere (in headers, tracks, waypoints, trackpoints, ...):
     $num_pruned_cmts  += s#[ \t]*<cmts>.*?</cmt>\n?##sg              if $prune_cmts;
@@ -1277,8 +1275,7 @@ my ($timediff_before, $dis_before, $dis);
 my $timediff = "";
 my $spd_before;
 $spd = "";
-for ( my $acc, my $rate,
-      my $i = 0 ; $i <= $#TIM ; $i++ ) {
+for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     $spd_before = $spd;
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
@@ -1447,7 +1444,7 @@ abort("FATAL: no trackpoint (possibly after ignoring some)\n") if $#TIM < 0;
 
 ## check waypoints
 
-for ( my $j = 0 ; $j <= $#WSEC ; $j++ ) {
+for (my $j = 0; $j <= $#WSEC; $j++) {
     $sec = $WSEC[$j];
     unless (defined $sec) {
         warning("waypoint '$WSTR[$j]\n' does not have time information; skipping proximity check");
@@ -1620,7 +1617,7 @@ sub push_phase {
     my $max__spd       = 0;
     my $max__spd_index;
 
-    for ( my $i = $start_index + 1 ; $i <= $end_index ; $i++ ) {
+    for (my $i = $start_index + 1; $i <= $end_index; $i++) {
         $dist += $DIS[$i];
         $rate  = $RAT[$i];
         $spd_ = $SPD[$i];
@@ -1649,13 +1646,13 @@ sub next_part {
 }
 my $seg = 0 if $segs;
 my $day = 0, my $prev_date, my $date if $days;
-for( my $rate, my $spd, my $direction,
+for (my $rate, my $spd, my $direction,
      my $prev_turn_index, my $prev_turn_ele, my $prev_turn_sec,
      my $local_max_index = 0, my $local_min_index = 0,
      my $local_max_sec, my $local_min_sec,
      my $local_max_ele = "", my $local_min_ele = "",
-     my $i = 0 ; $i < $#TIM + 1 ; $i++ ) {
-    if ( $i <= $#TIM ) {
+     my $i = 0; $i <= $#TIM; $i++) {
+    if ($i <= $#TIM) {
         ( $lat, $lon, $ele, $tim, $sec, $spd ) =
           ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
         $date = $1 if $days && $tim =~ m/^(.*?)T/;
@@ -1950,13 +1947,13 @@ sub phase_text {
 }
 
 my $wpts = "";
-for ( my $j = 0 ; $j <= $#WTIM ; $j++ ) {
+for (my $j = 0; $j <= $#WTIM; $j++) {
     $wpts .= wpt( $j, -1, "" );
 }
 
 my $phase_wpts   = "";
 my $phase_points = "";
-for ( my $i = 0 ; $i <= $#PHASE_END_INDEX ; $i++ ) {
+for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
     my $type = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
     my $Len = phase_text($i) . "$type   = " . ( sprintf DIF_PRECISION, $PHASE_DIFF[$i] ) . "  m;   "
       . "distance   =".($PHASE_DIST[$i] / 1000 >= 10 ? "" : " ").dis_string($PHASE_DIST[$i]);
@@ -1991,8 +1988,8 @@ for (my $i = $all; $i <= $part_last; $i++) {
     my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? " ".spd_full($SPD[$MAX_SPD_INDEX [$i]]) : "";
     my $Max_gain_spd = defined $MAX_GAIN_INDEX[$i] ?     spd_str ($SPD[$MAX_GAIN_INDEX[$i]]) : "";
     my $Max_loss_spd = defined $MAX_LOSS_INDEX[$i] ?     spd_str ($SPD[$MAX_LOSS_INDEX[$i]]) : "";
-    while (substr( $Max_gain_spd, 0, 1 ) eq " " &&
-           substr( $Max_loss_spd, 0, 1 ) eq " " )
+    while (substr($Max_gain_spd, 0, 1 ) eq " " &&
+           substr($Max_loss_spd, 0, 1 ) eq " ")
     {
         $Max_gain_spd = substr( $Max_gain_spd, 1 );
         $Max_loss_spd = substr( $Max_loss_spd, 1 );
@@ -2213,7 +2210,7 @@ $HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s;    # prepend stats to track comment
 ### write final output
 
 print $out $HEAD;                     # includes <gpx> <trk> <trkseg>
-for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
+for (my $i = 0; $i <= $#TIM ;$i++) {
     ($tim, $spd) = ($TIM[$i], $SPD[$i]);
     print $out '<trkpt lat="' . lat_str($LAT[$i]) . '" lon="' . lon_str($LON[$i]) . '">';
     print $out "<ele>" . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
@@ -2260,7 +2257,7 @@ for ( my $i = 0 ; $i <= $#TIM ; $i++ ) {
     }
     print $out $exts if $exts ne "";
     print $out "</trkpt>\n";
-    print $out "</trkseg>\n<trkseg>\n" if $SEG[ $i + 1 ] && $i < $#TIM;
+    print $out "</trkseg>\n<trkseg>\n" if $SEG[$i + 1] && $i < $#TIM;
 }
 print $out "</trkseg>\n</trk>\n</gpx>\n";
 
