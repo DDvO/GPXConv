@@ -1981,7 +1981,7 @@ for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
 my $total_time  = defined $max_sec && defined $min_sec ? timediff_string($max_sec - $min_sec) : 0;
 my $part_wpts   = ""; # also used for overall statistics
 my $part_points = ""; # also used for overall statistics
-my $part_last = defined $part_start ? $part_end // $part : $all;
+my $part_last = $part_end // $part // $all;
 for (my $i = $all; $i <= $part_last; $i++) {
     my $Part = $i == $all ? "" : (defined $segs ? "segment" : "day")." ".(' ' x (length($part_last) - length($i))).($i + $part_offset)." ";
     my $Min_ele      = defined $MIN_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]) : "";
