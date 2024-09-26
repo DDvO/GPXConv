@@ -50,7 +50,7 @@ newlines are kept</extensions>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[5th ascent = +25 m; distance = 1.00 km; duration = 0:30:01 h]</name></wpt>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[5th max speed = 2 km/h; avg speed = 2 km/h]</name></wpt>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[5th max rate = +50 m/h; avg rate = +50 m/h]</name></wpt>
-<wpt lat="0.00900" lon="0.00000">                                                <name>[end; total track length = 63.45 km; total track duration = 32:30:01 h; total moving time = 0:30:01 h, with speed being at least 1 km/h; average moving speed = 2.0 km/h; total biking energy = -10 kJ, leaving out 7 points where time or altitude information is missing]</name></wpt>
+<wpt lat="0.00900" lon="0.00000">                                                <name>[end; total track length = 63.13 km; total track duration = 32:30:01 h; total moving time = 0:30:01 h, with speed being at least 1 km/h; average moving speed = 2.0 km/h; total biking energy = -10 kJ, leaving out 7 points where time or altitude information is missing]</name></wpt>
 <trk>
 <name><![CDATA[2001-01-01..02_test]]></name>
 <cmt>
@@ -91,7 +91,7 @@ At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th ascent  
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max speed =     2 km/h; avg speed  =    2 km/h
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max rate  =   +50  m/h; avg rate   =  +50  m/h
 At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
-total track length   = 63.45 km
+total track length   = 63.13 km
 total track duration = 32:30:01 h
 total moving time    = 0:30:01 h, with speed being at least 1 km/h
 average moving speed = 2.0 km/h
@@ -117,7 +117,7 @@ trk comment</cmt>
 <trkseg>
 <trkpt lat="44.00001" lon="2.28002"><cmt>for some reason, lat gets rounded down to 44.00001, lon upwards to 2.2801; initially no elevation and time</cmt></trkpt>
 <trkpt lat="44.00002" lon="2.00003"><ele>  75</ele><extensions><value>101</value></extensions><extensions> in trkpt second extension, which is not really allowed but supported here</extensions></trkpt>
-<trkpt lat="44.00000" lon="2.00800"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><cmt>descent is not counted because it is less than 25</cmt></trkpt>
+<trkpt lat="44.00000" lon="2.00400"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><cmt>descent is not counted because it is less than 25</cmt></trkpt>
 </trkseg>
 <trkseg>
 <trkpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><cmt>ele=50.00 and time=2001-01-01T10:00:00Z to be carried over from previous segment</cmt><src>substituted altitude; substituted time</src></trkpt>

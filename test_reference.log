@@ -4,8 +4,8 @@ WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE <tim
 WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                 no time     given and no previous value available
 WARNING: no altitude  up to <trkpt lat="44.000015" lon="2.280015" <ele> NONE <time>NONE                 for 1 point over a distance of 0.00 km
 WARNING: no time      up to <trkpt lat="44.00002"  lon="2.00003"  <ele>74.99 <time>NONE                 for 2 points over a distance of 22.38 km
-INFO   : end of  segment at <trkpt lat="44.000"    lon="2.008"    <ele>50.00 <time>2001-01-01T10:00:00Z
-INFO   : further segment at <trkpt lat="44"        lon="2"        <ele> NONE <time>NONE                 after a gap of 0:00:00 h and 0.64 km
+INFO   : end of  segment at <trkpt lat="44.000"    lon="2.004"    <ele>50.00 <time>2001-01-01T10:00:00Z
+INFO   : further segment at <trkpt lat="44"        lon="2"        <ele> NONE <time>NONE                 after a gap of 0:00:00 h and 0.32 km
 WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 <time>NONE                 no altitude was given; using previous available value
 WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 <time>2001-01-01T10:00:00Z no time     was given; using previous value
 WARNING: no altitude     at <trkpt lat="44"        lon="2"        <ele> NONE <time>NONE                ; trying to interpolate altitude
@@ -50,7 +50,7 @@ WARNING: according to its time information, waypoint '
   </wpt>
 ' appears not close to track (interpolated distance = 400 m > 100); it should be approximately at <trkpt lat="45.9"      lon="4.3"      <ele>  90  
 WARNING: no time         at <trkpt lat="44.00002"  lon="2.00003"  <ele> 74.99 <time>NONE                ; cannot calculate energy here
-WARNING: no time     before <trkpt lat="44.000"    lon="2.008"    <ele> 50.00 <time>2001-01-01T10:00:00Z; cannot calculate energy here
+WARNING: no time     before <trkpt lat="44.000"    lon="2.004"    <ele> 50.00 <time>2001-01-01T10:00:00Z; cannot calculate energy here
 WARNING:        at least at <trkpt lat="44"        lon="2"        <ele>40.000 <time>2001-01-01T10:30:00Z  cannot calculate energy due to missing speed information
 WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                ; cannot calculate energy here
 WARNING: no time         at <trkpt lat="45.802"    lon="4.20"     <ele>40.688 <time>NONE                ; cannot calculate energy here
@@ -96,7 +96,7 @@ At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th ascent  
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max speed =     2 km/h; avg speed  =    2 km/h
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max rate  =   +50  m/h; avg rate   =  +50  m/h
 At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
-total track length   = 63.45 km
+total track length   = 63.13 km
 total track duration = 32:30:01 h
 total moving time    = 0:30:01 h, with speed being at least 1 km/h
 average moving speed = 2.0 km/h

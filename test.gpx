@@ -39,7 +39,7 @@ newlines are kept</extensions>
     <trkpt lat="44.00002" lon="2.00003"><ele>74.99</ele>
     <extensions><value>101</value></extensions>
     <extensions><value>102</value> in trkpt second extension, which is not really allowed but supported here</extensions></trkpt>
-    <trkpt lat="44.000" lon="2.008"><ele>50.00</ele><time>2001-01-01T10Z</time><cmt>descent is not counted because it is less than 25</cmt></trkpt>
+    <trkpt lat="44.000" lon="2.004"><ele>50.00</ele><time>2001-01-01T10Z</time><cmt>descent is not counted because it is less than 25</cmt></trkpt>
     <extensions>trkseg extension gets ignored</extensions>
   </trkseg>
 
