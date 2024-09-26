@@ -125,7 +125,7 @@ trk comment</cmt>
 <trkpt lat="44.00000" lon="2.00000"><ele>  30</ele><time>2001-01-01T11:00:00Z</time><cmt>elevation 30 to be interpolated; not time gaps to be filled</cmt><src>interpolated altitude; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
 <trkpt lat="44.00000" lon="2.00000"><ele>  20</ele><time>2001-01-01T11:30:00Z</time><cmt>first descent that is counted: -30</cmt><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
 <trkpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><cmt>time 2001-01-01T11:40:00Z to be interpolated; first ascent 30</cmt><src>interpolated time; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
-<trkpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><cmt>ele=-10 and time=2001-01-01T12:00:00Z to be carried over from next segment; second descent -60</cmt><src>substituted altitude; substituted time; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><cmt>ele=-10 and time=2001-01-01T12:00:00Z to be carried over from next segment; second descent -60</cmt><src>substituted altitude; substituted time; computed speed</src><extensions><keep_before_speed></keep_before_speed><speed> 0</speed></extensions></trkpt>
 </trkseg>
 <trkseg>
 <trkpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time></trkpt>
@@ -144,9 +144,9 @@ trk comment</cmt>
 <trkpt lat="-0.00900" lon="-0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><src>bridging time gap: duplicated point after</src></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted and 2 to be duplicated; gpxtpx:speed ignored</cmt><extensions><speed>10</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>11</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+<trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted and 2 to be duplicated; gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed></extensions></trkpt>
 <trkpt lat="-0.00450" lon="0.00000"><ele> 512</ele><time>2001-01-02T18:15:01Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
-<trkpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before, so point to be inserted; third ascent should be counted: 25; all recorded speed ignored except for plausibility check</cmt><src>computed speed</src><extensions><speed> 2</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>10</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+<trkpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before, so point to be inserted; third ascent should be counted: 25; all given speed to be ignored except for plausibility check</cmt><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
 <trkpt lat="0.00900" lon="0.00000"><cmt>at the end no elevation and time</cmt><extensions><gpxtpx:TrackPointExtension><gpxtpx:some>text</gpxtpx:some></gpxtpx:TrackPointExtension></extensions></trkpt>
 </trkseg>
 </trk>
