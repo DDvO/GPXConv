@@ -811,6 +811,8 @@ elsif ( $activity eq "-fly" ) {
 } else {
     abort("unknown activity: $activity\naborting\n");
 }
+my $INSERTION_MAX_SPEED = $MAX_PLAUSIBLE_SPEED / 2;
+
 
 ### main loops
 
@@ -2058,10 +2060,17 @@ sub insert_points_in_gap {
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]); # needed also for print_trkpt
         my ($sec    , $dis    ) =
            ($SEC[$i], $DIS[$i]);
-        ## debug "checking for gap at point $i with lat=$lat lon=$lon ele=$ele tim=$tim spd=".($spd eq "" ? "" : spd_str($spd));
         my $diff_time = diff_defined($sec, $SEC[$i - 1]) // 0;
-        # note that this insertion with interpolation is done only between adjacent track points that both have time information
+        my $dis_text = dis_str(DIS_PRECISION2, $dis);
+        ## debug "at point $i with lat=$lat lon=$lon ele=$ele tim=$tim, considering gap of $diff_time s and $dis_text";
         if ($diff_time > INSERTION_MAX_GAP) {
+            # note that this is done only between adjacent track points that both have time information
+            my $lin_spd = $dis / $diff_time;
+            my $gap_text = "  long time gap = ".timediff_str("%2d", $diff_time)." over a distance of $dis_text";
+            if (MPS2KMPH * $lin_spd > $INSERTION_MAX_SPEED) {
+                warn_trkpt("before", "$gap_text; not inserting points because linear speed would be ".spd_str($lin_spd)." km/h, higher than $INSERTION_MAX_SPEED");
+                next;
+            }
             # insert equidistant points with interpolated data, plus
             # in case of new segment: an extra trkpt that equals the end of the previous segment and one that equals the start of the next segment
             my $n_spans  = int($diff_time / INSERTION_MAX_GAP) + ($diff_time % INSERTION_MAX_GAP == 0 ? 0 : 1);
@@ -2079,8 +2088,7 @@ sub insert_points_in_gap {
             my $sec_delta = $diff_time / $n_spans; # 0 < $sec_delta <= INSERTION_MAX_GAP
             my $ele_delta = diff_nonempty($ele, $ele_curr);
             $ele_delta /= $n_spans if defined $ele_delta;
-            warn_trkpt("before", "  long time gap = ".timediff_str("%2d", $diff_time)." over a distance of ".dis_str(DIS_PRECISION2, $dis).
-                       "; inserting ".points($n_spans - 1)." after each ".(sprintf SEC_PRECISION, $sec_delta)." seconds");
+            warn_trkpt("before", "$gap_text; inserting ".points($n_spans - 1)." after each ".(sprintf SEC_PRECISION, $sec_delta)." seconds");
 
             # point $i will become the point past the insertion (possibly with duplication before and after segment)
             # need to move info about previous ignored points from point past the insertion to first new point
