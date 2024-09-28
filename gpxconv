@@ -915,7 +915,7 @@ for (my $state = 0,
         {    #remove any earlier statistics section
             my $stats = $1;
             warning("smoothing apparently has already been done on input")
-              if $smoothing && $stats =~ m#smoothened#;
+              if $smoothing && $stats =~ m#(\d+) points .*?smoothened# && $1 > 0;
         }
         if (m#$/#s) {
             s#$/##s;    #remove trailing "<trkpt "
