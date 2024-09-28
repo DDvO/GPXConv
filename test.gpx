@@ -16,7 +16,7 @@ newlines are kept</extensions>
 <name><![CDATA[0001234]]></name><cmt>this automatic wpt will be pruned by default</cmt><desc><![CDATA[<p><br /><h3>Name: WP1</h3>]]></desc><sym>Waypoint</sym><type>Starting Point</type>
 <extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
 </wpt>
-<wpt lat="45.90" lon="4.30"><ele>490</ele><time>2001-01-02T16Z</time>
+<wpt lat="45.90" lon="4.30"><ele>490</ele><time>2001-01-02T15Z</time>
 <name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type>
 <extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
 </wpt>
@@ -35,7 +35,7 @@ newlines are kept</extensions>
 </om:oruxmapsextensions>
 </extensions>
   <trkseg>
-    <trkpt lat="44.000015" lon="2.280015"><cmt>for some reason, lat gets rounded down to 44.00001, lon upwards to 2.2801; initially no elevation and time</cmt></trkpt>
+    <trkpt lat="44.000015" lon="2.280015"><cmt>for some reason, lat gets rounded down to 44.00001, lon upwards to 2.2801; initially no elevation and time, no possibility to carry them over</cmt></trkpt>
     <trkpt lat="44.00002" lon="2.00003"><ele>74.99</ele>
     <extensions><value>101</value></extensions>
     <extensions><value>102</value> in trkpt second extension, which is not really allowed but supported here</extensions></trkpt>
@@ -57,17 +57,21 @@ newlines are kept</extensions>
 <trk>
  <trkseg>
   <trkpt lat="45.50" lon="3.50"><ele>-10</ele><time>2001-01-01T12:00Z</time></trkpt>
-  <trkpt lat="45.60" lon="3.52"><cmt>no possibility to carry over elevation or time</cmt></trkpt>
+  <trkpt lat="45.60" lon="3.52"><cmt>can carry over elevation but not time from begin of next segment</cmt></trkpt>
  </trkseg>
 
  <trkseg>
-  <trkpt lat="45.70" lon="4.10"><ele>-10</ele><cmt>better not carry over elevation -10 from last available value in segment before; no possibility to carry over time, long time gap not filled</cmt></trkpt>
+  <trkpt lat="45.70" lon="4.10"><ele>-10</ele><cmt>better not automatically carry over elevation -10 from last available value in segment before; no possibility to carry over time, long time gap not filled</cmt></trkpt>
   <trkpt lat="45.802"lon="4.20"><cmt>iterpolated elevation 41, no time</cmt></trkpt>
-  <trkpt lat="45.90" lon="4.30"><ele>90</ele><time>2001-01-02T16:00:00Z</time><cmt>second ascent 100</cmt></trkpt>
+  <trkpt lat="45.90" lon="4.30"><ele>90</ele><time>2001-01-02T15:00:00Z</time><cmt>second ascent 100</cmt></trkpt>
  </trkseg>
 
  <trkseg>
-  <trkpt lat="-0.009" lon="0"><ele>500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted and 2 to be duplicated; gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed><gpxtpx:TrackPointExtension><gpxtpx:speed>11</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+  <trkpt lat="-0.045" lon="0"><ele>500</ele><time>2001-01-02T16:00:00Z</time><cmt>no ascent/descent due to singleton segment; 1 hour time gap before, so 1 point would be inserted and 2 duplicated, but linear speed would be too high</cmt></trkpt>
+ </trkseg>
+
+ <trkseg>
+  <trkpt lat="-0.009" lon="0"><ele>500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted and 2 duplicated; gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed><gpxtpx:TrackPointExtension><gpxtpx:speed>11</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
   <trkpt lat= "0.000" lon="0"><ele>525</ele><time>2001-01-02T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before, so point to be inserted; third ascent should be counted: 25; all given speed to be ignored except for plausibility check</cmt><extensions><speed>20</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>10</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
   <trkpt lat= "0.009" lon="0"><cmt>at the end no elevation and time</cmt><extensions><gpxtpx:TrackPointExtension><gpxtpx:some>text</gpxtpx:some></gpxtpx:TrackPointExtension></extensions></trkpt>
  </trkseg>
