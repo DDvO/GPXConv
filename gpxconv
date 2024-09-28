@@ -993,14 +993,15 @@ for (my $state = 0,
             info_trkpt( "first   segment at", "" );
         }
         else {
-            print_trkpt("FATAL: before", " negative time difference (-".timediff_string(-$diff_time).")")
+            my $severity = $state < 3 ? "WARNING" : "FATAL"; # at segment start, just warn
+            print_trkpt("$severity: before", " negative time difference (-".timediff_string(-$diff_time).")")
                 if $diff_time < 0; # this implies defined $sec && defined $prev_sec
             if (defined $sec && defined $prev_sec && $diff_time == 0) {
-                print_trkpt("FATAL: point before",
-                            " has same time ($prev_tim) but different position ($prev_lat, $prev_lon)")
+                print_trkpt("$severity: point before",
+                            " has same time but different position: $prev_lat, $prev_lon")
                     if $lat != $prev_lat || $lon != $prev_lon;
-                print_trkpt("FATAL: point before",
-                            " has same time ($prev_tim) but different altitude ($prev_ele m)")
+                print_trkpt("$severity: point before",
+                            " has same time but different altitude: $prev_ele m")
                     if $ele != $prev_ele;
             }
         }
