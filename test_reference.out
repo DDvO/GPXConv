@@ -116,7 +116,7 @@ trk comment</cmt>
 </extensions>
 <trkseg>
 <trkpt lat="44.00001" lon="2.28002"><cmt>for some reason, lat gets rounded down to 44.00001, lon upwards to 2.2801; initially no elevation and time, no possibility to carry them over</cmt></trkpt>
-<trkpt lat="44.00002" lon="2.00003"><ele>  75</ele><extensions><value>101</value></extensions><extensions> in trkpt second extension, which is not really allowed but supported here</extensions></trkpt>
+<trkpt lat="44.00002" lon="2.00003"><ele>  74</ele><extensions><value>101</value></extensions><extensions> in trkpt second extension, which is not really allowed but supported here</extensions></trkpt>
 <trkpt lat="44.00000" lon="2.00400"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><cmt>descent is not counted because it is less than 25</cmt></trkpt>
 </trkseg>
 <trkseg>

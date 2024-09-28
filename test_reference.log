@@ -3,7 +3,7 @@ INFO   : first   segment at <trkpt lat="44.000015" lon="2.280015" <ele>NONE <tim
 WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                 no altitude given and no previous value available
 WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                 no time     given and no previous value available
 WARNING: no altitude  up to <trkpt lat="44.000015" lon="2.280015" <ele> NONE <time>NONE                 for 1 point over a distance of 0.00 km
-WARNING: no time      up to <trkpt lat="44.00002"  lon="2.00003"  <ele>74.99 <time>NONE                 for 2 points over a distance of 22.38 km
+WARNING: no time      up to <trkpt lat="44.00002"  lon="2.00003"  <ele>74.49 <time>NONE                 for 2 points over a distance of 22.38 km
 INFO   : end of  segment at <trkpt lat="44.000"    lon="2.004"    <ele>50.00 <time>2001-01-01T10:00:00Z
 INFO   : further segment at <trkpt lat="44"        lon="2"        <ele> NONE <time>NONE                 after a gap of 0:00:00 h and 0.32 km
 WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 <time>NONE                 no altitude was given; using previous available value
@@ -41,7 +41,7 @@ WARNING: no time         at <trkpt lat="0.009"     lon="0"        <ele>  NONE <t
 INFO   : last   segment end <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                
 WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                 was unable to interpolate missing altitude by end of last segment
 WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                 was unable to interpolate missing time by end of last segment
-WARNING: before   <trkpt lat="44.00002"  lon="2.00003"  <ele> 74.99 <time>NONE                 distance between points = 22.38 km (more than 2)
+WARNING: before   <trkpt lat="44.00002"  lon="2.00003"  <ele> 74.49 <time>NONE                 distance between points = 22.38 km (more than 2)
 WARNING: before   <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 distance between points = 11.22 km (more than 2)
 WARNING: before   <trkpt lat="45.802"    lon="4.20"     <ele>40.688 <time>NONE                 distance between points = 13.73 km (more than 2)
 WARNING: before   <trkpt lat="45.90"     lon="4.30"     <ele>  90   <time>2001-01-02T15:00:00Z distance between points = 13.36 km (more than 2)
@@ -51,7 +51,7 @@ WARNING: according to its time information, waypoint '
   <extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
   </wpt>
 ' appears not close to track (interpolated distance = 400 m > 100); it should be approximately at <trkpt lat="45.9"      lon="4.3"      <ele>  90  
-WARNING: no time         at <trkpt lat="44.00002"  lon="2.00003"  <ele> 74.99 <time>NONE                ; cannot calculate energy here
+WARNING: no time         at <trkpt lat="44.00002"  lon="2.00003"  <ele> 74.49 <time>NONE                ; cannot calculate energy here
 WARNING: no time     before <trkpt lat="44.000"    lon="2.004"    <ele> 50.00 <time>2001-01-01T10:00:00Z; cannot calculate energy here
 WARNING:        at least at <trkpt lat="44"        lon="2"        <ele>40.000 <time>2001-01-01T10:30:00Z  cannot calculate energy due to missing speed information
 WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                ; cannot calculate energy here
