@@ -14,7 +14,7 @@ newlines are kept</extensions>
 </metadata>
 
 
-<wpt lat="45.90000" lon="4.30000"><ele> 490</ele><time>2001-01-02T16:00:00Z</time>><name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type><extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions></wpt>
+<wpt lat="45.90000" lon="4.30000"><ele> 490</ele><time>2001-01-02T16:00:00Z</time><name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type><extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions></wpt>
 <wpt lat="44.00001" lon="2.28002">                                                <name>[start]</name></wpt>
 <wpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><name>[max speed = 10 km/h]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[min altitude = -10 m]</name></wpt>
