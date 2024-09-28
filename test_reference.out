@@ -115,7 +115,7 @@ trk comment</cmt>
 </om:oruxmapsextensions>
 </extensions>
 <trkseg>
-<trkpt lat="44.00001" lon="2.28002"><cmt>for some reason, lat gets rounded down to 44.00001, lon upwards to 2.2801; initially no elevation and time</cmt></trkpt>
+<trkpt lat="44.00001" lon="2.28002"><cmt>for some reason, lat gets rounded down to 44.00001, lon upwards to 2.2801; initially no elevation and time, no possibility to carry them over</cmt></trkpt>
 <trkpt lat="44.00002" lon="2.00003"><ele>  75</ele><extensions><value>101</value></extensions><extensions> in trkpt second extension, which is not really allowed but supported here</extensions></trkpt>
 <trkpt lat="44.00000" lon="2.00400"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><cmt>descent is not counted because it is less than 25</cmt></trkpt>
 </trkseg>
@@ -129,7 +129,7 @@ trk comment</cmt>
 </trkseg>
 <trkseg>
 <trkpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time></trkpt>
-<trkpt lat="45.60000" lon="3.52000"><ele> -10</ele><cmt>no possibility to carry over elevation or time</cmt><src>substituted altitude</src></trkpt>
+<trkpt lat="45.60000" lon="3.52000"><ele> -10</ele><cmt>can carry over elevation but not time from begin of next segment</cmt><src>substituted altitude</src></trkpt>
 </trkseg>
 <trkseg>
 <trkpt lat="45.70000" lon="4.10000"><ele> -10</ele><cmt>better not carry over elevation -10 from last available value in segment before; no possibility to carry over time, long time gap not filled</cmt></trkpt>
@@ -141,7 +141,7 @@ trk comment</cmt>
 <trkpt lat="34.42275" lon="3.22500"><ele> 192</ele><time>2001-01-02T16:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
 <trkpt lat="22.94550" lon="2.15000"><ele> 295</ele><time>2001-01-02T17:00:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
 <trkpt lat="11.46825" lon="1.07500"><ele> 398</ele><time>2001-01-02T17:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
-<trkpt lat="-0.00900" lon="-0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><src>bridging time gap: duplicated point after</src></trkpt>
+<trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><src>bridging time gap: duplicated point after</src></trkpt>
 </trkseg>
 <trkseg>
 <trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted and 2 to be duplicated; gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed></extensions></trkpt>

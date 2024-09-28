@@ -393,7 +393,7 @@ sub ele_string {
     stacktrace() if !defined $_[1] || $_[1] eq "";
     my $len = $_[0];
     my $ele = $_[1];
-    $ele = (sprintf ELE_PRECISION0, $ele) if $len >= 0;
+    $ele = (sprintf ELE_PRECISION0, $ele) =~ s/^\s*-(0(\.0*)?)$/$1/r if $len >= 0;
     return ( " " x max( 0, abs($len) - length($ele) ) ) . $ele;
 }
 sub dis_str {
@@ -419,8 +419,8 @@ sub spd_string {
 my $lat_prec_len = my $lat_full_len =
 my $lon_prec_len = my $lon_full_len =
 my $ele_prec_len = my $ele_full_len = my $tim_len = 1; # used only for formatting
-sub lat_str { return sprintf LAT_PRECISION, $_[0]; }
-sub lon_str { return sprintf LON_PRECISION, $_[0]; }
+sub lat_str { return (sprintf LAT_PRECISION, $_[0]) =~ s/^\s*-(0(\.0*)?)$/$1/r; }
+sub lon_str { return (sprintf LON_PRECISION, $_[0]) =~ s/^\s*-(0(\.0*)?)$/$1/r; }
 sub lat_string {
     my $s = lat_str($_[0]);
     return " " x max(0, $lat_prec_len - length($s)) . $s;
