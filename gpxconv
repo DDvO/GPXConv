@@ -1451,8 +1451,9 @@ for (my $j = 0; $j <= $#WSEC; $j++) {
         warning("waypoint '$WSTR[$j]\n' does not have time information; skipping proximity check");
         next;
     }
-    if ( $j > 0 && $WSEC[ $j - 1 ] && $sec - $WSEC[ $j - 1 ] < 0 ) {
-        warning("waypoint '$WSTR[$j]\n' is before previous waypoint: $WSTR[$j-1]");
+    if ($j > 0 && (diff_defined($sec, $WSEC[$j - 1]) // 0) < 0 &&
+        !($WTXT[$j] =~ m#^<name>\[.*?\]</name>$#)) { # do not warn for statistics waypoints in the input which we had added in an earlier run # TODO instead, insert new waypoints in time order, avoiding duplicates
+        warning("waypoint '$WSTR[$j]\n' has earlier time than the waypoint found before: $WSTR[$j-1]");
     }
     if ( $#TIM < 0 ) { # can not happen due to above check
         warning("no trackpoint found for checking waypoints");
