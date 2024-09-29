@@ -1871,22 +1871,12 @@ sub correct_ele {    # may update $ele_corr; uses $ele_corr
 
 ## prepare output header
 
-# TODO make below decls local
-#must be done before interpolating, which may shift indexes
-my $Min_lat     = lat_str($min_lat);
-my $Min_lon     = lon_str($min_lon);
-my $Max_lat     = lat_str($max_lat);
-my $Max_lon     = lon_str($max_lon);
-my $Sum_dis    = dis_string($sum_dis);
-my $Speed_deviation_text = $sum_speed ? ("average deviation between recorded and computed speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
-                                         int(0.5 + 100 * $sum_speed_deviation / ($sum_speed / 2))." %\n") : "";
-
 $HEAD =~ s|(<gpx)([ >])|$1 version="1.1"$2|     unless $HEAD =~ m|<gpx.*? version\s*=.*?>|s;
 $HEAD =~ s|(<gpx)([ >])|$1 creator="GPXConv"$2| unless $HEAD =~ m|<gpx.*? creator\s*=.*?>|s;
 # $HEAD =~ s|(<gpx )|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" |; # would not fit for our simple speed extension, and if so, should not be duplicated
-
-# http://docstore.mik.ua/orelly/perl/cookbook/ch06_07.htm match multiple lines with 's' option
-if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # TODO insert metadata if not present
+#$speed_extension = '<xsd:element name="speed" type="xsd:decimal" minOccurs="0"><xsd:annotation><xsd:documentation>The current speed relative to the previous point, in meters per second</xsd:documentation></xsd:annotation></xsd:element>';
+#$HEAD =~ s|(( )*</metadata>)|$2$2<extensions>$speed_extension</extensions>\n$1|s if $speed_extension ne ""; # add declaration for speed extension
+if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' option; TODO insert metadata if not present
     my $indent = $1;
     $indent .= ($indent =~ m/ $/ ? '    ' : "\t");
     if ( $min_tim ne "" ) {
@@ -1895,17 +1885,20 @@ if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # TODO insert metadata if not pres
         $HEAD =~ s|(\r?\n?[ \t]*</metadata>)|$indent<time>$min_tim</time>$1|s; # add new time
     }
     my $bounds = '<bounds'
-      .  ' minlat="' . $Min_lat
-      . '" minlon="' . $Min_lon
-      . '" maxlat="' . $Max_lat
-      . '" maxlon="' . $Max_lon . '"/>';
+      .  ' minlat="' . lat_str($min_lat)
+      . '" minlon="' . lon_str($min_lon)
+      . '" maxlat="' . lat_str($max_lat)
+      . '" maxlon="' . lon_str($max_lon) . '"/>';
     $HEAD =~ s|\r?\n?[ \t]*<bounds .*?/>||sg;                # remove any pre-existing bounds entry
     $HEAD =~ s|(\r?\n?[ \t]*</metadata>)|$indent$bounds$1|s; # add new bounds
 }
-#$speed_extension = '<xsd:element name="speed" type="xsd:decimal" minOccurs="0"><xsd:annotation><xsd:documentation>The current speed relative to the previous point, in meters per second</xsd:documentation></xsd:annotation></xsd:element>';
-#$HEAD =~ s|(( )*</metadata>)|$2$2<extensions>$speed_extension</extensions>\n$1|s if $speed_extension ne ""; # add declaration for speed extension
 $HEAD =~ s/\n?\n *(<trk>)/\n$1/g; # remove any double empty line (after metadata) before trk
 $HEAD =~ s/ *$//;
+
+# statistics must be generated before interpolating, which may shift indexes
+
+my $stat_points = "";
+add_stat_point(0, "start");
 
 sub wpt {
     my $j = $_[0]; # index of waypoint
@@ -1923,9 +1916,6 @@ sub point {
     my $time_val = $TIM[$i] eq "" ? "NONE".(" " x max(0,      $tim_len - length("NONE"))) : round_tim($TIM[$i]);
     return "At lat,lon,ele = " . lat_string($LAT[$i]) . "," . lon_string($LON[$i]).",$ele_val time = $time_val: $text\n";
 }
-
-my $stat_points = "";
-add_stat_point(0, "start");
 
 sub add_stat_point { # generate trackpoint-related statistics output and waypoint with same data
     my ($i, $txt, $extra) = @_; # $i is index of trackpoint containing the location and time
@@ -2059,6 +2049,22 @@ for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
     add_stat_point($PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
 }
 
+my $end_text = "";
+if (1) {
+    $end_text .= "total track length   = ".dis_string($sum_dis)."\n";
+    $end_text .= "total track duration = ".timediff_string(diff_defined($max_sec, $min_sec) // 0)."\n";
+}
+if ($sum_timediff_mov) {
+    $end_text .= "total moving time    = ".timediff_string($sum_timediff_mov).", with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
+    $end_text .= "average moving speed = ".(sprintf AVG_PRECISION, MPS2KMPH * $sum_dis_mov / $sum_timediff_mov)." km/h\n";
+}
+if ($weight) {
+    $end_text .= "total biking energy  = ".(sprintf "%.0f", $sum_energy / 1000)." kJ";
+    $end_text .= ", leaving out ".points($num_energy_missing)." where time or altitude information is missing" if $num_energy_missing;
+    $end_text .= "\n";
+}
+add_stat_point($#TIM, "end", "; $end_text");
+
 
 ## fill long time gaps as far as needed by inserting intermediate points with linear interpolation of data
 
@@ -2147,30 +2153,14 @@ sub insert_points_in_gap {
     }
     return ($num_inserted_trkpts, $num_duplicated_trkpts);
 }
-
 my ($num_inserted_trkpts, $num_duplicated_trkpts) = INSERT_POINTS ? insert_points_in_gap() : (0, 0);
 
 
 ### generate final output
 
-my $total_time = defined $max_sec && defined $min_sec ? timediff_string($max_sec - $min_sec) : 0;
-my $final_text = "\n";
-$final_text .= "total track length   = $Sum_dis\n";
-$final_text .= "total track duration = $total_time\n";
-if ($sum_timediff_mov) {
-    my $Sum_timediff_mov = timediff_string($sum_timediff_mov);
-    my $Avg_spd_mov = sprintf AVG_PRECISION, MPS2KMPH * $sum_dis_mov / $sum_timediff_mov;
-    $final_text .= "total moving time    = $Sum_timediff_mov, with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
-    $final_text .= "average moving speed = $Avg_spd_mov km/h\n";
-}
-if ($weight) {
-    my $Sum_energy = sprintf "%.0f", $sum_energy / 1000;
-    my $no_energy_text = $num_energy_missing ? ", leaving out ".points($num_energy_missing).
-        " where time or altitude information is missing" : "" if $weight;
-    $final_text .= "total biking energy  = $Sum_energy kJ$no_energy_text\n";
-}
-my $end_text = $final_text;
-$final_text .= $Speed_deviation_text;
+my $final_text = $end_text;
+$final_text .= "average deviation between recorded and computed speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
+    int(0.5 + 100 * $sum_speed_deviation / ($sum_speed / 2))." %\n" if $sum_speed;
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
 $final_text .= plural($num_auto_wpts, "automatic waypoint")." pruned\n" if $num_auto_wpts;
 $final_text .= plural($num_ignored_hdrs,    "track header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
@@ -2197,13 +2187,6 @@ $final_text .= points($num_inserted_trkpts)." inserted and ".points($num_duplica
     "due to gaps > ".INSERTION_MAX_GAP." seconds\n" if INSERT_POINTS;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
-add_stat_point($#TIM, "end", $end_text);
-
-my $all_wpts = "";
-for (my $j = 0; $j <= $#WTIM; $j++) {
-    $all_wpts .= wpt($j);
-}
-$HEAD =~ s/(<trk>)/$all_wpts$1/s;    # prepend collected and computed waypoints to track
 
 my $num_sanitized = $num_removals_ele + $num_removals_dir + $num_removals_spd + $num_removals_acc
     + $num_removals_dec + $num_removals_gain + $num_removals_loss + $num_removals_diff;
@@ -2213,11 +2196,17 @@ my $stats = "GPXConv statistics (not including $sanitized_text"."periods between
   .($phases && $PHASES_REPORT_THRESHOLD > ELE_THRESHOLD ?
     "$ascent__phases_suppressed ascent phases and $descent_phases_suppressed descent phases " .
     "not reported because they are below the threshold of +/-$PHASES_REPORT_THRESHOLD m\n" : "")
-    . substr( $final_text, 1 ) .
+    .$final_text.
 "GPXConv statistics end";
 
 print_line(""); # empty line
 info($stats);
+
+my $all_wpts = "";
+for (my $j = 0; $j <= $#WTIM; $j++) {
+    $all_wpts .= wpt($j);
+}
+$HEAD =~ s/(<trk>)/$all_wpts$1/s;    # prepend collected and computed waypoints to track
 
 abort("FATAL: end of track header not found\n") unless $HEAD =~ m/<trk>(.*?)<trkseg>/s;
 # add preliminarily empty comment in track; # if not already existing:
