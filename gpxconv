@@ -202,12 +202,12 @@ my @SEG;
 my @FLG;
 my @LAT;
 my @LON;
-my @ELE; # or "" if not avialable
-my @TIM; # or "" if not avialable
-my @SEC; # computed from @TIM, possibly adapted, or undefined if not avialable
+my @ELE; # or "" if not available
+my @TIM; # or "" if not available
+my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
 my @DIS; # derived from LAT and LON, and ELE if available, also from point before
-my @RAT; # derived from optionally ELE and SEC, also from point before, or "" if not avialable
-my @SPD; # as recorded or computed, or "" if not avialable
+my @RAT; # derived from optionally ELE and SEC, also from point before, or "" if not available
+my @SPD; # as recorded or computed, or "" if not available
 my @CMT; # or ""
 my @EXT; # or ""
 
@@ -215,10 +215,10 @@ my @EXT; # or ""
 
 my @WLAT;
 my @WLON;
-my @WELE;
-my @WTIM;
-my @WSEC; # computed from @WTIM, possibly adapted
-my @WTXT; # inner waypoint text after </time>
+my @WELE; # or "" if not available
+my @WTIM; # or "" if not available
+my @WSEC; # computed from @WTIM, possibly adapted, or undefined if not available
+my @WTXT; # inner waypoint text after </time>, or "" if not available
 my @WSTR; # full original (but indented) waypoint text
 
 # ascent/descent phase data
