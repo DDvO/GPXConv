@@ -1881,10 +1881,9 @@ my $Sum_dis    = dis_string($sum_dis);
 my $Speed_deviation_text = $sum_speed ? ("average deviation between recorded and computed speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
                                          int(0.5 + 100 * $sum_speed_deviation / ($sum_speed / 2))." %\n") : "";
 
-$HEAD =~ s/(<gpx )/$1creator="GPXConv" /
-  unless $HEAD =~ m/<gpx.*? creator\s*=.*?>/;
-$HEAD =~ s/(<gpx )/$1version="1.1" / unless $HEAD =~ m/<gpx.*? version\s*=.*?>/;
-$HEAD =~ s|(<gpx )|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" |;
+$HEAD =~ s|(<gpx)([ >])|$1 version="1.1"$2|     unless $HEAD =~ m|<gpx.*? version\s*=.*?>|s;
+$HEAD =~ s|(<gpx)([ >])|$1 creator="GPXConv"$2| unless $HEAD =~ m|<gpx.*? creator\s*=.*?>|s;
+# $HEAD =~ s|(<gpx )|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" |; # would not fit for our simple speed extension, and if so, should not be duplicated
 
 # http://docstore.mik.ua/orelly/perl/cookbook/ch06_07.htm match multiple lines with 's' option
 if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # TODO insert metadata if not present
