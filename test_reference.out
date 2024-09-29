@@ -14,42 +14,42 @@ newlines are kept</extensions>
 </metadata>
 
 
-<wpt lat="45.90000" lon="4.30000"><ele> 490</ele><time>2001-01-02T15:00:00Z</time><name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type><extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions></wpt>
-<wpt lat="44.00001" lon="2.28002">                                                <name>[start]</name></wpt>
-<wpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><name>[max speed = 10 km/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[min altitude = -10 m]</name></wpt>
-<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[max altitude = 525 m]</name></wpt>
-<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[total ascent = +155 m; avg rate = +232 m/h with 1 point not having time information]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[total descent = -90 m; avg rate = -49 m/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[max ascent rate = +180 m/h at 0 km/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[max descent rate = -180 m/h at 0 km/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[segment 102 max speed = 0 km/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 102 min altitude = -10 m]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><name>[segment 102 max altitude = 50 m]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[1st max speed = 0 km/h; avg speed = 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[1st max rate = -20 m/h; avg rate = -20 m/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  20</ele><time>2001-01-01T11:30:00Z</time><name>[1st descent = -30 m; distance = 0.03 km; duration = 1:30:00 h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[max ascent rate = +180 m/h at 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[segment 102 max speed = 0 km/h]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[segment 102 total ascent = +30 m; avg rate = +180 m/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 102 total descent = -90 m; avg rate = -49 m/h]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[segment 102 max ascent rate = +180 m/h at 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2nd ascent = +30 m; distance = 0.03 km; duration = 0:10:00 h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2nd max speed = 0 km/h; avg speed = 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2nd max rate = +180 m/h; avg rate = +180 m/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[min altitude = -10 m]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[total descent = -90 m; avg rate = -49 m/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[max descent rate = -180 m/h at 0 km/h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 102 min altitude = -10 m]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 102 total descent = -90 m; avg rate = -49 m/h]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 102 max descent rate = -180 m/h at 0 km/h]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 102 end]</name></wpt>
 <wpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 103 min altitude = -10 m]</name></wpt>
 <wpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[segment 103 max altitude = -10 m]</name></wpt>
-<wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 end]</name></wpt>
-<wpt lat="45.70000" lon="4.10000"><ele> -10</ele>                                 <name>[segment 104 min altitude = -10 m]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[3rd descent = -60 m; distance = 0.06 km; duration = 0:20:00 h]</name></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[3rd max rate = -180 m/h; avg rate = -180 m/h]</name></wpt>
+<wpt lat="45.90000" lon="4.30000"><ele> 490</ele><time>2001-01-02T15:00:00Z</time><name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type><extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[segment 104 max altitude = 90 m]</name></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[segment 104 total ascent = +100 m; avg rate unknown due to missing time]</name></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[segment 104 end]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  20</ele><time>2001-01-01T11:30:00Z</time><name>[1st descent = -30 m; distance = 0.03 km; duration = 1:30:00 h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[1st max speed = 0 km/h; avg speed = 0 km/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[1st max rate = -20 m/h; avg rate = -20 m/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2nd ascent = +30 m; distance = 0.03 km; duration = 0:10:00 h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2nd max speed = 0 km/h; avg speed = 0 km/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2nd max rate = +180 m/h; avg rate = +180 m/h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[3rd descent = -60 m; distance = 0.06 km; duration = 0:20:00 h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[3rd max rate = -180 m/h; avg rate = -180 m/h]</name></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[4th ascent = +100 m; distance =27.09 km]</name></wpt>
+<wpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><name>[max speed = 10 km/h]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[max altitude = 525 m]</name></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[total ascent = +155 m; avg rate = +232 m/h with 1 point not having time information]</name></wpt>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[5th ascent = +25 m; distance = 1.00 km; duration = 0:30:01 h]</name></wpt>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[5th max speed = 2 km/h; avg speed = 2 km/h]</name></wpt>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[5th max rate = +50 m/h; avg rate = +50 m/h]</name></wpt>
+<wpt lat="44.00001" lon="2.28002">                                                <name>[start]</name></wpt>
+<wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 end]</name></wpt>
+<wpt lat="45.70000" lon="4.10000"><ele> -10</ele>                                 <name>[segment 104 min altitude = -10 m]</name></wpt>
 <wpt lat="0.00900" lon="0.00000">                                                <name>[end; total track length = 63.13 km; total track duration = 32:30:01 h; total moving time = 0:30:01 h, with speed being at least 1 km/h; average moving speed = 2.0 km/h; total biking energy = -10 kJ, leaving out 7 points where time or altitude information is missing]</name></wpt>
 <trk>
 <name><![CDATA[2001-01-01..02_test]]></name>

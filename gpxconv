@@ -120,8 +120,9 @@ use constant MAX_PLAUSIBLE_ANGLE_DIFF =>  170; # maximal plausible turning angle
 use constant MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD => 2; # speed threshold for maximal plausible turning angle: 7.2 km/h
 use constant MIN_PLAUSIBLE_ELE        => -450; # minimal plausible altitude; actual elevation values on Earth may be as low as -450 m at Dead Sea
 
-# time correction control
+# time control
 use constant TIME_CORRECTION => 0; # number of seconds to add to time stamps in trkpt and wpt
+my $MAX_UNDEF_TIME = str_to_epoch("9999-12-31T23:59:59Z"); # as used in RFC 5820 section 4.1.2.5
 
 # elevation correction control
 use constant GEOID_ELE_CORRECTION   => 0; # whether to correct elevation wrt. geoid height retrieved online
@@ -219,7 +220,7 @@ my @WELE; # or "" if not available
 my @WTIM; # or "" if not available
 my @WSEC; # computed from @WTIM, possibly adapted, or undefined if not available
 my @WTXT; # inner waypoint text after </time>, or "" if not available
-my @WSTR; # full original (but indented) waypoint text
+my @WSTR; # full original (but indented) waypoint text, or undefined for statistics waypoint
 
 # ascent/descent phase data
 
@@ -895,9 +896,11 @@ for (my $state = 0,
         if (!$ignore && !$prune_wpts
             && !( PRUNE_AUTOMATIC_WPTS &&
                   $rest =~ m#<name><!\[CDATA\[\d*\]\]></name># && ++$num_auto_wpts )
-            && !( $rest =~ m#\[(start|end.*?)\]# )
-            && # waypoint with statistics added previously by this tool:
-            !($rest =~ m#\[((max|min)\s+(altitude|elevation|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+[+-]?[\.\d]+ k?m(\/h)?( at -?[\.\d]+ km/h|;\s+avg\s+rate\s+=\s+[+-]?[\d.]+ m/h)?\]#))
+            # better not leave out waypoints added previously by this tool because this would disturb the ordering and duplicates are now taken care of by add_stat_point():
+            # && !( $rest =~ m#\[(start|end.*?)\]# ) # start/end waypoint added previously by this tool
+            # && # waypoint with statistics added previously by this tool:
+            # !($rest =~ m#\[((max|min)\s+(altitude|elevation|height)|max\s+speed|max\s+(climb|ascent|descent)\s+rate|total\s+(ascent|descent|gain|loss))\s+=\s+[+-]?[\.\d]+ k?m(\/h)?( at -?[\.\d]+ km/h|;\s+avg\s+rate\s+=\s+[+-]?[\d.]+ m/h)?\]#)
+            )
         {
             push @WLAT, $lat;
             push @WLON, $lon;
@@ -1453,8 +1456,7 @@ for (my $j = 0; $j <= $#WSEC; $j++) {
         warning("waypoint '$WSTR[$j]\n' does not have time information; skipping proximity check");
         next;
     }
-    if ($j > 0 && (diff_defined($sec, $WSEC[$j - 1]) // 0) < 0 &&
-        !($WTXT[$j] =~ m#^<name>\[.*?\]</name>$#)) { # do not warn for statistics waypoints in the input which we had added in an earlier run # TODO instead, insert new waypoints in time order, avoiding duplicates
+    if ($j > 0 && (diff_defined($sec, $WSEC[$j - 1]) // 0) < 0) {
         warning("waypoint '$WSTR[$j]\n' has earlier time than the waypoint found before: $WSTR[$j-1]");
     }
     if ( $#TIM < 0 ) { # can not happen due to above check
@@ -1907,35 +1909,65 @@ $HEAD =~ s/\n?\n *(<trk>)/\n$1/g; # remove any double empty line (after metadata
 $HEAD =~ s/ *$//;
 
 sub wpt {
-    my $j = $_[0];    # index of waypoint if >= 0
-    my $i = $_[1];    # otherwise, index of trackpoint or undefined or < 0 for no wpt
-    my $n = $_[2];    # text to be attributed to trackpoint
-    return "" if $j < 0 && (!defined $i || $i < 0);
-    if ( $j < 0 ) {
-        $n =~ s/\n/; /g;
-        $n =~ s/; $//;
-        $n =~ s/\s+/ /g;
-    }
-    my ( $lat, $lon, $tim ) = $j >= 0
-      ? ( $WLAT[$j], $WLON[$j], $WTIM[$j] )
-      : ( $LAT[$i], $LON[$i], $TIM[$i] );
-    my $ele  = correct_ele( $j, $i );
-    my $name_or_orig_text = $j >= 0 ? $WTXT[$j] : $n eq "" ? "" : "<name>[$n]</name>";
-    return '<wpt lat="' . lat_str($lat) . '" ' . 'lon="' . lon_str($lon) . '">'
+    my $j = $_[0]; # index of waypoint
+    my ($ele, $tim) = (correct_ele($j, -1), $WTIM[$j]);
+    return '<wpt lat="' . lat_str($WLAT[$j]) . '" ' . 'lon="' . lon_str($WLON[$j]) . '">'
         .($ele eq "" ? "     " .(" " x $ele_prec_len )."      "  : "<ele>" .ele_string($ele_prec_len, $ele) . "</ele>")
         .($tim eq "" ? "      "."                    "."       " : "<time>".round_tim($tim)                 ."</time>")
-      . $name_or_orig_text . "</wpt>\n";
+      . $WTXT[$j] . "</wpt>\n";
 }
 
 sub point {
-    my $i = $_[0]; # index of trackpoint or undefined or < 0 for none
-    my $n = $_[1];
-    return "" if !defined $i || $i < 0;
+    my ($i, $text) = @_;
     my $ele      = correct_ele( -1, $i );
     my $ele_val  = $ele     eq "" ? "NONE".(" " x max(0, $ele_prec_len - length("NONE"))) : ele_string($ele_prec_len, $ele);
     my $time_val = $TIM[$i] eq "" ? "NONE".(" " x max(0,      $tim_len - length("NONE"))) : round_tim($TIM[$i]);
-    return "At lat,lon,ele = " . lat_string($LAT[$i]) . "," . lon_string($LON[$i]).",$ele_val time = $time_val: $n\n";
+    return "At lat,lon,ele = " . lat_string($LAT[$i]) . "," . lon_string($LON[$i]).",$ele_val time = $time_val: $text\n";
 }
+
+my $stat_points = "";
+add_stat_point(0, "start");
+
+sub add_stat_point { # generate trackpoint-related statistics output and waypoint with same data
+    my ($i, $txt, $extra) = @_; # $i is index of trackpoint containing the location and time
+    return unless defined $i;
+
+    $stat_points .= point($i, $txt);
+
+    # adapt text to be used as name in statistics wpt
+    $txt .= $extra if defined $extra;
+    $txt =~ s/\n/; /g;
+    $txt =~ s/; $//;
+    $txt =~ s/\s+/ /g;
+    $txt = "<name>[$txt]</name>" if $txt ne "";
+
+    # insert wpt in existing array, avoiding duplicates,
+    # in ascending time order, where missing time is considered infinit,
+    # assuming that the array is already ordered
+    my $sec_or_inf = $SEC[$i] // $MAX_UNDEF_TIME;
+
+    my  ($lat    , $lon    , $ele    , $tim    , $sec    ) =
+        ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i]);
+    my $j = 0;
+    while ($j <= $#WSEC && ($WSEC[$j] // $MAX_UNDEF_TIME) < $sec_or_inf) {
+        $j++
+    }
+    while ($j <= $#WSEC && ($WSEC[$j] // $MAX_UNDEF_TIME) == $sec_or_inf) {
+        return if # do not add duplicates
+            $WLAT[$j] eq $lat && $WLON[$j] eq $lon && $WELE[$j] eq $ele &&
+            $WTIM[$j] eq $tim && $WTXT[$j] eq $txt;
+        $j++
+    }
+    splice @WLAT, $j, 0, $lat;
+    splice @WLON, $j, 0, $lon;
+    splice @WELE, $j, 0, $ele;
+    splice @WTIM, $j, 0, $tim;
+    splice @WSEC, $j, 0, $sec;
+    splice @WTXT, $j, 0, $txt;
+    splice @WSTR, $j, 0, undef;
+}
+
+# add statistics for phases
 
 sub phase_text {
     my $i = $_[0] + 1;
@@ -1950,13 +1982,7 @@ sub phase_text {
       . " ";
 }
 
-my $wpts = "";
-for (my $j = 0; $j <= $#WTIM; $j++) {
-    $wpts .= wpt( $j, -1, "" );
-}
-
-my $phase_wpts   = "";
-my $phase_points = "";
+sub add_phases_stat { # TODO move down
 for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
     my $type = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
     my $Len = phase_text($i) . "$type   = " . ( sprintf DIF_PRECISION, $PHASE_DIFF[$i] ) . "  m;   "
@@ -1973,17 +1999,14 @@ for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
         . "max rate  =" . (sprintf RAT_PRECISION2, $RAT[$max_rate_idx]) . "  m/h; "
         . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE[$i]    ) . "  m/h"
         if defined $max_rate_idx;
-    $phase_wpts .= wpt(-1, $PHASE_END_INDEX     [$i], $Len );
-    $phase_wpts .= wpt(-1, $PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
-    $phase_wpts .= wpt(-1, $PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
-    $phase_points .= point($PHASE_END_INDEX     [$i], $Len );
-    $phase_points .= point($PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
-    $phase_points .= point($PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
+    add_stat_point($PHASE_END_INDEX     [$i], $Len );
+    add_stat_point($PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
+    add_stat_point($PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
+}
 }
 
-my $total_time  = defined $max_sec && defined $min_sec ? timediff_string($max_sec - $min_sec) : 0;
-my $part_wpts   = ""; # also used for overall statistics
-my $part_points = ""; # also used for overall statistics
+# add overall statistics and for parts
+
 my $part_last = $part_end // $part // $all;
 for (my $i = $all; $i <= $part_last; $i++) {
     my $Part = $i == $all ? "" : (defined $segs ? "segment" : "day")." ".(' ' x (length($part_last) - length($i))).($i + $part_offset)." ";
@@ -2024,31 +2047,19 @@ for (my $i = $all; $i <= $part_last; $i++) {
     my $max_gain_text = $Part."max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # relevant only if defined $MAX_GAIN_INDEX[$i]
     my $max_loss_text = $Part."max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # relevant only if defined $MAX_LOSS_INDEX[$i]
     my $part_end_text = $Part."end";
-    $part_wpts = $part_wpts
-        . wpt(-1, $MAX_SPD_INDEX  [$i], $max_spd_text )
-        . wpt(-1, $MIN_ELE_INDEX  [$i], $min_ele_text )
-        . wpt(-1, $MAX_ELE_INDEX  [$i], $max_ele_text )
-        . wpt(-1, $LAST_GAIN_INDEX[$i], $ascent_text  )
-        . wpt(-1, $LAST_LOSS_INDEX[$i], $descent_text )
-        . wpt(-1, $MAX_GAIN_INDEX [$i], $max_gain_text)
-        . wpt(-1, $MAX_LOSS_INDEX [$i], $max_loss_text)
-        . ($i == $all ? ""
-        : wpt(-1, $PART_END_INDEX [$i], $part_end_text));
-    $part_points = $part_points
-        . point($MAX_SPD_INDEX  [$i], $max_spd_text )
-        . point($MIN_ELE_INDEX  [$i], $min_ele_text )
-        . point($MAX_ELE_INDEX  [$i], $max_ele_text )
-        . point($LAST_GAIN_INDEX[$i], $ascent_text  )
-        . point($LAST_LOSS_INDEX[$i], $descent_text )
-        . point($MAX_GAIN_INDEX [$i], $max_gain_text)
-        . point($MAX_LOSS_INDEX [$i], $max_loss_text)
-        . ($i == $all ? ""
-        : point($PART_END_INDEX [$i], $part_end_text));
+    add_stat_point($MAX_SPD_INDEX  [$i], $max_spd_text );
+    add_stat_point($MIN_ELE_INDEX  [$i], $min_ele_text );
+    add_stat_point($MAX_ELE_INDEX  [$i], $max_ele_text );
+    add_stat_point($LAST_GAIN_INDEX[$i], $ascent_text  );
+    add_stat_point($LAST_LOSS_INDEX[$i], $descent_text );
+    add_stat_point($MAX_GAIN_INDEX [$i], $max_gain_text);
+    add_stat_point($MAX_LOSS_INDEX [$i], $max_loss_text);
+    add_stat_point($PART_END_INDEX [$i], $part_end_text) unless $i == $all;
 }
-
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
 
+add_phases_stat();
 
 ## fill long time gaps as far as needed by inserting intermediate points with linear interpolation of data
 
@@ -2143,6 +2154,7 @@ my ($num_inserted_trkpts, $num_duplicated_trkpts) = INSERT_POINTS ? insert_point
 
 ### generate final output
 
+my $total_time = defined $max_sec && defined $min_sec ? timediff_string($max_sec - $min_sec) : 0;
 my $final_text = "\n";
 $final_text .= "total track length   = $Sum_dis\n";
 $final_text .= "total track duration = $total_time\n";
@@ -2186,22 +2198,19 @@ $final_text .= points($num_inserted_trkpts)." inserted and ".points($num_duplica
     "due to gaps > ".INSERTION_MAX_GAP." seconds\n" if INSERT_POINTS;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
+add_stat_point($#TIM, "end", $end_text);
 
-$wpts .=
-    wpt( -1, 0, "start" )
-  . $part_wpts
-  . $phase_wpts
-  . wpt( -1, $#TIM, "end$end_text" );
-$HEAD =~ s/(<trk>)/$wpts$1/s;    # prepend collected and computed waypoints to track
+my $all_wpts = "";
+for (my $j = 0; $j <= $#WTIM; $j++) {
+    $all_wpts .= wpt($j);
+}
+$HEAD =~ s/(<trk>)/$all_wpts$1/s;    # prepend collected and computed waypoints to track
 
 my $num_sanitized = $num_removals_ele + $num_removals_dir + $num_removals_spd + $num_removals_acc
     + $num_removals_dec + $num_removals_gain + $num_removals_loss + $num_removals_diff;
 my $sanitized_text = $num_sanitized ? plural($num_sanitized, "sanitized trackpoint")." nor " : "";
 my $stats = "GPXConv statistics (not including $sanitized_text"."periods between segments)\n"
-  . point(0, "start")
-  . $part_points
-  . $phase_points
-  . point($#TIM, "end")
+  . $stat_points
   .($phases && $PHASES_REPORT_THRESHOLD > ELE_THRESHOLD ?
     "$ascent__phases_suppressed ascent phases and $descent_phases_suppressed descent phases " .
     "not reported because they are below the threshold of +/-$PHASES_REPORT_THRESHOLD m\n" : "")
