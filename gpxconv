@@ -1967,44 +1967,6 @@ sub add_stat_point { # generate trackpoint-related statistics output and waypoin
     splice @WSTR, $j, 0, undef;
 }
 
-# add statistics for phases
-
-sub phase_text {
-    my $i = $_[0] + 1;
-    my $d = $i % 10;
-    return ( " " x max( 0, length( $#PHASE_END_INDEX + 1 ) - length($i) ) )
-        . $i .
-        ( 11 <= $i && $i <= 13 ? "th"
-        : $d == 1 ? "st"
-        : $d == 2 ? "nd"
-        : $d == 3 ? "rd"
-        :           "th" )
-      . " ";
-}
-
-sub add_phases_stat { # TODO move down
-for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
-    my $type = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
-    my $Len = phase_text($i) . "$type   = " . ( sprintf DIF_PRECISION, $PHASE_DIFF[$i] ) . "  m;   "
-      . "distance   =".($PHASE_DIST[$i] / 1000 >= 10 ? "" : " ").dis_string($PHASE_DIST[$i]);
-    my $duration = $PHASE_DURATION[$i];
-    $Len .= "; duration = " . timediff_string($duration) if $duration;
-    my $max_spd_idx = $PHASE_MAX_SPD_INDEX[$i];
-    my $Spd = phase_text($i)
-        . "max speed =  ".spd_full($SPD[$max_spd_idx])." km/h; "
-        . "avg speed  = ".spd_full($PHASE_SPD[    $i])." km/h"
-        if defined $max_spd_idx;
-    my $max_rate_idx = $PHASE_MAX_RATE_INDEX[$i];
-    my $Rate = phase_text($i)
-        . "max rate  =" . (sprintf RAT_PRECISION2, $RAT[$max_rate_idx]) . "  m/h; "
-        . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE[$i]    ) . "  m/h"
-        if defined $max_rate_idx;
-    add_stat_point($PHASE_END_INDEX     [$i], $Len );
-    add_stat_point($PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
-    add_stat_point($PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
-}
-}
-
 # add overall statistics and for parts
 
 my $part_last = $part_end // $part // $all;
@@ -2059,7 +2021,45 @@ for (my $i = $all; $i <= $part_last; $i++) {
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
 
-add_phases_stat();
+# add statistics for phases
+
+sub order_postfix {
+    my $i = $_[0];
+    my $d = $i % 10;
+    return 11 <= $i && $i <= 13 ? "th" :
+        $d == 1 ? "st" :
+        $d == 2 ? "nd" :
+        $d == 3 ? "rd" :
+        "th";
+}
+sub phase_text {
+    my $i = $_[0] + 1;
+    my $d = $i % 10;
+    return (" " x max(0, length($#PHASE_END_INDEX + 1) - length($i)))
+        .$i.order_postfix($i)." ";
+}
+
+for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
+    my $type = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
+    my $Len = phase_text($i) . "$type   = " . ( sprintf DIF_PRECISION, $PHASE_DIFF[$i] ) . "  m;   "
+      . "distance   =".($PHASE_DIST[$i] / 1000 >= 10 ? "" : " ").dis_string($PHASE_DIST[$i]);
+    my $duration = $PHASE_DURATION[$i];
+    $Len .= "; duration = " . timediff_string($duration) if $duration;
+    my $max_spd_idx = $PHASE_MAX_SPD_INDEX[$i];
+    my $Spd = phase_text($i)
+        . "max speed =  ".spd_full($SPD[$max_spd_idx])." km/h; "
+        . "avg speed  = ".spd_full($PHASE_SPD[    $i])." km/h"
+        if defined $max_spd_idx;
+    my $max_rate_idx = $PHASE_MAX_RATE_INDEX[$i];
+    my $Rate = phase_text($i)
+        . "max rate  =" . (sprintf RAT_PRECISION2, $RAT[$max_rate_idx]) . "  m/h; "
+        . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE[$i]    ) . "  m/h"
+        if defined $max_rate_idx;
+    add_stat_point($PHASE_END_INDEX     [$i], $Len );
+    add_stat_point($PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
+    add_stat_point($PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
+}
+
 
 ## fill long time gaps as far as needed by inserting intermediate points with linear interpolation of data
 
