@@ -937,14 +937,13 @@ for (my $state = 0,
         }
     }
 
+    sub warn_smmoothing { warning("smoothing has already been done on input") if $_[0] =~ m#(\d+) points .*?smoothened($|\W)# && $1 > 0; } 
     if ( $state == 0 ) {
         # processing first header (of first input file)
 
-        if (s#\nGPXConv statistics (.*?)GPXConv statistics end\n##s)
-        {    #remove any earlier statistics section
-            my $stats = $1;
-            warning("smoothing apparently has already been done on input")
-              if $smoothing && $stats =~ m#(\d+) points .*?smoothened# && $1 > 0;
+        if (s#\r?\nGPXConv statistics (.*?)GPXConv statistics end\r?\n##s) # remove any earlier statistics section
+        {
+            warn_smmoothing($1) if $smoothing;
         }
         if (m#$/#s) {
             s#$/##s;    #remove trailing "<trkpt "
@@ -959,9 +958,9 @@ for (my $state = 0,
     }
     elsif (!$in_merge && m#(<gpx[ >])#s) { # processing further track file
         ++$num_ignored_hdrs;
-        if ($smoothing && m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n#)
+        if ($smoothing && m#\r?\nGPXConv statistics (.*?smoothened)(.*?)GPXConv statistics end\r?\n#)
         {
-            warning("smoothing apparently has already been done on input");
+            warn_smmooting($1);
         }
         if ( $#TIM >= 0 ) { # typically, new file
             info_trkpt_i( $i - 1, "end of segment at", "" ) if $i > 0;
