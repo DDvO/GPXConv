@@ -1299,10 +1299,8 @@ my $sum_timediff_mov0 = 0;
 my $num_pts_mov       = 0;
 my ($timediff_before, $dis_before, $dis);
 my $timediff = "";
-my $spd_before;
 $spd = "";
 for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
-    $spd_before = $spd;
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
 
