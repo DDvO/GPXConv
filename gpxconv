@@ -1877,7 +1877,9 @@ $HEAD =~ s|(<gpx)([ >])|$1 creator="GPXConv"$2| unless $HEAD =~ m|<gpx.*? creato
 # $HEAD =~ s|(<gpx )|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" |; # would not fit for our simple speed extension, and if so, should not be duplicated
 #$speed_extension = '<xsd:element name="speed" type="xsd:decimal" minOccurs="0"><xsd:annotation><xsd:documentation>The current speed relative to the previous point, in meters per second</xsd:documentation></xsd:annotation></xsd:element>';
 #$HEAD =~ s|(( )*</metadata>)|$2$2<extensions>$speed_extension</extensions>\n$1|s if $speed_extension ne ""; # add declaration for speed extension
-if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' option; TODO insert metadata if not present
+
+$HEAD =~ s|(<gpx.*?>)(\s*)|$1$2<metadata></metadata>$2|s unless $HEAD =~ m|<gpx.*?>\s*<metadata>.*?</metadata>|s;
+if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' option
     my $indent = $1;
     $indent .= ($indent =~ m/ $/ ? '    ' : "\t");
     if ( $min_tim ne "" ) {
