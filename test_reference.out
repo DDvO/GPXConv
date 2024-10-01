@@ -6,11 +6,11 @@
 <link href="https://github.com/DDvO/GPXConv">
 <text>GPXconv test data<value>101</value><value>102</value></text>
 </link>
+<time>2001-01-01T10:00:00Z</time>
+<bounds minlat="-0.04500" minlon="0.00000" maxlat="45.90000" maxlon="4.30000"/>
 <extensions><value>101</value></extensions>
 <extensions>in metadata second extension, which is not really allowed but supported here;
 newlines are kept</extensions>
-<time>2001-01-01T10:00:00Z</time>
-<bounds minlat="-0.04500" minlon="0.00000" maxlat="45.90000" maxlon="4.30000"/>
 </metadata>
 
 

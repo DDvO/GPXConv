@@ -1909,18 +1909,26 @@ $HEAD =~ s|(<gpx)([ >])|$1 creator="GPXConv"$2| unless $HEAD =~ m|<gpx.*? creato
 $HEAD =~ s|(<gpx.*?>)(\s*)|$1$2<metadata></metadata>$2|s unless $HEAD =~ m|<gpx.*?>\s*<metadata>.*?</metadata>|s;
 if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' option
     my $indent = $1;
-    if ( $min_tim ne "" ) {
-        $min_tim = round_tim($min_tim);
-        $HEAD =~ s|\r?\n?[ \t]*<time>.*?</time>||sg;   # remove any pre-existing time entry
-        $HEAD =~ s|(\r?\n?[ \t]*</metadata>)|$indent<time>$min_tim</time>$1|s; # add new time
-    }
+
     my $bounds = '<bounds'
       .  ' minlat="' . lat_str($min_lat)
       . '" minlon="' . lon_str($min_lon)
       . '" maxlat="' . lat_str($max_lat)
       . '" maxlon="' . lon_str($max_lon) . '"/>';
     $HEAD =~ s|\r?\n?[ \t]*<bounds .*?/>||sg;                # remove any pre-existing bounds entry
-    $HEAD =~ s|(\r?\n?[ \t]*</metadata>)|$indent$bounds$1|s; # add new bounds
+    abort("FATAL: cannot add <bounds> to header")
+        unless $HEAD =~ s|(\r?\n?[ \t]*<extensions>)|$indent$bounds$1|s
+        ||     $HEAD =~ s|(\r?\n?[ \t]*</metadata>)|$indent$bounds$1|s;
+
+    if ( $min_tim ne "" ) {
+        $min_tim = round_tim($min_tim);
+        $HEAD =~ s|\r?\n?[ \t]*<time>.*?</time>||sg;   # remove any pre-existing time entry
+        abort("FATAL: cannot add <time> to header")
+            unless $HEAD =~ s|(\r?\n?[ \t]*<keywords>)|$indent<time>$min_tim</time>$1|s
+            ||     $HEAD =~ s|(\r?\n?[ \t]*<bounds[ >])|$indent<time>$min_tim</time>$1|s;
+    }
+} else {
+    abort("FATAL: cannot find </metadata> in header");
 }
 $HEAD =~ s/\r?\n?(\r?\n)[ \t]*(<trk>)/$1$2/g; # remove any empty line (after metadata) and indentation before trk
 $HEAD =~ s/ *$//;
