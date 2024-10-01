@@ -210,8 +210,10 @@ my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
 my @DIS; # derived from LAT and LON, and ELE if available, also from point before
 my @RAT; # derived from optionally ELE and SEC, also from point before, or "" if not available
 my @SPD; # as recorded or computed, or "" if not available
-my @CMT; # or ""
-my @EXT; # or ""
+my @CMT; # or "" if not available
+my @SRC; # as given in input but without <src> and </src> tags, or "" if not available
+my @FIX; # as given in input but without <fix> and </fix> tags, or "" if not available
+my @EXT; # or "" if not available
 
 # waypoint data
 
@@ -485,6 +487,18 @@ sub parse_point {
         $cmt =~ s#\n##sg;
     }
 
+    my $src = "";
+    if ($is_trkpt && $str =~ s#[ \t]*<src>\s*(.*?)\s*?</src>\r?\n?##s) {
+        $src = $1;
+        $src =~ s#\r?\n##sg; # TODO match \r? also in other similar situations
+    }
+
+    my $fix = "";
+    if ($is_trkpt && $str =~ s#[ \t]*<fix>\s*(.*?)\s*?</fix>\r?\n?##s) {
+        $fix = $1;
+        $fix =~ s#\r?\n##sg;
+    }
+
     my $ext = "";
     while ($str =~ s#[ \t]*(<extensions>.*?</extensions>)\n?#($ext .= $1, "")#es) {
         $ext =~ s#\n##sg;
@@ -518,7 +532,7 @@ sub parse_point {
           $min_elem  && $_[0] =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below
         );
 
-    return ( $lat, $lon, $ele, $tim, $sec, $spd, $rest, $cmt, $ext, $ignore );
+    return ($lat, $lon, $ele, $tim, $sec, $spd, $rest, $cmt, $src, $fix, $ext, $ignore);
 }
 
 sub plural { my ($n, $str) = @_; return "$n $str".($n == 1 ? "" : "s"); }
@@ -602,6 +616,8 @@ sub remove_trkpt { my ($i, $last) = @_;
     splice @RAT, $i, 1;
     splice @SPD, $i, 1;
     splice @CMT, $i, 1;
+    splice @SRC, $i, 1;
+    splice @FIX, $i, 1;
     splice @EXT, $i, 1;
     if ($i <= $last) {
         recalculate_DIS($i);
@@ -836,8 +852,8 @@ if ($merge) {
     open M, $merge || abort("FATAL: cannot open alternative GPX source file $merge: $.") if $#TIM < 0;
     <M>; # first item is before "<trktpt"
 }
-my ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1) if $merge; # current end of gap to be merged
-my ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $exts2) if $merge; # current trkpt from alternative input
+my ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1) if $merge; # current end of gap to be merged
+my ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2) if $merge; # current trkpt from alternative input
 sub next_trkpt2() {
     my $trkpt2;
     my $ignore2 = 1;
@@ -845,7 +861,7 @@ sub next_trkpt2() {
         $trkpt2 =~ m#(.*?</trkpt>)#s;
         $trkpt2 = $1;
         abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt2;
-        ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $cmt2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
+        ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $cmt2, $src2, $fix2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
     }
     ## debug "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=$sec2 spd=".($spd2 eq "" ? "" : spd_str($spd2)) if $trkpt2;
     return $trkpt2;
@@ -891,7 +907,7 @@ for (my $state = 0,
         next if $wpt =~ m#<type>Finishing Point</type># && $wpt_time_stripped eq $prev_wpt_time_stripped;
         $prev_wpt_time_stripped = $wpt_time_stripped;
 
-        ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $rest, my $cmt_unused, my $exts, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
+        ($lat, $lon, $ele, $tim, my $sec, my $spd, my $rest, my $cmt_unused, my $src_unused, my $fix_unused, my $exts, my $ignore) = parse_point($wpt); # collect some basic data even if pruned
         $rest =~ s#^<wpt[^>]*>##; # ignoring any further wpt attributes, yet there should not be any (besides lat and lon)
         $rest =~ s#</wpt>$##;
         ++$num_pruned_wpts if $prune_wpts && !$ignore;
@@ -950,18 +966,18 @@ for (my $state = 0,
     else {
         # when $state == 1 || $state == 2: processing first trkpt in new trkseg
         # when $state == 3: processing further trkpt in trkseg
-        my ($sec, $spd, $cmt, $exts);
+        my ($sec, $spd, $cmt, $src, $fix, $exts);
         if (!$in_merge) {
             m#(.*?</trkpt>)#s;
             my $trkpt = $1;
             abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt;
-            ( $lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $exts, my $ignore ) = parse_point("<trkpt $trkpt");
+            ($lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $src, $fix, $exts, my $ignore) = parse_point("<trkpt $trkpt");
             next if $ignore;
             ## debug "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd))."; state = $state";
         } elsif ($merge) {
-            ( $lat, $lon, $ele, $tim, $sec, $spd, $exts) =
-                $in_merge == -1 ? ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1) # EOF in $merge during infile(s)
-                                : ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $exts2);
+            ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) = $in_merge == -1 ?
+            ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1) : # EOF in $merge during infile(s)
+            ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2);
         }
         my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
 
@@ -975,10 +991,10 @@ for (my $state = 0,
                     } else { # certainly $i > 0
                         info_trkpt_i( $i - 1, "start using alternative input on ".timediff_string($diff_time)." gap after", "" );
                     }
-                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1) =
-                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $exts );
-                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $exts ) =
-                    ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $exts2);
+                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1) =
+                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts );
+                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
+                    ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2);
                 } else {
                     while ($merge && defined $sec && defined $sec2 && $sec2 <= $sec) {
                         # advance $merge as far as possible to catch up with infile(s)
@@ -987,8 +1003,8 @@ for (my $state = 0,
                 }
             } else { # $in_merge != 0
                 if (defined $sec && $in_merge != 2 && defined $sec1 && $sec1 <= $sec) { # $merge is not before infiles(s)
-                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $exts ) =
-                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1);
+                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
+                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1);
                     $in_merge = 0;
                     info_trkpt_i( $i - 1, "end using alternative input at", "" );
                 }
@@ -1193,6 +1209,8 @@ for (my $state = 0,
         push @RAT, rate($diff_ele, $diff_sec);
         push @SPD, $spd; # initially as recorded, else ""
         push @CMT, $cmt;
+        push @SRC, $src;
+        push @FIX, $fix;
         push @EXT, $exts;
 
         # detect and report missing time and/or altitude
@@ -2144,6 +2162,8 @@ sub insert_points_in_gap {
                     splice @RAT, $i, 0, "";
                     splice @SPD, $i, 0, "";
                     splice @CMT, $i, 0, "";
+                    splice @SRC, $i, 0, "";
+                    splice @FIX, $i, 0, "";
                     splice @EXT, $i, 0, "";
                     $i++;
                 }
@@ -2240,21 +2260,25 @@ for (my $i = 0; $i <= $#TIM ;$i++) {
     print $out $cmt if $cmt ne "";
 
     if (!DISABLE_TRKPT_SRC) {
-        my $src = $FLG[$i] & INSERTED_POINT ? "bridging time gap: inserted point"
+        my $src = $SRC[$i];
+        my $gap = $FLG[$i] & INSERTED_POINT ? "bridging time gap: inserted point"
             : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
             . ($i > 0 && ($FLG[$i - 1] & INSERTED_POINT) != 0 ? "after" : "before") : "";
         # cannot place info on interpolation etc. in <trkseg> element because it cannot hold a comment
-        $src .= ( $src eq "" ? "" : "; " ) . "interpolated altitude"  if $FLG[$i] & INTERPOLATED_ELE;
-        $src .= ( $src eq "" ? "" : "; " ) . "interpolated time"      if $FLG[$i] & INTERPOLATED_TIM;
-        $src .= ( $src eq "" ? "" : "; " ) . "substituted altitude"   if $FLG[$i] & SUBSTITUTED_ELE;
-        $src .= ( $src eq "" ? "" : "; " ) . "substituted time"       if $FLG[$i] & SUBSTITUTED_TIM;
-        $src .= ( $src eq "" ? "" : "; " ) . "computed speed"         if $FLG[$i] & COMPUTED_SPEED && INCLUDE_BEST_SPEED;
-        print $out "<src>$src</src>" if !DISABLE_TRKPT_SRC && $src ne "";
+        sub append_unless_present { return $_[0] =~ m/$_[1]/ ? "" : ($_[0] eq "" ? "" : "; " ) . $_[1]; }
+        $src .= append_unless_present($src, $gap) if $gap ne "";
+        $src .= append_unless_present($src, "interpolated altitude") if $FLG[$i] & INTERPOLATED_ELE;
+        $src .= append_unless_present($src, "interpolated time"    ) if $FLG[$i] & INTERPOLATED_TIM;
+        $src .= append_unless_present($src, "substituted altitude" ) if $FLG[$i] & SUBSTITUTED_ELE;
+        $src .= append_unless_present($src, "substituted time"     ) if $FLG[$i] & SUBSTITUTED_TIM;
+        $src .= append_unless_present($src, "computed speed"       ) if $FLG[$i] & COMPUTED_SPEED && INCLUDE_BEST_SPEED;
+        print $out "<src>$src</src>" if $src;
     }
-    if (($FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT)) != 0 && !DISABLE_TRKPT_FIX) {
-        my $fix = "none";   # TODO check
-        # was before: my $fix = $flags == 0 ? "": ( $FLG[$i] & ( INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM ) == 0 ? "2d" : "none" );
-        print $out "<fix>$fix</fix>";
+    if (!DISABLE_TRKPT_FIX) {
+        my $fix = $FIX[$i];
+        $fix = "none" if ($FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT)) != 0;
+        # TODO check; was before: $fix = $flags == 0 ? "": ( $FLG[$i] & ( INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM ) == 0 ? "2d" : "none" );
+        print $out "<fix>$fix</fix>" if $fix;
     }
 
     my $exts = $EXT[$i];
