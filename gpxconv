@@ -199,7 +199,7 @@ my $print_info       = PRINT_INFO;
 
 # trackpoint data
 
-my @IGN;
+my @IGN; # number of points ignored immediately before this one
 my @SEG;
 my @FLG;
 my @LAT;
@@ -602,7 +602,7 @@ sub recalculate_RAT { my $i = $_[0];
 }
 
 sub remove_trkpt { my ($i, $last) = @_;
-    $IGN[ $i + 1 ] = $IGN[$i] + 1; # indicate that previous point has been ignored, in addition to any previous ignores
+    $IGN[ $i + 1 ] += $IGN[$i] + 1; # indicate that previous point has been ignored, in addition to any previous ignores
     $SEG[ $i + 1 ] = 1 if $i < $last && $SEG[$i]; # copy over any segment start
     splice @IGN, $i, 1;
     splice @SEG, $i, 1;
@@ -1197,7 +1197,7 @@ for (my $state = 0,
         my $diff_ele = $i > 0 ? diff_nonempty($ele, $ELE[$i - 1]) : "";
         my $diff_sec = $i > 0 ? diff_defined ($sec, $SEC[$i - 1]) : undef;
 
-        push @IGN, 0;
+        push @IGN, ($cmt =~ m#(\d+) previous points? ignored($|\W)#) ? $1 : 0;;
         push @SEG, $state < 3;
         push @FLG, $flags;
         push @LAT, $lat;
