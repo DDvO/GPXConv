@@ -12,8 +12,6 @@
 <extensions>in metadata second extension, which is not really allowed but supported here;
 newlines are kept</extensions>
 </metadata>
-
-
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><name>[segment 102 max altitude = 50 m]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[1st max speed = 0 km/h; avg speed = 0 km/h]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[1st max rate = -20 m/h; avg rate = -20 m/h]</name></wpt>

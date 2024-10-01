@@ -1930,7 +1930,7 @@ if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' op
 } else {
     abort("FATAL: cannot find </metadata> in header");
 }
-$HEAD =~ s/\r?\n?(\r?\n)[ \t]*(<trk>)/$1$2/g; # remove any empty line (after metadata) and indentation before trk
+$HEAD =~ s/(\r?\n)*[ \t]*(<trk>)/$1$2/sg; # remove empty lines (after metadata) and indentation before <trk>
 $HEAD =~ s/ *$//;
 
 # statistics must be generated before interpolating, which may shift indexes
