@@ -894,7 +894,7 @@ for (my $state = 0,
         ( $lat, $lon, $ele, $tim, my $sec, my $spd, my $rest, my $cmt_unused, my $exts, my $ignore ) = parse_point($wpt); # collect some basic data even if pruned
         $rest =~ s#^<wpt[^>]*>##; # ignoring any further wpt attributes, yet there should not be any (besides lat and lon)
         $rest =~ s#</wpt>$##;
-        ++$num_pruned_wpts if $prune_wpts;
+        ++$num_pruned_wpts if $prune_wpts && !$ignore;
         if (!$ignore && !$prune_wpts
             && !( PRUNE_AUTOMATIC_WPTS &&
                   $rest =~ m#<name><!\[CDATA\[\d*\]\]></name># && ++$num_auto_wpts )
