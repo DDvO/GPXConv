@@ -957,7 +957,7 @@ for (my $state = 0,
         $HEAD  = $_;
         $state = 1;         # expecting the very first trkpt
     }
-    elsif (!$in_merge && m#(<gpx )#s) { # processing further track file
+    elsif (!$in_merge && m#(<gpx[ >])#s) { # processing further track file
         ++$num_ignored_hdrs;
         if ($smoothing && m#\nGPXConv statistics (.*?)smoothened(.*?)GPXConv statistics end\n#)
         {
@@ -1273,7 +1273,7 @@ for (my $state = 0,
     }
     if ($i > 0 && !$in_merge && m#<trk>#) { # further track
         ++$num_ignored_hdrs;
-        info("further track, again from file $ARGV") unless m#<gpx #s;
+        info("further track, again from file $ARGV") unless m#<gpx[ >]#s;
     }
     if ($in_merge < 0) {
         $in_merge = $merge = 0;
@@ -1903,7 +1903,7 @@ sub correct_ele {    # may update $ele_corr; uses $ele_corr
 
 $HEAD =~ s|(<gpx)([ >])|$1 version="1.1"$2|     unless $HEAD =~ m|<gpx.*? version\s*=.*?>|s;
 $HEAD =~ s|(<gpx)([ >])|$1 creator="GPXConv"$2| unless $HEAD =~ m|<gpx.*? creator\s*=.*?>|s;
-# $HEAD =~ s|(<gpx )|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" |; # would not fit for our simple speed extension, and if so, should not be duplicated
+# $HEAD =~ s|(<gpx[ >])|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" |; # would not fit for our simple speed extension, and if so, should not be duplicated
 #$speed_extension = '<xsd:element name="speed" type="xsd:decimal" minOccurs="0"><xsd:annotation><xsd:documentation>The current speed relative to the previous point, in meters per second</xsd:documentation></xsd:annotation></xsd:element>';
 #$HEAD =~ s|(( )*</metadata>)|$2$2<extensions>$speed_extension</extensions>\n$1|s if $speed_extension ne ""; # add declaration for speed extension
 
