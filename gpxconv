@@ -1881,7 +1881,6 @@ $HEAD =~ s|(<gpx)([ >])|$1 creator="GPXConv"$2| unless $HEAD =~ m|<gpx.*? creato
 $HEAD =~ s|(<gpx.*?>)(\s*)|$1$2<metadata></metadata>$2|s unless $HEAD =~ m|<gpx.*?>\s*<metadata>.*?</metadata>|s;
 if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' option
     my $indent = $1;
-    $indent .= ($indent =~ m/ $/ ? '    ' : "\t");
     if ( $min_tim ne "" ) {
         $min_tim = round_tim($min_tim);
         $HEAD =~ s|\r?\n?[ \t]*<time>.*?</time>||sg;   # remove any pre-existing time entry
