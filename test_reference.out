@@ -2,7 +2,7 @@
 <gpx creator="" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
 <metadata>
 <name><![CDATA[GPXconv test data]]></name>
-<desc><![CDATA[use like this: gpxconv test.gpx -walk -min_ext value 101 -max_ext value 101 -smooth -weight 50 -phases -segs 2..4+100 >test.out 2>test.log; diff test{_reference,}.out; diff test{_reference,}.log]]></desc>
+<desc><![CDATA[can be used as given in test.sh]]></desc>
 <link href="https://github.com/DDvO/GPXConv">
 <text>GPXconv test data<value>101</value><value>102</value></text>
 </link>
