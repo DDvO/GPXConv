@@ -929,7 +929,7 @@ for (my $state = 0,
         else {
             s#(^.*</type>).*#$1\n<trkseg>\n#s; #ignore rest of (header-only) file having no trkpt
         }
-        s#[\s]+\n$#\n#s;    #remove any trailing spaces on line before
+        s#[ \t]+(\r?\n)$#$1#s;    #remove any trailing spaces on line before
         s#[ \t]*(<trkseg>)#$1#s;
         $HEAD  = $_;
         $state = 1;         # expecting the very first trkpt
@@ -1894,7 +1894,7 @@ if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' op
     $HEAD =~ s|\r?\n?[ \t]*<bounds .*?/>||sg;                # remove any pre-existing bounds entry
     $HEAD =~ s|(\r?\n?[ \t]*</metadata>)|$indent$bounds$1|s; # add new bounds
 }
-$HEAD =~ s/\n?\n *(<trk>)/\n$1/g; # remove any double empty line (after metadata) before trk
+$HEAD =~ s/\r?\n?(\r?\n)[ \t]*(<trk>)/$1$2/g; # remove any empty line (after metadata) and indentation before trk
 $HEAD =~ s/ *$//;
 
 # statistics must be generated before interpolating, which may shift indexes
