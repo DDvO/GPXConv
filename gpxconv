@@ -2251,7 +2251,7 @@ for (my $i = 0; $i <= $#TIM ;$i++) {
         $src .= ( $src eq "" ? "" : "; " ) . "computed speed"         if $FLG[$i] & COMPUTED_SPEED && INCLUDE_BEST_SPEED;
         print $out "<src>$src</src>" if !DISABLE_TRKPT_SRC && $src ne "";
     }
-    if ( ( $FLG[$i] & INSERTED_POINT ) != 0 && !DISABLE_TRKPT_FIX) {
+    if (($FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT)) != 0 && !DISABLE_TRKPT_FIX) {
         my $fix = "none";   # TODO check
         # was before: my $fix = $flags == 0 ? "": ( $FLG[$i] & ( INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM ) == 0 ? "2d" : "none" );
         print $out "<fix>$fix</fix>";
