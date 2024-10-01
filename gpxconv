@@ -601,9 +601,11 @@ sub recalculate_RAT { my $i = $_[0];
                      diff_defined($SEC[$i    ], $SEC[$i - 1]));
 }
 
-sub remove_trkpt { my ($i, $last) = @_;
-    $IGN[ $i + 1 ] += $IGN[$i] + 1; # indicate that previous point has been ignored, in addition to any previous ignores
-    $SEG[ $i + 1 ] = 1 if $i < $last && $SEG[$i]; # copy over any segment start
+sub remove_trkpt { my ($i, $last, $undo_gap_fill) = @_;
+    # undo_gap_fill means not counting the point being ignored, must ignore segment start and can re-calculate the distance simply by addition due to linear interpolation
+    $IGN[ $i + 1 ] += $IGN[$i] + ($undo_gap_fill ? 0 : 1); # indicate that previous point has been ignored, in addition to any previous ignores
+    $SEG[ $i + 1 ] = 1 if $i < $last && $SEG[$i] && !$undo_gap_fill; # copy over any segment start
+    my $dis_before = $DIS[$i];
     splice @IGN, $i, 1;
     splice @SEG, $i, 1;
     splice @FLG, $i, 1;
@@ -620,7 +622,11 @@ sub remove_trkpt { my ($i, $last) = @_;
     splice @FIX, $i, 1;
     splice @EXT, $i, 1;
     if ($i <= $last) {
-        recalculate_DIS($i);
+        if ($undo_gap_fill) {
+            $DIS[$i] += $dis_before if $i > 0;
+        } else {
+            recalculate_DIS($i);
+        }
         recalculate_RAT($i);
     }
 }
@@ -1288,7 +1294,7 @@ warn_trkpt("                at",
 } # end TODO re-format
 
 
-## sanitize trackpoints with implausible data
+## sanitize trackpoints with implausible data, silently ignoring previously inserted or duplicated points
 
 my ($num_removals_ele, $num_removals_dir, $num_removals_spd, $num_removals_acc, $num_removals_dec,
     $num_removals_gain, $num_removals_loss, $num_removals_diff) = (0, 0, 0, 0, 0, 0, 0, 0);
@@ -1301,6 +1307,12 @@ my ($timediff_before, $dis_before, $dis);
 my $timediff = "";
 $spd = "";
 for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
+
+    # silently ignore any point inserted or duplicated by a previous run of this tool
+    while ($SRC[$i] =~ m#(^|\W)bridging time gap($|\W)# && $FIX[$i] =~ m#(^|\W)none($|\W)#) {
+        remove_trkpt($i, $i, 1);
+    }
+
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
 
@@ -2130,7 +2142,7 @@ sub insert_points_in_gap {
             my $ign = $IGN[$i];
             # for the point that will be the one past the insertion:
             $IGN[$i] = 0;
-            $DIS[$i] = $dis_delta; # recalculate distance
+            $DIS[$i] = $seg ? 0 : $dis_delta; # recalculate distance
             # ascent/decent rate as well as speed stays the same, due to linear interpolation
 
             for (my $n = 0; $n <= $n_end; $n++) {
@@ -2156,7 +2168,7 @@ sub insert_points_in_gap {
                     splice @ELE, $i, 0, $ele_curr;
                     splice @TIM, $i, 0, epoch_to_str($sec_curr);
                     splice @SEC, $i, 0, $sec_curr;
-                    splice @DIS, $i, 0, $dis_delta;
+                    splice @DIS, $i, 0, $n == 0 ? 0 : $dis_delta;
                     splice @RAT, $i, 0, "";
                     splice @SPD, $i, 0, "";
                     splice @CMT, $i, 0, "";
