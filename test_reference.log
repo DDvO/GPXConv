@@ -109,6 +109,6 @@ total biking energy  = -10 kJ, leaving out 7 points where time or altitude infor
 0 extension elements with name 'value' and value below 101 pruned
 2 extension elements with name 'value' and value above 101 pruned
 0 points being at most 60 seconds apart smoothened
-4 points inserted and 2 points duplicated due to gaps > 1800 seconds
+4 points inserted due to gaps > 1800 seconds
 elevation not corrected
 GPXConv statistics end

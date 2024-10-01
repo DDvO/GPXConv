@@ -96,6 +96,7 @@ use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackp
 
 # control insertion of points within long (time) gaps
 use constant INSERT_POINTS       =>    1; # enable inserting points with interpolated data in long time gaps
+use constant INSERT_SEGMENT      =>    0; # enable inserting segment for long time gaps just before segment start
 use constant INSERTION_MAX_GAP   => 1800; # length of gap in seconds between consecutive trackpoints before
 # insertion should be used (1800 for exiftool default GeoMaxIntSecs; for TrailGuru 3600 would be sufficient)
 
@@ -2068,7 +2069,7 @@ if ($weight) {
 add_stat_point($#TIM, "end", "; $end_text");
 
 
-## fill long time gaps as far as needed by inserting intermediate points with linear interpolation of data
+## fill long time gaps as far as needed for exiftool etc. by inserting intermediate points with linear interpolation of data
 
 # must not be called in between computing and using max/min etc. index values as these may get invalidated by inserting points
 sub insert_points_in_gap {
@@ -2092,9 +2093,9 @@ sub insert_points_in_gap {
             # insert equidistant points with interpolated data, plus
             # in case of new segment: an extra trkpt that equals the end of the previous segment and one that equals the start of the next segment
             my $n_spans  = int($diff_time / INSERTION_MAX_GAP) + ($diff_time % INSERTION_MAX_GAP == 0 ? 0 : 1);
-            my $seg = $SEG[$i]; # if gap was at segment start, have segment starts just before and after inserted points
+            my $seg = INSERT_SEGMENT ? $SEG[$i] : 0; # if gap was at segment start, optionally have segment starts just before and after inserted points
             my $start = $seg ? 0 : 1;
-            my $n_end = $n_spans - $start;
+            my $n_end = $n_spans - ($seg ? 0 : 1);
 
             my $p = $i - 1;
             my $flags_before = $FLG[$p];
@@ -2185,7 +2186,7 @@ $final_text .= points($num_removals_diff )." ignored due to time difference less
 $final_text .= plural($num_ext_below, "extension element")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
 $final_text .= plural($num_ext_above, "extension element")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "" );
-$final_text .= points($num_inserted_trkpts)." inserted and ".points($num_duplicated_trkpts)." duplicated ".
+$final_text .= points($num_inserted_trkpts)." inserted ".(INSERT_SEGMENT ? "and ".points($num_duplicated_trkpts)." duplicated " : "").
     "due to gaps > ".INSERTION_MAX_GAP." seconds\n" if INSERT_POINTS;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";

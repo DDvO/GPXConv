@@ -101,7 +101,7 @@ total biking energy  = -10 kJ, leaving out 7 points where time or altitude infor
 0 extension elements with name 'value' and value below 101 pruned
 2 extension elements with name 'value' and value above 101 pruned
 0 points being at most 60 seconds apart smoothened
-4 points inserted and 2 points duplicated due to gaps > 1800 seconds
+4 points inserted due to gaps > 1800 seconds
 elevation not corrected
 GPXConv statistics end
 trk comment</cmt>
@@ -122,7 +122,7 @@ trk comment</cmt>
 <trkseg>
 <trkpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><cmt>ele=50.00 and time=2001-01-01T10:00:00Z to be carried over from previous segment</cmt><src>substituted altitude; substituted time</src></trkpt>
 <trkpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><cmt>elevation 40 and time 2001-01-01T10:30:00Z to be interpolated</cmt><src>interpolated altitude; interpolated time; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
-<trkpt lat="44.00000" lon="2.00000"><ele>  30</ele><time>2001-01-01T11:00:00Z</time><cmt>elevation 30 to be interpolated; not time gaps to be filled</cmt><src>interpolated altitude; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="44.00000" lon="2.00000"><ele>  30</ele><time>2001-01-01T11:00:00Z</time><cmt>elevation 30 to be interpolated; time gap too short to be filled</cmt><src>interpolated altitude; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
 <trkpt lat="44.00000" lon="2.00000"><ele>  20</ele><time>2001-01-01T11:30:00Z</time><cmt>first descent that is counted: -30</cmt><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
 <trkpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><cmt>time 2001-01-01T11:40:00Z to be interpolated; first ascent 30</cmt><src>interpolated time; computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
 <trkpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><cmt>ele=-10 and time=2001-01-01T12:00:00Z to be carried over from next segment; second descent -60</cmt><src>substituted altitude; substituted time; computed speed</src><extensions><keep_before_speed></keep_before_speed><speed> 0</speed></extensions></trkpt>
@@ -132,22 +132,18 @@ trk comment</cmt>
 <trkpt lat="45.60000" lon="3.52000"><ele> -10</ele><cmt>can carry over elevation but not time from begin of next segment</cmt><src>substituted altitude</src></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="45.70000" lon="4.10000"><ele> -10</ele><cmt>better not automatically carry over elevation -10 from last available value in segment before; no possibility to carry over time, long time gap not filled</cmt></trkpt>
+<trkpt lat="45.70000" lon="4.10000"><ele> -10</ele><cmt>better not automatically carry over elevation -10 from last available value in segment before; no possibility to carry over time, so no time gap to be filled</cmt></trkpt>
 <trkpt lat="45.80200" lon="4.20000"><ele>  41</ele><cmt>iterpolated elevation 41, no time</cmt><src>interpolated altitude</src></trkpt>
 <trkpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><cmt>second ascent 100</cmt></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="-0.04500" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:00:00Z</time><cmt>no ascent/descent due to singleton segment; 1 hour time gap before, so 1 point would be inserted and 2 duplicated, but linear speed would be too high</cmt></trkpt>
-</trkseg>
-<trkseg>
-<trkpt lat="-0.04500" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:00:00Z</time><src>bridging time gap: duplicated point before</src></trkpt>
+<trkpt lat="-0.04500" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:00:00Z</time><cmt>no ascent/descent due to singleton segment; 1 hour time gap before, so 1 point would be inserted (and optionally 2 duplicated), but linear speed would be too high</cmt></trkpt>
 <trkpt lat="-0.03600" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
 <trkpt lat="-0.02700" lon="0.00000"><ele> 500</ele><time>2001-01-02T17:00:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
 <trkpt lat="-0.01800" lon="0.00000"><ele> 500</ele><time>2001-01-02T17:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
-<trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><src>bridging time gap: duplicated point after</src></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted and 2 duplicated; gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed></extensions></trkpt>
+<trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted (but by default not 2 duplicated); gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed></extensions></trkpt>
 <trkpt lat="-0.00450" lon="0.00000"><ele> 512</ele><time>2001-01-02T18:15:01Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
 <trkpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before, so point to be inserted; third ascent should be counted: 25; all given speed to be ignored except for plausibility check</cmt><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
 <trkpt lat="0.00900" lon="0.00000"><cmt>at the end no elevation and time</cmt><extensions><gpxtpx:TrackPointExtension><gpxtpx:some>text</gpxtpx:some></gpxtpx:TrackPointExtension></extensions></trkpt>
