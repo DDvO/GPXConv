@@ -300,7 +300,7 @@ sub info {
 }
 
 sub abort {
-    print_line("$_[0]aborting");
+    print_line("$_[0]\naborting");
     exit 1;
 }
 
@@ -437,7 +437,7 @@ sub parse_point {
     my $is_trkpt = $str =~ m/^<trkpt /;
 
     my $lat, my $lon;
-    abort("FATAL: cannot find lat/lon part of point: $_[0]\n")
+    abort("FATAL: cannot find lat/lon part of point: $_[0]")
         unless $str =~ s#^(<\w+)(\s+(\w+\s*=\s*"[^\"]*"\s*)+)\s*>#$1>#s;
     my $lat_lon_str = $2;
     if ($lat_lon_str =~ m#\slat\s*=\s*"(-?\d*(\.\d+)?)"\s*lon\s*=\s*"(-?\d*(\.\d+)?)"#s) {
@@ -445,7 +445,7 @@ sub parse_point {
     } elsif ($lat_lon_str =~ m#\slon\s*=\s*"(-?\d*(\.\d+)?)"\s*lat\s*=\s*"(-?\d*(\.\d+)?)"#s) {
         ($lat, $lon) = ($3, $1);
     } else {
-        abort("FATAL: error parsing lat/lon part '$lat_lon_str' of point: $_[0]\n");
+        abort("FATAL: error parsing lat/lon part '$lat_lon_str' of point: $_[0]");
     }
     $lat_full_len = max($lat_full_len, length($lat));
     $lon_full_len = max($lon_full_len, length($lon));
@@ -453,7 +453,7 @@ sub parse_point {
     my $ele_str = my $ele = "";
     if ($str =~ s#[ \t]*(<ele>\s*([^\s<]*)\s*</ele>)\n?##s) {
         ($ele_str, my $ele_inner) = ($1, $2);
-        abort("FATAL: error parsing elevation value '$ele_inner' in point: $_[0]\n")
+        abort("FATAL: error parsing elevation value '$ele_inner' in point: $_[0]")
             unless $ele_inner =~ m/^\s*(-?\d*(\.\d+)?)(\.\d*)?\s*$/; # ignores any decimals past any second decimal dot, e.g, takes ".12" on ".12.34" input
         $ele = $1; # may be empty or 0
         $ele_prec_len = max($ele_prec_len, length((sprintf ELE_PRECISION0, $ele)));
@@ -466,7 +466,7 @@ sub parse_point {
         $tim =~ s/\.0+Z/Z/;
         $tim_len = max( $tim_len, length($tim) );
         $sec = str_to_epoch($tim); # may be 0
-        abort("FATAL: error parsing time value '$orig_tim' in point: $_[0]\n") unless defined $sec;
+        abort("FATAL: error parsing time value '$orig_tim' in point: $_[0]") unless defined $sec;
         $sec += 0.001 if $tim =~ m/\.999Z/; # for some reason, at least OruxMaps on Android often reports 0.001 seconds less than a full second
         if (TIME_CORRECTION) {
             $sec += TIME_CORRECTION;
@@ -491,9 +491,9 @@ sub parse_point {
 
     my $spd = "";
     if ($ext =~ m#<(\w+:)?speed>([^<]*)</(\w+:)?speed>#s) {
-        abort("FATAL: inconsistent tags '<$1speed>' and '</$3speed>' in speed extension of in point: $_[0]\n") if ($1 // "") ne ($3 // "");
+        abort("FATAL: inconsistent tags '<$1speed>' and '</$3speed>' in speed extension of in point: $_[0]") if ($1 // "") ne ($3 // "");
         my ($prefix, $spd_str) = ($1, $2);
-        abort("FATAL: error parsing speed extension value '$spd_str' in point: $_[0]\n")
+        abort("FATAL: error parsing speed extension value '$spd_str' in point: $_[0]")
             unless $spd_str =~ m/^\s*(-?\d*(\.\d+)?)(\.\d*)?\s*$/; # ignores any decimals past any second decimal dot, e.g, takes ".12" on ".12.34" input
         # we assume that recorded speed takes altitude into account (i.e., is not just horizontal/lateral speed),
         # see also https://forums.geocaching.com/GC/index.php?/topic/209525-gps-speed-3d-or-2d/
@@ -684,50 +684,50 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
         $phases = 1;
     }
     elsif ( $opt eq "-merge" ) {
-        abort("missing file argument for -$opt option\n") if $#ARGV - $i < 1;
+        abort("missing file argument for -$opt option") if $#ARGV - $i < 1;
         $merge = $arg1;
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ($opt eq "-segs" || $opt eq "-days") {
-        abort("missing argument for -$opt option\n") if $#ARGV - $i < 1;
-        abort("argument '$arg1' of -$opt option is not of the form <n>..[<m>][(+|-)<d>] with natural numbers n, m, and integer d\n")
+        abort("missing argument for -$opt option") if $#ARGV - $i < 1;
+        abort("argument '$arg1' of -$opt option is not of the form <n>..[<m>][(+|-)<d>] with natural numbers n, m, and integer d")
             unless $arg1 =~ m/^(\d+)\.\.(\d+)?([-+]\d+)?+$/ && $1 > 0;
         if ($opt eq "-segs") {
-            abort("cannot use both -days and -$opt option\n") if $days;
+            abort("cannot use both -days and -$opt option") if $days;
             $segs = $arg1;
         } else {
-            abort("cannot use both -segs and -$opt option\n") if $segs;
+            abort("cannot use both -segs and -$opt option") if $segs;
             $days = $arg1;
         }
         ($part_start, $part_end, $part_offset) = ($1, $2, $3); # $part_end < $part_start will lead to empty selection, just like without $opt
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ( $opt eq "-weight" ) {
-        abort("missing value argument for -$opt option\n") if $#ARGV - $i < 1;
-        abort("cannot parse value argument in '$opt $arg1'\n") unless looks_like_number($arg1);
+        abort("missing value argument for -$opt option") if $#ARGV - $i < 1;
+        abort("cannot parse value argument in '$opt $arg1'") unless looks_like_number($arg1);
         $weight = $arg1 + 0;
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ( $opt eq "-begin" || $opt eq "-end") {
-        abort("missing time argument for $opt option\n") if $#ARGV - $i < 1;
+        abort("missing time argument for $opt option") if $#ARGV - $i < 1;
         my $sec = str_to_epoch($arg1);
-        abort("cannot parse time argument in '$opt $arg1'\n") unless defined $sec;
+        abort("cannot parse time argument in '$opt $arg1'") unless defined $sec;
         $begin_sec = $sec if $opt eq "-begin";
         $end_sec   = $sec if $opt eq "-end";
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ( $opt eq "-max" || $opt eq "-min" ) {
-        abort("missing element name argument for $opt option\n") if $#ARGV - $i < 1;
-        abort("missing limit argument for -$opt option\n") if $#ARGV - $i < 2;
-        abort("cannot parse limit argument in '$opt $arg1 $arg2'\n") unless looks_like_number($arg2);
+        abort("missing element name argument for $opt option") if $#ARGV - $i < 1;
+        abort("missing limit argument for -$opt option") if $#ARGV - $i < 2;
+        abort("cannot parse limit argument in '$opt $arg1 $arg2'") unless looks_like_number($arg2);
         ( $max_elem, $max_elem_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max";;
         ( $min_elem, $min_elem_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min";;
         splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
     }
     elsif ( $opt eq "-max_ext" || $opt eq "-min_ext" ) {
-        abort("missing extension name argument for $opt option\n") if $#ARGV - $i < 1;
-        abort("missing limit argument for -$opt option\n") if $#ARGV - $i < 2;
-        abort("cannt parse limit argument in '$opt $arg1 $arg2'\n") unless looks_like_number($arg2);
+        abort("missing extension name argument for $opt option") if $#ARGV - $i < 1;
+        abort("missing limit argument for -$opt option") if $#ARGV - $i < 2;
+        abort("cannt parse limit argument in '$opt $arg1 $arg2'") unless looks_like_number($arg2);
         ( $max_ext, $max_ext_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-max_ext";
         ( $min_ext, $min_ext_limit ) = ( $arg1, $arg2 + 0 ) if $opt eq "-min_ext";
         splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
@@ -750,12 +750,12 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     elsif ( $opt eq "-o" ) {
 
      # not checking for operlap with shell-level redirection of STDOUT using '>'
-        abort("missing outfile argument for -o option\n") if $#ARGV - $i < 1;
+        abort("missing outfile argument for -o option") if $#ARGV - $i < 1;
         open( $out, "> $arg1" );
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ( $opt =~ m/^-/ ) {
-        abort("unknown option: $opt\n");
+        abort("unknown option: $opt");
     }
     else {
         $i++;
@@ -810,7 +810,7 @@ elsif ( $activity eq "-fly" ) {
     $MAX_PLAUSIBLE_ELE_LOSS = 50000;
     $PHASES_REPORT_THRESHOLD = 100;
 } else {
-    abort("unknown activity: $activity\naborting\n");
+    abort("unknown activity: $activity\naborting");
 }
 my $INSERTION_MAX_SPEED = $MAX_PLAUSIBLE_SPEED / 2;
 
@@ -832,7 +832,7 @@ my $prev_sec;
 
 $/ = "<trkpt ";
 if ($merge) {
-    open M, $merge || abort("FATAL: cannot open alternative GPX source file $merge: $.\n") if $#TIM < 0;
+    open M, $merge || abort("FATAL: cannot open alternative GPX source file $merge: $.") if $#TIM < 0;
     <M>; # first item is before "<trktpt"
 }
 my ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $exts1) if $merge; # current end of gap to be merged
@@ -843,7 +843,7 @@ sub next_trkpt2() {
     while ($ignore2 && defined($trkpt2 = <M>)) {
         $trkpt2 =~ m#(.*?</trkpt>)#s;
         $trkpt2 = $1;
-        abort("FATAL: cannot find end of trackpoint: <trkpt $_\n") unless $trkpt2;
+        abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt2;
         ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $cmt2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
     }
     ## debug "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=$sec2 spd=".($spd2 eq "" ? "" : spd_str($spd2)) if $trkpt2;
@@ -851,7 +851,7 @@ sub next_trkpt2() {
 }
 my $in_merge = 0; # if set, using trkpt from $merge
 if ($merge && !next_trkpt2()) {
-    abort("FATAL: no trkpt found in alternative input $merge\n");
+    abort("FATAL: no trkpt found in alternative input $merge");
     $merge = 0;
     close M;
 }
@@ -952,7 +952,7 @@ for (my $state = 0,
         if (!$in_merge) {
             m#(.*?</trkpt>)#s;
             my $trkpt = $1;
-            abort("FATAL: cannot find end of trackpoint: <trkpt $_\n") unless $trkpt;
+            abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt;
             ( $lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $exts, my $ignore ) = parse_point("<trkpt $trkpt");
             next if $ignore;
             ## debug "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd))."; state = $state";
@@ -1223,7 +1223,7 @@ for (my $state = 0,
             $time_gap_length = 0;
         }
         my $sec_str = defined $sec ? epoch_to_str($sec) : "";
-        abort("FATAL: inconsistent time data for trkpt ".($i + 1).": tim=$tim != $sec_str (=$sec)\n")
+        abort("FATAL: inconsistent time data for trkpt ".($i + 1).": tim=$tim != $sec_str (=$sec)")
             if $tim ne $sec_str && !($tim =~ m/\.999Z/ && defined $sec && $tim eq epoch_to_str($sec - 0.001));
 
         # will go wrong if previous trkpt gets ignored: $ELE[$#ELE] = $ELE[$#ELE-1] if $ele eq "" && !$SEG[$#ELE]; # implies $#ELE > 0
@@ -1445,7 +1445,7 @@ $avg_timediff = $num_pts_mov ? $sum_timediff_mov0 / $num_pts_mov : 0; # used for
 # $sum_timediff_mov will be recalculated thereafter, since points may have been ignored or smoothened
 } # end TODO re-format
 
-abort("FATAL: no trackpoint (possibly after ignoring some)\n") if $#TIM < 0;
+abort("FATAL: no trackpoint (possibly after ignoring some)") if $#TIM < 0;
 
 
 ## check waypoints
@@ -2208,9 +2208,9 @@ for (my $j = 0; $j <= $#WTIM; $j++) {
 }
 $HEAD =~ s/(<trk>)/$all_wpts$1/s;    # prepend collected and computed waypoints to track
 
-abort("FATAL: end of track header not found\n") unless $HEAD =~ m/<trk>(.*?)<trkseg>/s;
+abort("FATAL: end of track header not found") unless $HEAD =~ m/<trk>(.*?)<trkseg>/s;
 # add preliminarily empty comment in track; # if not already existing:
-abort("FATAL: end of track header not found\n") unless $1 =~ m/<cmt>/ || $HEAD =~ s|(<trk>(\s*<name>.*?</name>)?)|$1\n<cmt></cmt>|s;
+abort("FATAL: end of track header not found") unless $1 =~ m/<cmt>/ || $HEAD =~ s|(<trk>(\s*<name>.*?</name>)?)|$1\n<cmt></cmt>|s;
 $HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
 
 
