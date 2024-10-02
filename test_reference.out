@@ -95,7 +95,6 @@ total moving time    = 0:30:01 h, with speed being at least 1 km/h
 average moving speed = 2.0 km/h
 total biking energy  = -10 kJ, leaving out 7 points where time or altitude information is missing
 1 automatic waypoint pruned
-1 track header ignored (apart from any included waypoints)
 0 extension elements with name 'value' and value below 101 pruned
 2 extension elements with name 'value' and value above 101 pruned
 0 points being at most 60 seconds apart smoothened

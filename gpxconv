@@ -956,7 +956,7 @@ for (my $state = 0,
         $HEAD  = $_;
         $state = 1;         # expecting the very first trkpt
     }
-    elsif (!$in_merge && m#(<gpx[ >])#s) { # processing further track file
+    elsif (!$in_merge && m#(<gpx[ >])#s) { # processing further GPX header, typically from next file
         ++$num_ignored_hdrs;
         if ($smoothing && m#\r?\nGPXConv statistics (.*?smoothened)(.*?)GPXConv statistics end\r?\n#)
         {
@@ -1271,7 +1271,6 @@ for (my $state = 0,
         $prev_spd = "";
     }
     if ($i > 0 && !$in_merge && m#<trk>#) { # further track
-        ++$num_ignored_hdrs;
         info("further track, again from file $ARGV") unless m#<gpx[ >]#s;
     }
     if ($in_merge < 0) {
@@ -2203,7 +2202,7 @@ $final_text .= "average deviation between recorded and computed speed (for point
     int(0.5 + 100 * $sum_speed_deviation / ($sum_speed / 2))." %\n" if $sum_speed;
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
 $final_text .= plural($num_auto_wpts, "automatic waypoint")." pruned\n" if $num_auto_wpts;
-$final_text .= plural($num_ignored_hdrs,    "track header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
+$final_text .= plural($num_ignored_hdrs,      "GPX header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
 $final_text .= plural($num_pruned_cmts,              "cmt")." pruned\n" if $num_pruned_cmts;
 $final_text .= plural($num_pruned_descs,     "description")." pruned\n" if $num_pruned_descs;
 $final_text .= plural($num_pruned_links,            "link")." pruned\n" if $num_pruned_links;
