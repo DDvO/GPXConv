@@ -1374,9 +1374,13 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
                        "deviation is " . spd_string($spd_diff) . " km/h" .
                        " (more than " . MAX_SPEED_DEVIATION . ")") if $spd_diff > (MAX_SPEED_DEVIATION + 0.5) / MPS2KMPH;
         }
+        # from now on, use for $spd and $SPD[$i] the computed speed (average since previous point) if recorded speed is not available or previous point is not very recent
         if ($spd eq "" || $timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED) {
-            $spd = $comp_spd; # $SPD[$i] will be set later if needed
+            $spd = $comp_spd;
+            $SPD[$i] = $spd;
+            $FLG[$i] |= COMPUTED_SPEED if $comp_spd ne "";
         }
+
         my $Spd      = $spd ne "" ? spd_string($spd) : "";
         my $Spd_txt  = $spd ne "" ? " at speed = $Spd km/h" : "";
         my $Dis      = dis_string($dis);
@@ -1779,11 +1783,6 @@ for (my $rate, my $spd, my $direction,
     if ($i <= $#TIM && !$SEG[$i]) { # not at segment start, implies $i >= 1
         (my $diff_ele_unused, my $timediff, $rate, my $dis, $spd, my $acc_unused) = comp_diffs(); # TODO is comp_diffs() needed here after all?
         $sum_dis += $dis;
-        if ($SPD[$i] eq "" || ($timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED)) # set computed speed if recorded speed is not available or over unusually long time
-        {
-            $SPD[$i] = $spd;
-            $FLG[$i] |= COMPUTED_SPEED if $spd ne "";
-        }
         $spd = $SPD[$i];
         if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
             $sum_dis_mov += $dis;

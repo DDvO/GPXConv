@@ -93,6 +93,7 @@ At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd ascent  
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd max speed =     0 km/h; avg speed  =    0 km/h
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd max rate  =  +180  m/h; avg rate   = +180  m/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: 3rd descent   =   -60  m;   distance   = 0.06 km; duration = 0:20:00 h
+At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: 3rd max speed =     0 km/h; avg speed  =    0 km/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: 3rd max rate  =  -180  m/h; avg rate   = -180  m/h
 At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: 4th ascent    =  +100  m;   distance   =27.09 km
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th ascent    =   +25  m;   distance   = 1.00 km; duration = 0:30:01 h
