@@ -1442,7 +1442,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         }
         elsif ($timediff ne "" && $timediff < $MIN_TIMEDIFF && ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM))
         {
-            my $inter = ( $FLG[$i] & INTERPOLATED_TIM ) ? "interpolated " : "";
+            my $inter = $FLG[$i] & INTERPOLATED_TIM ? "interpolated " : "";
             $num_removals_diff++;
             ignore_trkpt($Spd, $inter."time difference = ".int($timediff).
                          " sec (less than $MIN_TIMEDIFF) over a distance of $Dis") if $timediff > 1.001;
@@ -2302,7 +2302,7 @@ for (my $i = 0; $i <= $#TIM ;$i++) {
         my $src = $SRC[$i];
         my $gap = $FLG[$i] & INSERTED_POINT ? "bridging time gap: inserted point"
             : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
-            . ($i > 0 && ($FLG[$i - 1] & INSERTED_POINT) != 0 ? "after" : "before") : "";
+            . ($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before") : "";
         # cannot place info on interpolation etc. in <trkseg> element because it cannot hold a comment
         sub append_unless_present { return $_[0] =~ m/$_[1]/ ? "" : ($_[0] eq "" ? "" : "; " ) . $_[1]; }
         $src .= append_unless_present($src, $gap) if $gap ne "";
@@ -2315,8 +2315,8 @@ for (my $i = 0; $i <= $#TIM ;$i++) {
     }
     if (!DISABLE_TRKPT_FIX) {
         my $fix = $FIX[$i];
-        $fix = "none" if ($FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT)) != 0;
-        # TODO check; was before: $fix = $flags == 0 ? "": ( $FLG[$i] & ( INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM ) == 0 ? "2d" : "none" );
+        $fix = "none" if $FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT);
+        # TODO check; was before: $fix = $flags == 0 ? "": ( $FLG[$i] & (INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM) == 0 ? "2d" : "none" );
         print $out "<fix>$fix</fix>" if $fix;
     }
 
