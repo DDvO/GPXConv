@@ -604,10 +604,20 @@ sub recalculate_DIS { my $i = $_[0];
     $DIS[$i] = distance($LAT[$i    ], $LON[$i    ], $ELE[$i    ],
                         $LAT[$i - 1], $LON[$i - 1], $ELE[$i - 1]);
 }
+sub recalculate_SPD { my $i = $_[0];
+    return if $i <= 0 || $SEG[$i] || !($FLG[$i] & COMPUTED_SPEED);
+    my $diff_time = diff_defined($SEC[$i], $SEC[$i - 1]);
+    $SPD[$i] = $DIS[$i] / $diff_time if $diff_time;
+}
 sub recalculate_RAT { my $i = $_[0];
     return if $i <= 0 || $SEG[$i];
-    $RAT[$i] = rate(diff_nonempty($ELE[$i    ], $ELE[$i - 1]),
-                     diff_defined($SEC[$i    ], $SEC[$i - 1]));
+    $RAT[$i] = rate(diff_nonempty($ELE[$i], $ELE[$i - 1]), diff_defined($SEC[$i], $SEC[$i - 1]));
+}
+sub recalculate_all {
+    my $i = $_[0];
+    recalculate_DIS($i);
+    recalculate_SPD($i);
+    recalculate_RAT($i);
 }
 
 sub remove_trkpt { my ($i, $last, $undo_gap_fill) = @_;
@@ -635,6 +645,7 @@ sub remove_trkpt { my ($i, $last, $undo_gap_fill) = @_;
             $DIS[$i] += $dis_before if $i > 0;
         } else {
             recalculate_DIS($i);
+            recalculate_SPD($i);
         }
         recalculate_RAT($i);
     }
@@ -1054,8 +1065,7 @@ for (my $state = 0,
                     # fill in altitude in last point of segment before
                     $FLG[ $i - 1 ] |= SUBSTITUTED_ELE;
                     $ELE[ $i - 1 ] = $prev_ele = $ele;
-                    recalculate_DIS($i - 1);
-                    recalculate_RAT($i - 1);
+                    recalculate_all($i - 1);
                     $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # recalculation
                     $ele_miss_length += $DIS[$i - 1] if $ele_miss_start;
                     warn_trkpt_i($i - 1, "at segment end    ",
@@ -1073,6 +1083,7 @@ for (my $state = 0,
                     $FLG[ $i - 1 ] |= SUBSTITUTED_TIM;
                     $TIM[ $i - 1 ] = $tim;
                     $SEC[ $i - 1 ] = $sec;
+                    recalculate_SPD($i - 1);
                     recalculate_RAT($i - 1);
                     $tim_miss_length += $DIS[$i - 1] if $tim_miss_start;
                     warn_trkpt_i($i - 1, "at segment end    ",
@@ -1167,15 +1178,13 @@ for (my $state = 0,
                     $ele_curr += ($ele_miss_length > 0 ? $DIS[$j] : 1) * $ele_gradient;
                     $ELE[$j] = sprintf ELE_PRECISION3, $ele_curr;
                     $ele_full_len = max($ele_full_len, length($ELE[$j]));
-                    recalculate_DIS($j);
-                    recalculate_RAT($j);
+                    recalculate_all($j);
                     # not changing $ele nor $prev_ele such that below time interpolation is not affected
                     $FLG[$j] |= INTERPOLATED_ELE;
                     ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE[$j] dis=$DIS[$j] rate=$RAT[$j]";
                 }
                 if ($i_end < $i) {
-                    recalculate_DIS($j);
-                    recalculate_RAT($j);
+                    recalculate_all($j);
                 } else {
                     $dis = distance_curr($LAT[$j - 1], $LON[$j - 1], $ELE[$j - 1]); # recalculation
                 }
@@ -1204,11 +1213,15 @@ for (my $state = 0,
                     $sec_curr += ($tim_miss_length > 0 ? $DIS[$j] : 1) * $sec_gradient;
                     $SEC[$j] = $sec_curr;
                     $TIM[$j] = epoch_to_str($sec_curr);
+                    recalculate_SPD($j);
                     recalculate_RAT($j);
                     $FLG[$j] |= INTERPOLATED_TIM;
                     ## debug_log "interpolating missing time at point $j with ele=$ELE[$j] new  time=$TIM[$j] dis=$DIS[$j] rate=".($RAT[$j] // "");
                 }
-                recalculate_RAT($j) if $i_end < $i;
+                if ($i_end < $i) {
+                    recalculate_SPD($j);
+                    recalculate_RAT($j);
+                }
             }
             $tim_miss_start = 0;
         }
@@ -1411,9 +1424,8 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         }
         if ($ignore) {
             $num_removals_in_row++;
-            remove_trkpt($i - 1, $i);
+            remove_trkpt($i - 1, $i); # also recalculates speed etc. of former point $i relative to its new previous point
             $i--;
-            # maybe should re-compute speed etc. relative to new previous point
             $ignore_before = 1;
             $ignore = 0;
         }
@@ -1461,9 +1473,8 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             $num_removals_in_row = 0;
         }
         $num_removals_in_row++;
-        remove_trkpt($i, $i);
+        remove_trkpt($i, $i); # also recalculates speed etc. of former point $i + 1 relative to its new previous point
         $i--;
-        # will re-compute speed etc. relative to same previous point as before
     }
     elsif (!$ignore_before) {
         if ($last_ignore != 1) { # must delay output by one point because current point may be ignored in next iteration
@@ -1579,21 +1590,16 @@ if ($smoothing) {
             $LON[$i] = average($LON[$i - 1], $LON[$i], $LON[$i + 1], $diff_time1, $diff_time2);
             $ELE[$i] = average($prev_ele   , $ele    , $next_ele   , $diff_time1, $diff_time2)
                 if $prev_ele ne "" && $ele ne "" && $next_ele ne "";
-            recalculate_DIS($i);
-            recalculate_RAT($i);
+            recalculate_all($i);
             $pending_recalculation = 1;
             # individiual points are not marked as smoothened; this is done globally
             $num_smoothened++;
         } elsif ($pending_recalculation) {
-            recalculate_DIS($i);
-            recalculate_RAT($i);
+            recalculate_all($i);
             $pending_recalculation = 0;
         }
     }
-    if ($pending_recalculation) {
-        recalculate_DIS($i);
-        recalculate_RAT($i);
-    }
+    recalculate_all($i) if $pending_recalculation;
 }
 
 ## perform analysis/statistics
