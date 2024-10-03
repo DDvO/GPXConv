@@ -1117,15 +1117,17 @@ for (my $state = 0,
                   if !$ele_miss_start; # $i is > 0
                 $ele_miss_length += $dis;
             }
-            if (!defined $sec && defined $prev_sec && $spd ne "" && $spd > 0) {
+
+            # substitute missing time if posssible using previous time, recorded speed, and distance from previous point
+            if (!defined $sec && defined $prev_sec && $spd ne "" && $dis > 0 && $spd > 0) {
                 my $comp_sec = $prev_sec + $dis / $spd;
-                # substitute time using recorded speed and distance from previous point
                 $tim = epoch_to_str($comp_sec);    # will become $TIM[$i]
                 $sec = $comp_sec;                  # will become $SEC[$i]
                 warn_trkpt("at                ", " no time recognized, " .
                            " filled in using time difference calculated by distance / speed");
                 $FLG[$i] |= SUBSTITUTED_TIM;
-            }
+            } # any inconsistency where either $dis is (nearly) 0 or $spd is (nearly) 0 are covered by warning w.r.t. MAX_SPEED_DEVIATION
+
             if ($tim eq "" && FILL_MISSING_TIME && ($tim_miss_start ||
                                                     $prev_tim ne "")) # not $prev_avail_tim, which may be an earlier time
             {
