@@ -1326,10 +1326,10 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         $num_removals_ele++;
         $ignore = 1;
         ignore_trkpt("", "altitude is less than ".MIN_PLAUSIBLE_ELE);
-    } elsif ($spd ne "" && MPS2KMPH * $spd > $MAX_PLAUSIBLE_SPEED) {
+    } elsif ($spd ne "" && ($spd < 0 || MPS2KMPH * $spd > $MAX_PLAUSIBLE_SPEED)) {
         $num_removals_spd++;
         $ignore = 1;
-        ignore_trkpt(spd_string($spd), "recorded speed higher than ".$MAX_PLAUSIBLE_SPEED);
+        ignore_trkpt(spd_string($spd), $spd < 0 ? "recorded speed is negative" : "recorded speed is higher than ".$MAX_PLAUSIBLE_SPEED);
     }
 
     my $comp_spd = "";
