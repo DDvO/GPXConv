@@ -62,7 +62,7 @@ newlines are kept</extensions>
 
  <trkseg>
   <trkpt lat="45.70" lon="4.10"><ele>-10</ele><cmt>better not automatically carry over elevation -10 from last available value in segment before; no possibility to carry over time, so no time gap to be filled</cmt></trkpt>
-  <trkpt lat="45.802"lon="4.20"><cmt>iterpolated elevation 41, no time</cmt></trkpt>
+  <trkpt lat="45.799956"lon="4.20"><cmt>iterpolated elevation 40.000, no time</cmt></trkpt>
   <trkpt lat="45.90" lon="4.30"><ele>90</ele><time>2001-01-02T15:00:00Z</time><cmt>second ascent 100</cmt></trkpt>
  </trkseg>
 

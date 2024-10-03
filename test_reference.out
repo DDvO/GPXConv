@@ -132,7 +132,7 @@ trk comment</cmt>
 </trkseg>
 <trkseg>
 <trkpt lat="45.70000" lon="4.10000"><ele> -10</ele><cmt>better not automatically carry over elevation -10 from last available value in segment before; no possibility to carry over time, so no time gap to be filled</cmt></trkpt>
-<trkpt lat="45.80200" lon="4.20000"><ele>  41</ele><cmt>iterpolated elevation 41, no time</cmt><src>interpolated altitude</src></trkpt>
+<trkpt lat="45.79996" lon="4.20000"><ele>  40</ele><cmt>iterpolated elevation 40.000, no time</cmt><src>interpolated altitude</src></trkpt>
 <trkpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><cmt>second ascent 100</cmt></trkpt>
 </trkseg>
 <trkseg>

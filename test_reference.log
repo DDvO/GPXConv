@@ -29,9 +29,9 @@ WARNING:              up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   <t
 INFO   : further segment at <trkpt lat="45.70"     lon="4.10"     <ele> -10   <time>NONE                 after a gap of 0:00:00 h and 46.40 km
 WARNING: at segment start   <trkpt lat="45.70"     lon="4.10"     <ele> -10   <time>NONE                 no time     given and no previous value available
 WARNING: no altitude  up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 for 1 point over a distance of 11.22 km
-WARNING: no altitude     at <trkpt lat="45.802"    lon="4.20"     <ele>  NONE <time>NONE                ; trying to interpolate altitude
-WARNING: no altitude  up to <trkpt lat="45.802"    lon="4.20"     <ele>40.688 <time>NONE                 for 1 point over a distance of 13.73 km
-WARNING: no time      up to <trkpt lat="45.802"    lon="4.20"     <ele>40.688 <time>NONE                 for 3 points over a distance of 71.35 km
+WARNING: no altitude     at <trkpt lat="45.799956" lon="4.20"     <ele>  NONE <time>NONE                ; trying to interpolate altitude
+WARNING: no altitude  up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 <time>NONE                 for 1 point over a distance of 13.54 km
+WARNING: no time      up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 <time>NONE                 for 3 points over a distance of 71.16 km
 INFO   : end of  segment at <trkpt lat="45.90"     lon="4.30"     <ele>  90   <time>2001-01-02T15:00:00Z
 INFO   : further segment at <trkpt lat="-0.045"    lon="0"        <ele> 500   <time>2001-01-02T16:00:00Z after a gap of 1:00:00 h and 5123.93 km
 INFO   : end of  segment at <trkpt lat="-0.045"    lon="0"        <ele> 500   <time>2001-01-02T16:00:00Z
@@ -43,8 +43,8 @@ WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE <t
 WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                 was unable to interpolate missing time by end of last segment
 WARNING: before   <trkpt lat="44.00002"  lon="2.00003"  <ele> 74.49 <time>NONE                 distance between points = 22.38 km (more than 2)
 WARNING: before   <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 distance between points = 11.22 km (more than 2)
-WARNING: before   <trkpt lat="45.802"    lon="4.20"     <ele>40.688 <time>NONE                 distance between points = 13.73 km (more than 2)
-WARNING: before   <trkpt lat="45.90"     lon="4.30"     <ele>  90   <time>2001-01-02T15:00:00Z distance between points = 13.36 km (more than 2)
+WARNING: before   <trkpt lat="45.799956" lon="4.20"     <ele>40.000 <time>NONE                 distance between points = 13.54 km (more than 2)
+WARNING: before   <trkpt lat="45.90"     lon="4.30"     <ele>  90   <time>2001-01-02T15:00:00Z distance between points = 13.54 km (more than 2)
 WARNING: according to its time information, waypoint '
   <wpt lat="45.90" lon="4.30"><ele>490</ele><time>2001-01-02T15Z</time>
   <name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type>
@@ -55,7 +55,7 @@ WARNING: no time         at <trkpt lat="44.00002"  lon="2.00003"  <ele> 74.49 <t
 WARNING: no time     before <trkpt lat="44.000"    lon="2.004"    <ele> 50.00 <time>2001-01-01T10:00:00Z; cannot calculate energy here
 WARNING:        at least at <trkpt lat="44"        lon="2.0"      <ele>40.000 <time>2001-01-01T10:30:00Z  cannot calculate energy due to missing speed information
 WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                ; cannot calculate energy here
-WARNING: no time         at <trkpt lat="45.802"    lon="4.20"     <ele>40.688 <time>NONE                ; cannot calculate energy here
+WARNING: no time         at <trkpt lat="45.799956" lon="4.20"     <ele>40.000 <time>NONE                ; cannot calculate energy here
 WARNING: no time     before <trkpt lat="45.90"     lon="4.30"     <ele>  90   <time>2001-01-02T15:00:00Z; cannot calculate energy here
 WARNING: no time         at <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                ; cannot calculate energy here
 WARNING: before <trkpt lat="-0.045"    lon="0"        <ele> 500   <time>2001-01-02T16:00:00Z  long time gap =  1:00:00 h over a distance of 5123.930 km; not inserting points because linear speed would be 5124 km/h, higher than 10
