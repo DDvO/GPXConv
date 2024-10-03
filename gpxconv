@@ -526,11 +526,10 @@ sub parse_point {
 
     my $ignore = 0;
     $ignore = 1 if
-        (defined $begin_sec && defined $sec && $sec < $begin_sec && ++$num_ignored_before ||
-         defined $end_sec   && defined $sec && $end_sec < $sec   && ++$num_ignored_after  ||
-          $max_elem  && $_[0] =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
-          $min_elem  && $_[0] =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below
-        );
+        (diff_defined($sec, $begin_sec) // 0) < 0 && ++$num_ignored_before ||
+        (diff_defined($sec,   $end_sec) // 0) < 0 && ++$num_ignored_after  ||
+         $max_elem  && $_[0] =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
+         $min_elem  && $_[0] =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below;
 
     return ($lat, $lon, $ele, $tim, $sec, $spd, $rest, $cmt, $src, $fix, $ext, $ignore);
 }
@@ -988,8 +987,7 @@ for (my $state = 0,
 
         if ($merge) {
             if (!$in_merge) {
-                if (($diff_time >= MERGE_FILL_GAP || $state == 1)
-                        && defined $sec && defined $sec2 && $sec2 < $sec) { # $merge currently is before infiles(s)
+                if (($diff_time >= MERGE_FILL_GAP || $state == 1) && (diff_defined($sec2, $sec) // 0) < 0) { # $merge currently is before infiles(s)
                     $in_merge = 1;
                     if ($state == 1) {
                         info("alternative input starts before infile(s)");
