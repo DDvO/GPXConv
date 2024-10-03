@@ -68,7 +68,7 @@ use constant PRUNE_DESCS          => 0; # do not remove descriptions
 use constant PRUNE_LINKS          => 0; # do not remove links
 use constant PRUNE_EXTENSIONS     => 0; # by default do not remove extensions
 use constant PRUNE_RECORDED_SPEED => 1; # remove existing speed extensions with recorded speed (<gpxtpx:speed>)
-use constant INCLUDE_BEST_SPEED   => 1; # include our simple speed extensions with recorded or computed speed (<speed>)
+use constant INCLUDE_SPEED        => 1; # include our simple speed extensions with recorded or computed speed (<speed>)
 use constant DISABLE_TRKPT_CMT    => 0; # do not add 'cmt' entries to trackpoints, e.g., comments on ignored points
 use constant DISABLE_TRKPT_SRC    => 0; # do not add 'src' entries to trackpoints, e.g., on time gaps and interpolated data
 use constant DISABLE_TRKPT_FIX    => 0; # do not add 'fix' entries to trackpoints, on points inserted with interpolated data
@@ -209,7 +209,7 @@ my @TIM; # or "" if not available
 my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
 my @DIS; # derived from LAT and LON, and ELE if available, also from point before, 0 for first point
 my @RAT; # derived from optionally ELE and SEC, also from point before, or "" if not available
-my @SPD; # as recorded or computed, or "" if not available
+my @SPD; # as recorded or computed (as average since previous point if FLG contains COMPUTED_SPEED), or "" if not available
 my @CMT; # or "" if not available
 my @SRC; # as given in input but without <src> and </src> tags, or "" if not available
 my @FIX; # as given in input but without <fix> and </fix> tags, or "" if not available
@@ -244,7 +244,7 @@ my $HEAD;
 my $found_corr = 0;
 
 my $lat, my $lon, my $ele, my $tim, my $sec, my $spd; # TODO make local
-my $prev_lat, my $prev_lon, my $prev_ele, my $prev_tim, my $prev_sec, my $prev_spd, my $prev_rate, my $prev_acc; # TODO make local
+my $prev_lat, my $prev_lon, my $prev_ele, my $prev_tim, my $prev_sec, my $prev_comp_spd, my $prev_rate, my $prev_acc; # TODO make local
 
 my $min_lat, my $max_lat;
 my $min_lon, my $max_lon;
@@ -661,7 +661,7 @@ sub distance_curr {    # of $lat, $lon, $ele
 
 sub comp_diffs()
 { # of $lat, $lon, $ele relative to $prev_lat, $prev_lon, $prev_ele, so speed is relative to previous point
-    # $prev_spd is assumed to be average speed computed between previous points
+    # $prev_comp_spd is assumed to be average speed computed between previous points
     # recalculation of distance and elevation difference since coordinates may have been smoothened # TODO recalculate DIS on smoothing
     my $dis = distance_curr( $prev_lat, $prev_lon, $prev_ele );
     my $diff_ele = diff_nonempty($ele, $prev_ele);
@@ -669,10 +669,10 @@ sub comp_diffs()
     #http://forums.howwhatwhy.com/showflat.php?Cat=&Board=scigen&Number=-208125
     my $timediff = diff_defined($sec, $prev_sec);
     my $rate = rate($diff_ele, $timediff);
-    my $speed = defined $timediff ? ($timediff > 0 ? $dis / $timediff : $prev_spd) : "";
-    $spd_prec_len = max($spd_prec_len, length(spd_str($speed))) if $speed ne ""; # used only for spd_string
-    my $acc = $speed ne "" && $prev_spd ne "" && $timediff ? ($speed - $prev_spd) / $timediff : "";
-    return ( $diff_ele // "", $timediff // "", $rate, $dis, $speed, $acc );
+    my $comp_spd = defined $timediff ? ($timediff > 0 ? $dis / $timediff : $prev_comp_spd) : "";
+    $spd_prec_len = max($spd_prec_len, length(spd_str($comp_spd))) if $comp_spd ne ""; # used only for spd_string
+    my $acc = $comp_spd ne "" && $prev_comp_spd ne "" && $timediff ? ($comp_spd - $prev_comp_spd) / $timediff : "";
+    return ( $diff_ele // "", $timediff // "", $rate, $dis, $comp_spd, $acc );
 }
 
 
@@ -1212,7 +1212,7 @@ for (my $state = 0,
         push @SEC, $sec;
         push @DIS, $dis;
         push @RAT, rate($diff_ele, $diff_sec);
-        push @SPD, $spd; # initially as recorded, else ""
+        push @SPD, $spd; # initially as recorded, "" if not available
         push @CMT, $cmt;
         push @SRC, $src;
         push @FIX, $fix;
@@ -1253,8 +1253,8 @@ for (my $state = 0,
 
         # will go wrong if previous trkpt gets ignored: $ELE[$#ELE] = $ELE[$#ELE-1] if $ele eq "" && !$SEG[$#ELE]; # implies $#ELE > 0
         $i++;
-        ( $prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_spd ) =
-          ( $lat, $lon, $ele, $tim, $sec, $spd );
+        ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec) =
+            ( $lat,      $lon,      $ele,      $tim,      $sec);
         $prev_avail_ele = $ele if $ele ne "";
 
      # Commenting out $prev_avail_tim as it is currently unused, but referred to
@@ -1268,7 +1268,6 @@ for (my $state = 0,
         info_trkpt_i( $i - 1, "end of  segment at", "" ) if $i > 0;
         $state = 2; # starting new trkseg
         # reset intra-segment values
-        $prev_spd = "";
     }
     if ($i > 0 && !$in_merge && m#<trk>#) { # further track
         info("further track, again from file $ARGV") unless m#<gpx[ >]#s;
@@ -1362,6 +1361,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
                 $Spd2 = spd_string($spd2);
             }
         }
+
         my $Theta_diff = sprintf "%+.0f", $theta_diff;
         my $Comp_spd = spd_string($comp_spd) if $comp_spd ne "";
         if ($comp_spd ne "" && $spd ne "" && $timediff ne "" && $timediff <= MAX_TIMEDIFF_RECORDED_SPEED) {
@@ -1376,8 +1376,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         }
         # from now on, use for $spd and $SPD[$i] the computed speed (average since previous point) if recorded speed is not available or previous point is not very recent
         if ($spd eq "" || $timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED) {
-            $spd = $comp_spd;
-            $SPD[$i] = $spd;
+            $SPD[$i] = $spd = $comp_spd;
             $FLG[$i] |= COMPUTED_SPEED if $comp_spd ne "";
         }
 
@@ -1458,13 +1457,12 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
             $num_removals_in_row = 0;
         }
-        ( $prev_lat, $prev_lon, $prev_ele,  $prev_tim,
-          $prev_sec, $prev_spd, $prev_rate, $prev_acc )
-            = ( $lat, $lon, $ele, $tim, $sec, $comp_spd, $rate, $acc );
+        ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_comp_spd, $prev_rate, $prev_acc) =
+            ( $lat,      $lon,      $ele,      $tim,      $sec,      $comp_spd,      $rate,      $acc);
     }
     if ($ignore_before) {
-        ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_spd, $prev_rate, $prev_acc) =
-        (     $lat,      $lon,      $ele,      $tim,      $sec, $comp_spd, $prev_rate, $prev_acc);
+        ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_comp_spd, $prev_rate, $prev_acc) =
+            ( $lat,      $lon,      $ele,      $tim,      $sec,      $comp_spd, $prev_rate, $prev_acc);
         $timediff += $timediff_before;
         $dis += $dis_before;
     }
@@ -1684,6 +1682,7 @@ sub next_part {
 }
 my $seg = 0 if $segs;
 my $day = 0, my $prev_date, my $date if $days;
+my $prev_spd;
 for (my $rate, my $spd, my $direction,
      my $prev_turn_index, my $prev_turn_ele, my $prev_turn_sec,
      my $local_max_index = 0, my $local_min_index = 0,
@@ -1781,13 +1780,14 @@ for (my $rate, my $spd, my $direction,
         }
     }
     if ($i <= $#TIM && !$SEG[$i]) { # not at segment start, implies $i >= 1
-        (my $diff_ele_unused, my $timediff, $rate, my $dis, $spd, my $acc_unused) = comp_diffs(); # TODO is comp_diffs() needed here after all?
+        (my $diff_ele_unused, my $timediff, $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs(); # TODO is comp_diffs() needed here after all?
         $sum_dis += $dis;
         $spd = $SPD[$i];
         if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
             $sum_dis_mov += $dis;
             $sum_timediff_mov += $timediff;
         }
+
         if ($weight) {
             unless (defined $sec && defined $prev_sec) {
                 warn_trkpt_i($i, "no time     ".(defined $sec ? "before" : "    at"), "; cannot calculate energy here");
@@ -2286,7 +2286,7 @@ for (my $i = 0; $i <= $#TIM ;$i++) {
         $src .= append_unless_present($src, "interpolated time"    ) if $FLG[$i] & INTERPOLATED_TIM;
         $src .= append_unless_present($src, "substituted altitude" ) if $FLG[$i] & SUBSTITUTED_ELE;
         $src .= append_unless_present($src, "substituted time"     ) if $FLG[$i] & SUBSTITUTED_TIM;
-        $src .= append_unless_present($src, "computed speed"       ) if $FLG[$i] & COMPUTED_SPEED && INCLUDE_BEST_SPEED;
+        $src .= append_unless_present($src, "computed speed"       ) if $FLG[$i] & COMPUTED_SPEED && INCLUDE_SPEED;
         print $out "<src>$src</src>" if $src;
     }
     if (!DISABLE_TRKPT_FIX) {
@@ -2298,7 +2298,7 @@ for (my $i = 0; $i <= $#TIM ;$i++) {
 
     my $exts = $EXT[$i];
     $exts =~ s#<gpxtpx:TrackPointExtension>\s*<gpxtpx:speed>.*?</gpxtpx:speed>\s*</gpxtpx:TrackPointExtension>##sg if PRUNE_RECORDED_SPEED;
-    if (INCLUDE_BEST_SPEED && $spd ne "") { # may be recorded or computed, depending on $FLG[$i] & COMPUTED_SPEED
+    if (INCLUDE_SPEED && $spd ne "") { # may be recorded or computed, depending on $FLG[$i] & COMPUTED_SPEED
         my $spdstr = "<speed>".spd_string($spd)."</speed>";
         if ($exts eq "") {
             $exts = "<extensions>$spdstr</extensions>";
