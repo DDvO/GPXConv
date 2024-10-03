@@ -1500,25 +1500,23 @@ $avg_timediff = $num_pts_mov ? $sum_timediff_mov0 / $num_pts_mov : 0; # used for
 abort("FATAL: no trackpoint (possibly after ignoring some)") if $#TIM < 0;
 
 
-## check waypoints
-
-for (my $j = 0; $j <= $#WSEC; $j++) {
-    $sec = $WSEC[$j];
-    unless (defined $sec) {
-        warning("waypoint $WSTR[$j] does not have time information; skipping proximity check");
-        next;
-    }
-    if ($j > 0 && (diff_defined($sec, $WSEC[$j - 1]) // 0) < 0) {
-        warning("waypoint $WSTR[$j] has earlier time than the waypoint found before: $WSTR[$j - 1]");
-    }
-    if ( $#TIM < 0 ) { # can not happen due to above check
-        warning("no trackpoint found for checking waypoints");
-        last;
-    }
-    else {
+sub check_waypoints {
+    for (my $j = 0; $j <= $#WSEC; $j++) {
+        $sec = $WSEC[$j];
+        unless (defined $sec) {
+            warning("waypoint $WSTR[$j] does not have time information; skipping proximity check");
+            next;
+        }
+        if ($j > 0 && (diff_defined($sec, $WSEC[$j - 1]) // 0) < 0) {
+            warning("waypoint $WSTR[$j] has earlier time than the waypoint found before: $WSTR[$j - 1]");
+        }
+        if ($#TIM < 0) { # can not happen due to above check
+            warning("no trackpoint found for checking waypoints");
+            last;
+        }
         # find trackpoint $i2 at or just after wpt
         my $i2 = 0; # would be more efficient to do this just before the wpt loop, but then cannot deal with wpts not in time order
-        my $i1; # trackpoint just before, if any, else same as $i2
+        my $i1; # most recent trackpoint having time info, otherwise undefined; ulimately becomes same as $i2 if no such trackpoint exists
         while ($i2 <= $#TIM && (!defined $SEC[$i2] || $SEC[$i2] < $sec))
         {
             $i1 = $i2 if defined $SEC[$i2];
@@ -1526,33 +1524,32 @@ for (my $j = 0; $j <= $#WSEC; $j++) {
         }
         $i2 = $#TIM if $i2 > $#TIM;
         $i1 = $i2 unless defined $i1;
-        next
-          if $LAT[$i1] == $WLAT[$j]
-          && $LON[$i1] == $WLON[$j]
-          && $ELE[$i1] == $WELE[$j];    # late finishing point
-        next
-          if $LAT[$i2] == $WLAT[$j]
-          && $LON[$i2] == $WLON[$j]
-          && $ELE[$i2] == $WELE[$j];    # early starting point
+
+        my ($wlat, $wlon, $wele) = ($WLAT[$j], $WLON[$j], $WELE[$j]);
+        next if $LAT[$i1] == $wlat && $LON[$i1] == $wlon && $ELE[$i1] eq $wele; # late finishing point
+        next if $LAT[$i2] == $wlat && $LON[$i2] == $wlon && $ELE[$i2] eq $wele; # early starting point
         warning("no trackpoint found at same time or later than waypoint $WSTR[$j]; will ".
                 ($i1 < $i2 ? "extrapolate distance from the one before" : "take the difference from the last one"))
             if $i2 == $#TIM;
+
+        # calculate and report distance to nearest trackpoint
         my $diff_sec_i2_i1 = diff_defined($SEC[$i2], $SEC[$i1]);
         my $linear_factor = $diff_sec_i2_i1 ? ($sec - $SEC[$i1]) / $diff_sec_i2_i1 : 0;
-        $lat = $LAT[$i1] + ( $LAT[$i2] - $LAT[$i1] ) * $linear_factor;
-        $lon = $LON[$i1] + ( $LON[$i2] - $LON[$i1] ) * $linear_factor;
-        my $ele2 = $ELE[$i2] eq "" ? ( $WELE[$j] eq "" ? $ELE[$i1] : $WELE[$j] ) : $ELE[$i2];
+        $lat = $LAT[$i1] + ($LAT[$i2] - $LAT[$i1]) * $linear_factor;
+        $lon = $LON[$i1] + ($LON[$i2] - $LON[$i1]) * $linear_factor;
+        my $ele2 = $ELE[$i2] eq "" ? ($WELE[$j] eq "" ? $ELE[$i1] : $WELE[$j]) : $ELE[$i2];
         my $ele1 = $ELE[$i1] eq "" ? $ele2 : $ELE[$i1];
-        $ele  = $ele1 eq "" || $ele2 eq "" ? "" : $ele1 + ( $ele2 - $ele1 ) * $linear_factor;
-        my $dis = distance_curr( $WLAT[$j], $WLON[$j], $WELE[$j] );
+        $ele = $ele1 eq "" || $ele2 eq "" ? ""
+            : $ele1 + ($ele2 - $ele1) * $linear_factor;
+        my $dis = distance_curr($wlat, $wlon, $wele);
         $tim = "NO"; # do not print time for interpolated positon, since done already for wpt
-        my $Dis = sprintf "%.0f", $dis;
         warn_trkpt("according to its time information, waypoint $WSTR[$j] appears not close to track "
-              . "(interpolated distance = $Dis m > " . WARNING_WPT_DIST . "); "
+              . "(interpolated distance = ".(sprintf "%.0f", $dis)." m > " . WARNING_WPT_DIST . "); "
               . "it should be approximately at", "")
           if $dis > WARNING_WPT_DIST;
     }
 }
+check_waypoints();
 
 ## smoothen trackpoints
 
