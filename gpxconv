@@ -1683,7 +1683,7 @@ sub next_part {
 my $seg = 0 if $segs;
 my $day = 0, my $prev_date, my $date if $days;
 my $prev_spd;
-for (my $rate, my $spd, my $direction,
+for (my $spd, my $direction,
      my $prev_turn_index, my $prev_turn_ele, my $prev_turn_sec,
      my $local_max_index = 0, my $local_min_index = 0,
      my $local_max_sec, my $local_min_sec,
@@ -1780,9 +1780,19 @@ for (my $rate, my $spd, my $direction,
         }
     }
     if ($i <= $#TIM && !$SEG[$i]) { # not at segment start, implies $i >= 1
-        (my $diff_ele_unused, my $timediff, $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs(); # TODO is comp_diffs() needed here after all?
+        my $point_str = "point $i ".($tim ne "" ? $tim : "$lat,$lon ele=$ele");
+        my $timediff = diff_defined($sec, $prev_sec) // "";
+        if (0) {
+            (my $diff_ele_unused, my $td, my $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs();
+            my $msg = "FATAL: at $point_str, internal inconsistency on ";
+            abort("$msg time difference: '$timediff' vs. '$td'") if $timediff ne $td;
+            abort("$msg distance value:". " $DIS[$i] vs. $dis" ) if abs($DIS[$i] -  $dis) > 0.001;
+            abort("$msg rate" ." value: '$RAT[$i]' vs. '$rate'") if $RAT[$i] ne $rate;
+        }
+        my $dis = $DIS[$i];
         $sum_dis += $dis;
         $spd = $SPD[$i];
+        # debug "phase analysis $point_str dis=$dis rate=$rate spd=$spd";
         if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
             $sum_dis_mov += $dis;
             $sum_timediff_mov += $timediff;
@@ -1822,6 +1832,7 @@ for (my $rate, my $spd, my $direction,
         ($MAX_ELE[$part], $MAX_ELE_INDEX[$part]) = ($ele , $i) if !defined $MAX_ELE[$part] || $MAX_ELE[$part] < $ele;
         }
     }
+    my $rate = $RAT[$i];
     if (!$SEG[$i] && $rate ne "") {
         ($MAX_GAIN[$all ], $MAX_GAIN_INDEX[$all ]) = ($rate, $i) if $rate > 0 && (!defined $MAX_GAIN[$all ] ||  $MAX_GAIN[$all ] <  $rate);
         ($MAX_LOSS[$all ], $MAX_LOSS_INDEX[$all ]) = ($rate, $i) if $rate < 0 && (!defined $MAX_LOSS[$all ] || -$MAX_LOSS[$all ] < -$rate);
