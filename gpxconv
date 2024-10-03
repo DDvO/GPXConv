@@ -47,6 +47,7 @@ Command-line options:
   -nw                          - do not print warnings
   -ni                          - do not print information
   -o <outfile>                 - output the resulting track to <outfile>
+  -debug                       - enable internal consistency checks and debug output
 Other options can be set by changing values of the configuration variables.
 
 (c) 2012-2024 David von Oheimb - License: MIT - Version 2.8.1";
@@ -162,6 +163,7 @@ use constant COMPUTED_SPEED     => 1 << 6;
 
 # global option variables
 
+my $debug = 0;
 my $merge;
 my $num_ignored_hdrs   = 0;
 my $begin_sec;
@@ -311,15 +313,19 @@ sub debug {
     print_line("### DEBUG: $_[0]");
 }
 
+sub debug_log {
+    print_line("### LOG: $_[0]") if $debug;
+}
+
 # https://stackoverflow.com/questions/229009/how-can-i-get-a-call-stack-listing-in-perl
 # alternatively to making explicit individual calls to stacktras, may use: perl -d:Confess
 sub stacktrace {
     use Devel::StackTrace;
-    debug(Devel::StackTrace->new->as_string);
+    debug Devel::StackTrace->new->as_string;
     # { # further alternative:
     #     use Carp qw<longmess>;
     #   # local $Carp::CarpLevel = -1;
-    #     debug(longmess());
+    #     debug longmess();
     # }
     # { # further alternative:
     #     for (print STDERR "Stack Trace:\n", my $i = 0; my @call_details = caller($i); $i++) {
@@ -405,6 +411,10 @@ sub dis_str {
     return sprintf $_[0]." km", M2KM * $_[1];
 }
 sub dis_string { return dis_str(DIS_PRECISION, $_[0]); }
+
+sub point_str { return "point $_[0] ".($tim ne "" ? "tim=$tim" : "$lat , $lon ".($ele eq "" ? "none" : $ele)); }
+
+sub spd_or_none { return $_[0] eq "" ? "none" : (sprintf "%.3f", MPS2KMPH * $_[0]) =~ s/\.?0+$//r; }
 
 my $spd_prec_len = 1; # used only for spd_string
 sub spd_full {
@@ -776,6 +786,9 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
         open( $out, "> $arg1" );
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
+    elsif ($opt eq "-debug") {
+        $debug = 1;
+    }
     elsif ( $opt =~ m/^-/ ) {
         abort("unknown option: $opt");
     }
@@ -868,7 +881,7 @@ sub next_trkpt2() {
         abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt2;
         ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $cmt2, $src2, $fix2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
     }
-    ## debug "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=$sec2 spd=".($spd2 eq "" ? "" : spd_str($spd2)) if $trkpt2;
+    ## debug_log "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=".($sec2 // "none")." spd=".spd_or_none($spd2) if $trkpt2;
     return $trkpt2;
 }
 my $in_merge = 0; # if set, using trkpt from $merge
@@ -977,7 +990,7 @@ for (my $state = 0,
             abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt;
             ($lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $src, $fix, $exts, my $ignore) = parse_point("<trkpt $trkpt");
             next if $ignore;
-            ## debug "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=$sec spd=".($spd eq "" ? "" : spd_str($spd))."; state = $state";
+            ## debug_log "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
         } elsif ($merge) {
             ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) = $in_merge == -1 ?
             ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1) : # EOF in $merge during infile(s)
@@ -1158,7 +1171,7 @@ for (my $state = 0,
                     recalculate_RAT($j);
                     # not changing $ele nor $prev_ele such that below time interpolation is not affected
                     $FLG[$j] |= INTERPOLATED_ELE;
-                    ## debug "interpolating missing ele at point $j $tim: new ele=$ELE[$j] dis=$DIS[$j] rate=$RAT[$j]";
+                    ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE[$j] dis=$DIS[$j] rate=$RAT[$j]";
                 }
                 if ($i_end < $i) {
                     recalculate_DIS($j);
@@ -1186,14 +1199,14 @@ for (my $state = 0,
             my $sec_gradient = $tim_miss_length > 0 ? $sec_diff / $tim_miss_length : $sec_diff / ($i - $tim_miss_start + 1);
             if ($sec_gradient != 0) {
                 my $j;
-                ## debug("over ".dis_string($tim_miss_length).", sec_diff = $sec_diff);
+                ## debug_log "interpolating missing time over ".dis_string($tim_miss_length).", sec_diff = $sec_diff";
                 for ($j = $tim_miss_start; $j < $i_end; $j++) {
                     $sec_curr += ($tim_miss_length > 0 ? $DIS[$j] : 1) * $sec_gradient;
                     $SEC[$j] = $sec_curr;
                     $TIM[$j] = epoch_to_str($sec_curr);
                     recalculate_RAT($j);
                     $FLG[$j] |= INTERPOLATED_TIM;
-                    ## debug "interpolating missing time at point $j with ele=$ELE[$j] new  time=$TIM[$j] dis=$DIS[$j] rate=".($RAT[$j] // "");
+                    ## debug_log "interpolating missing time at point $j with ele=$ELE[$j] new  time=$TIM[$j] dis=$DIS[$j] rate=".($RAT[$j] // "");
                 }
                 recalculate_RAT($j) if $i_end < $i;
             }
@@ -1313,7 +1326,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     ( $lat, $lon, $ele, $tim, $sec, $spd ) =
       ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
 
-    ## debug "considering sanitization of point $i with lat=$lat lon=$lon ele='$ele' tim='$tim' sec=$sec spd=".($spd eq "" ? "" : spd_str($spd));
+    debug_log "consider sanitizing ".point_str($i)." spd=".spd_or_none($spd);
     my ($ignore, $ignore_before) = (0, 0);
     sub ignore_trkpt        { ignoring_trkpt(  -1, @_); }
     sub ignore_trkpt_before { ignoring_trkpt($i-1, @_); }
@@ -1780,11 +1793,12 @@ for (my $spd, my $direction,
         }
     }
     if ($i <= $#TIM && !$SEG[$i]) { # not at segment start, implies $i >= 1
-        my $point_str = "point $i ".($tim ne "" ? $tim : "$lat,$lon ele=$ele");
         my $timediff = diff_defined($sec, $prev_sec) // "";
-        if (0) {
+        if ($debug) {
             (my $diff_ele_unused, my $td, my $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs();
-            my $msg = "FATAL: at $point_str, internal inconsistency on ";
+            my $rate_str = $rate eq "" ? "" : sprintf "%.3f", $rate;
+            debug_log "phase analysis ".point_str($i)." dis=".(sprintf "%.3f", $dis)." rate=$rate_str spd=".spd_or_none($spd);
+            my $msg = "FATAL: internal inconsistency on ";
             abort("$msg time difference: '$timediff' vs. '$td'") if $timediff ne $td;
             abort("$msg distance value:". " $DIS[$i] vs. $dis" ) if abs($DIS[$i] -  $dis) > 0.001;
             abort("$msg rate" ." value: '$RAT[$i]' vs. '$rate'") if $RAT[$i] ne $rate;
@@ -1792,7 +1806,6 @@ for (my $spd, my $direction,
         my $dis = $DIS[$i];
         $sum_dis += $dis;
         $spd = $SPD[$i];
-        # debug "phase analysis $point_str dis=$dis rate=$rate spd=$spd";
         if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
             $sum_dis_mov += $dis;
             $sum_timediff_mov += $timediff;
@@ -2125,7 +2138,7 @@ sub insert_points_in_gap {
            ($SEC[$i], $DIS[$i]);
         my $diff_time = diff_defined($sec, $SEC[$i - 1]) // 0;
         my $dis_text = dis_str(DIS_PRECISION2, $dis);
-        ## debug "at point $i with lat=$lat lon=$lon ele=$ele tim=$tim, considering gap of $diff_time s and $dis_text";
+        ## debug_log "at ".point_str($i).", considering gap of $diff_time seconds and $dis_text";
         if ($diff_time > INSERTION_MAX_GAP) {
             # note that this is done only between adjacent track points that both have time information
             my $lin_spd = $dis / $diff_time;

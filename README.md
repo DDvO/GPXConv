@@ -47,5 +47,6 @@ Command-line options:
   -nw                          - do not print warnings
   -ni                          - do not print information
   -o <outfile>                 - output the resulting track to <outfile>
+  -debug                       - enable internal consistency checks and debug output
 ```
 Other options can be set by changing values of the configuration variables.
