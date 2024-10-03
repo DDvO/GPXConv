@@ -582,14 +582,14 @@ sub print_trkpt_i {
         my $n_spaces = $ele_full_len - $ele_prec_len - $decimals - 1;
         $elev .= ' ' x $n_spaces if $n_spaces > 0;
     }
-    my $time = $t ne "" ? $t : "NONE";
+    my $time = $t eq "NO" ? "" : " <time>".($t eq "" ? "NONE" : $t);
     print_line("$head "
       . "<trkpt"
       . ' lat="' . ( $lati . '"' . ( ' ' x max( 0, $lat_full_len - length($lati) ) ) )
       . ' lon="' . ( $long . '"' . ( ' ' x max( 0, $lon_full_len - length($long) ) ) )
       . " <ele>" . ele_string(-$ele_full_len, $elev)
-      . ( $t ne "NO" ? " <time>" . ( $time . ( " " x max( 0, $tim_len - length($time) ) ) ) : "" )
-      . "$tail");
+      . $time . ($tail ? " " x max(0, $tim_len + length(" <time>") - length($time)) : "")
+      . $tail);
     abort("") if ( $head =~ "^FATAL:" );
 }
 
