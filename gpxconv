@@ -207,7 +207,7 @@ my @LON;
 my @ELE; # or "" if not available
 my @TIM; # or "" if not available
 my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
-my @DIS; # derived from LAT and LON, and ELE if available, also from point before
+my @DIS; # derived from LAT and LON, and ELE if available, also from point before, 0 for first point
 my @RAT; # derived from optionally ELE and SEC, also from point before, or "" if not available
 my @SPD; # as recorded or computed, or "" if not available
 my @CMT; # or "" if not available
@@ -1222,7 +1222,7 @@ for (my $state = 0,
 
         if ($ele eq "") {
             $num_no_ele++;
-            $ele_gap_length += $dis;
+            $ele_gap_length += $dis; # using $dis == 0 for first point
             warn_trkpt( "no altitude     at", "; $ele_solution" ) if !$SEG[$i] && $num_no_ele == 1;
         }
         elsif ($num_no_ele) {
@@ -1236,7 +1236,7 @@ for (my $state = 0,
         $time_solution = "trying to interpolate time" if $tim_miss_start;
         unless (defined $sec) {
             $num_no_time++;
-            $time_gap_length += $dis;
+            $time_gap_length += $dis; # using $dis == 0 for first point
             warn_trkpt( "no time         at", "; $time_solution" ) if !$SEG[$i] && $num_no_time == 1;
         }
         elsif ($num_no_time) {
