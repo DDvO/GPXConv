@@ -23,10 +23,17 @@
 # Optionally calculates approx. total energy spent by biking along the resulting track.
 # Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
 #
+
+use constant TOOL_NAME    => "GPXConv";
+use constant TOOL_VERSION => "2.8.1";
+my $TOOL_ID = TOOL_NAME." v".TOOL_VERSION;
+
 my $usage =
 "Usage:  gpxconv <option(s) and infile(s)> [> <outfile>]
 
 Command-line options:
+  -h | -help | --help          - print these hints and exit
+  -version                     - print tool name and version and exit
   -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
   -no_sanitize                 - do not sanitize trackpoints with implausible data
   -smooth                      - smoothen tracks
@@ -50,7 +57,7 @@ Command-line options:
   -debug                       - enable internal consistency checks and debug output
 Other options can be set by changing values of the configuration variables.
 
-(c) 2012-2024 David von Oheimb - License: MIT - Version 2.8.1";
+(c) 2012-2024 David von Oheimb - License: MIT - ".TOOL_NAME." version ".TOOL_VERSION;
 ################################################################################
 
 use strict;
@@ -709,6 +716,9 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
 
     if ($opt eq "-h" || $opt =~ /^-*help$/) {
         print_line($usage);
+        exit 0;
+    } elsif ($opt eq "-version") {
+        print_line($TOOL_ID);
         exit 0;
     } elsif ($opt eq "-swim"  ||
         $opt eq "-walk"  ||
@@ -1927,7 +1937,7 @@ sub correct_ele {    # may update $ele_corr; uses $ele_corr
 ## prepare output header
 
 $HEAD =~ s|(<gpx)([ >])|$1 version="1.1"$2|     unless $HEAD =~ m|<gpx.*? version\s*=.*?>|s;
-$HEAD =~ s|(<gpx)([ >])|$1 creator="GPXConv"$2| unless $HEAD =~ m|<gpx.*? creator\s*=.*?>|s;
+$HEAD =~ s|(<gpx)([ >])|$1 creator="$TOOL_ID"$2| unless $HEAD =~ m|<gpx.*? creator\s*=.*?>|s;
 # $HEAD =~ s|(<gpx[ >])|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" |; # would not fit for our simple speed extension, and if so, should not be duplicated
 #$speed_extension = '<xsd:element name="speed" type="xsd:decimal" minOccurs="0"><xsd:annotation><xsd:documentation>The current speed relative to the previous point, in meters per second</xsd:documentation></xsd:annotation></xsd:element>';
 #$HEAD =~ s|(( )*</metadata>)|$2$2<extensions>$speed_extension</extensions>\n$1|s if $speed_extension ne ""; # add declaration for speed extension
