@@ -53,7 +53,7 @@ WARNING: according to its time information, waypoint '
 ' appears not close to track (interpolated distance = 400 m > 100); it should be approximately at <trkpt lat="45.9"      lon="4.3"      <ele>  90  
 WARNING: no time         at <trkpt lat="44.00002"  lon="2.00003"  <ele> 74.49 <time>NONE                ; cannot calculate energy here
 WARNING: no time     before <trkpt lat="44.000"    lon="2.004"    <ele> 50.00 <time>2001-01-01T10:00:00Z; cannot calculate energy here
-WARNING:        at least at <trkpt lat="44"        lon="2.0"      <ele>40.000 <time>2001-01-01T10:30:00Z  cannot calculate energy due to missing speed information
+WARNING: no speed info near <trkpt lat="44"        lon="2.0"      <ele>40.000 <time>2001-01-01T10:30:00Z; cannot calculate energy
 WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                ; cannot calculate energy here
 WARNING: no time         at <trkpt lat="45.799956" lon="4.20"     <ele>40.000 <time>NONE                ; cannot calculate energy here
 WARNING: no time     before <trkpt lat="45.90"     lon="4.30"     <ele>  90   <time>2001-01-02T15:00:00Z; cannot calculate energy here

@@ -1615,7 +1615,7 @@ sub energy { # calculate energy difference between trackpoints  # TODO simplify 
     my $h1 = $_[5];                # altitude after  in m
     if ($h0 eq "" || $h1 eq "") {
         # $h0 = $h1 = 500;         # default altitude in m assumed for calculating density
-        warn_trkpt_i($i, "       at least at", "  cannot calculate energy due to missing altitude information") if $energy_missing_ele < 2;
+        warn_trkpt_i($i, "no altitude   near", "; cannot calculate energy") if $energy_missing_ele < 2;
         $energy_missing_ele++;
         $num_energy_missing++;
         return 0;
@@ -1624,9 +1624,9 @@ sub energy { # calculate energy difference between trackpoints  # TODO simplify 
     my $h  = ( $h0 + $h1 ) / 2;    # average altitude, used for air density
     my $v0 = $_[6];                # speed before in m/s
     my $v1 = $_[7];                # speed after  in m/s
-    if ($v0 eq "" || $v1 eq "") { # cannot really happen because time is present, lat/lon are guaranteed to be there, just ele may be missing
+    if ($v0 eq "" || $v1 eq "") {  # $v1 eq "" cannot happen because times are present, lat/lon are guaranteed to be there, just ele may be missing
         # $v0 = $v1 = 0;           # default speed in m/s assumed for calculating acceleration and air drag
-        warn_trkpt_i($i, "       at least at", "  cannot calculate energy due to missing speed information") if $energy_missing_spd < 2;
+        warn_trkpt_i($i, "no speed info near", "; cannot calculate energy") if $energy_missing_spd < 2;
         $energy_missing_spd++;
         $num_energy_missing++;
         return 0;
