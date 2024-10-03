@@ -1038,19 +1038,16 @@ for (my $state = 0,
             }
             $diff_time = diff_defined($sec, $prev_avail_sec) // 0; # recalculation
         }
-        if ( $state == 1 ) {
-            info("initial track, from file $ARGV");
-            info_trkpt( "first   segment at", "" );
-        }
-        else {
+
+        if ($state > 1) {
             my $severity = $state < 3 ? "WARNING" : "FATAL"; # at segment start, just warn
             print_trkpt("$severity: before", " negative time difference (-".timediff_string(-$diff_time).")")
                 if $diff_time < 0; # this implies defined $sec && defined $prev_sec
             if (defined $sec && defined $prev_sec && $diff_time == 0) {
-                print_trkpt("$severity: point before",
+                print_trkpt("$severity: point before      ",
                             " has same time but different position: $prev_lat, $prev_lon")
                     if $lat != $prev_lat || $lon != $prev_lon;
-                print_trkpt("$severity: point before",
+                print_trkpt("$severity: point before      ",
                             " has same time but different altitude: $prev_ele m")
                     if $ele != $prev_ele;
             }
@@ -1058,7 +1055,7 @@ for (my $state = 0,
 
         my $flags = 0;
         my $dis = $i == 0 || $state == 1 ? 0 : distance_curr($prev_lat, $prev_lon, $prev_ele);
-        if ( $state < 3 ) {    # the first point in trkseg
+        if ($state < 3) { # at the first point in trkseg, first handle last point of segment before
             $prev_avail_ele = "";
             if ( CARRY_OVER_ELE && $ele ne "" ) {
                 if ( $i > 0 && $ELE[ $i - 1 ] eq "" ) {
@@ -1071,8 +1068,7 @@ for (my $state = 0,
                     warn_trkpt_i($i - 1, "at segment end    ",
                                  " no altitude was given; using value from begin of next segment");
                 }
-            }
-            elsif ($ele_miss_start) {
+            } elsif ($ele_miss_start) {
                 warn_trkpt_i($i - 1, "             up to",
                              " was unable to interpolate missing altitude within segment");
                 $ele_miss_start = 0;
@@ -1089,19 +1085,21 @@ for (my $state = 0,
                     warn_trkpt_i($i - 1, "at segment end    ",
                                  " no time     was given; using value from begin of next segment");
                 }
-            }
-            elsif ($tim_miss_start) {
+            } elsif ($tim_miss_start) {
                 warn_trkpt_i($i - 1, "             up to",
                     " was unable to interpolate missing time within segment");
                 $tim_miss_start = 0;
             }
-            if ( $state == 2 ) {
-                my $Dis = dis_string($dis);
-                my $Gap = timediff_string($diff_time);
-                $Gap =~ s/^\s+//;
-                info_trkpt("further segment at", " after a gap of $Gap and $Dis");
-            }
+        }
 
+        if ($state == 1) {
+            info("initial track, from file $ARGV");
+            info_trkpt( "first   segment at", "" );
+        } elsif ($state == 2) {
+            info_trkpt("further segment at", " after a gap of ".timediff_string($diff_time)." and ".dis_string($dis));
+        }
+
+        if ($state < 3) { # now handle first point in trkseg
             my $resolution;
             if ( $ele eq "" ) {
                 if ( $i == 0 || $prev_ele eq "" ) { # $prev_avail_ele
@@ -1254,8 +1252,8 @@ for (my $state = 0,
             warn_trkpt( "no altitude     at", "; $ele_solution" ) if !$SEG[$i] && $num_no_ele == 1;
         }
         elsif ($num_no_ele) {
-            my $Len = dis_string($ele_gap_length);
-            warn_trkpt_i($i - 1, "no altitude  up to", " for ".points($num_no_ele)." over a distance of $Len");
+            # unfortunately, this message may show after initial ones on next segment:
+            warn_trkpt_i($i - 1, "no altitude  up to", " for ".points($num_no_ele)." over a distance of ".dis_string($ele_gap_length));
             $num_no_ele     = 0;
             $ele_gap_length = 0;
         }
@@ -1268,8 +1266,8 @@ for (my $state = 0,
             warn_trkpt( "no time         at", "; $time_solution" ) if !$SEG[$i] && $num_no_time == 1;
         }
         elsif ($num_no_time) {
-            my $Len = dis_string($time_gap_length);
-            warn_trkpt_i($i - 1, "no time      up to", " for ".points($num_no_time)." over a distance of $Len");
+            # unfortunately, this message may show after initial ones on next segment:
+            warn_trkpt_i($i - 1, "no time      up to", " for ".points($num_no_time)." over a distance of ".dis_string($time_gap_length));
             $num_no_time     = 0;
             $time_gap_length = 0;
         }
