@@ -1528,6 +1528,9 @@ sub check_waypoints {
         my ($wlat, $wlon, $wele) = ($WLAT[$j], $WLON[$j], $WELE[$j]);
         next if $LAT[$i1] == $wlat && $LON[$i1] == $wlon && $ELE[$i1] eq $wele; # late finishing point
         next if $LAT[$i2] == $wlat && $LON[$i2] == $wlon && $ELE[$i2] eq $wele; # early starting point
+        # due to time possibly carried over across segement end and start of next segment, wpt may match next trkpt:
+        next if $i2 < $#TIM && $SEC[$i2] == $sec && defined $SEC[$i2 + 1] && $SEC[$i2 + 1] == $sec
+            && $LAT[$i2 + 1] == $wlat && $LON[$i2 + 1] == $wlon && $ELE[$i2 + 1] eq $wele;
         warning("no trackpoint found at same time or later than waypoint $WSTR[$j]; will ".
                 ($i1 < $i2 ? "extrapolate distance from the one before" : "take the difference from the last one"))
             if $i2 == $#TIM;
