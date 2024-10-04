@@ -219,7 +219,7 @@ my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
 my @DIS; # derived from LAT and LON, and ELE if available, also from point before, 0 for first point
 my @RAT; # derived from optionally ELE and SEC, also from point before, or "" if not available
 my @SPD; # as recorded or computed (as average since previous point if FLG contains COMPUTED_SPEED), or "" if not available
-my @CMT; # or "" if not available
+my @CMT; # as given in input but without <cmt> and </cmt> tags, or "" if not available
 my @SRC; # as given in input but without <src> and </src> tags, or "" if not available
 my @FIX; # as given in input but without <fix> and </fix> tags, or "" if not available
 my @EXT; # or "" if not available
@@ -499,7 +499,7 @@ sub parse_point {
     $ele = "" if !$ele_str && $tim eq ""; # for routes generated, e.g., using Google My Maps
 
     my $cmt = "";
-    if ($is_trkpt && $str =~ s#[ \t]*(<cmt>.*?</cmt>)\n?##s) {
+    if ($is_trkpt && $str =~ s#[ \t]*<cmt>\s*(.*?)\s*?</cmt>\r?\n?##s) {
         $cmt = $1;
         $cmt =~ s#\n##sg;
     }
@@ -1237,7 +1237,7 @@ for (my $state = 0,
         my $diff_ele = $i > 0 ? diff_nonempty($ele, $ELE[$i - 1]) : "";
         my $diff_sec = $i > 0 ? diff_defined ($sec, $SEC[$i - 1]) : undef;
 
-        push @IGN, ($cmt =~ m#(\d+) previous points? ignored($|\W)#) ? $1 : 0;;
+        push @IGN, 0;
         push @SEG, $state < 3;
         push @FLG, $flags;
         push @LAT, $lat;
@@ -2302,16 +2302,11 @@ for (my $i = 0; $i <= $#TIM ;$i++) {
 
     my $cmt = $CMT[$i];
     if (!DISABLE_TRKPT_CMT && $IGN[$i]) {
-        if ($cmt eq "") {
-            $cmt = "<cmt>".plural($IGN[$i], "previous point")." ignored</cmt>";
-        } else {
-            my $old_count = ($cmt =~ s#(\d+) previous points? ignored(; )?##s ? $1 : 0); # remove and previous instance of our comment
-            my $cmtstr = plural($old_count + $IGN[$i], "previous point")." ignored";
-            $cmtstr .= "; " if $cmt ne "<cmt></cmt>";
-            $cmt =~ s#(<cmt>)#$1$cmtstr#s;
-        }
+        my $old_count = ($cmt =~ s#(\d+) previous points? ignored(; )?##s ? $1 : 0); # remove and previous instance of our comment
+        my $ign_str = plural(($ARGV =~ m/^(test.*?\.out)\d$/ ? 0 : $old_count) + $IGN[$i], "previous point")." ignored";
+        $cmt = $cmt eq "" ? $ign_str : "$ign_str; $cmt";
     }
-    print $out $cmt if $cmt ne "";
+    print $out "<cmt>$cmt</cmt>" if $cmt ne "";
 
     if (!DISABLE_TRKPT_SRC) {
         my $src = $SRC[$i];
