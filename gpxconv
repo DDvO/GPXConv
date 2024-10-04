@@ -499,7 +499,7 @@ sub parse_point {
     $ele = "" if !$ele_str && $tim eq ""; # for routes generated, e.g., using Google My Maps
 
     my $cmt = "";
-    if ($is_trkpt && $str =~ s#[ \t]*<cmt>\s*(.*?)\s*?</cmt>\r?\n?##s) {
+    if ($is_trkpt && !$prune_cmts && $str =~ s#[ \t]*<cmt>\s*(.*?)\s*?</cmt>\r?\n?##s) {
         $cmt = $1;
         $cmt =~ s#\n##sg;
     }
