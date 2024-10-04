@@ -1103,7 +1103,8 @@ for (my $state = 0,
         }
 
         if ($state == 1) {
-            info("initial track, from file $ARGV");
+            my $name = $ARGV =~ s/^(test.*?\.out)\d$/$1/r; # avoid variation in test log output due to iteration count in file name
+            info("initial track, from file $name");
             info_trkpt( "first   segment at", "" );
         } elsif ($state == 2) {
             info_trkpt("further segment at", " after a gap of ".timediff_string($diff_time)." and ".dis_string($dis));
