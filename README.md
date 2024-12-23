@@ -31,6 +31,7 @@ Command-line options:
   -h | -help | --help          - print these hints and exit
   -version                     - print tool name and version and exit
   -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
+  -no_sanitize                 - do not sanitize trackpoints with implausible data
   -smooth                      - smoothen tracks
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs <n>..[<m>][(+|-)<d>]   - add statistics per segment n..m, adapt their numbers +/-d
