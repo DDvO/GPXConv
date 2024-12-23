@@ -14,7 +14,7 @@
 # Optionally prunes comments, extensions, or extension elements with value below or above given limits.
 # By default carries over missing altitude and time data between segments.
 # By default fills in missing altitude and time data by interpolation within segments.
-# Optionally inserts interpolated points in long gaps (default 1800 seconds sufficient for exiftool).
+# Optionally inserts interpolated points in long time gaps (default 1800 seconds sufficient for exiftool).
 # Optionally corrects elevation and smoothens tracks.
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
@@ -102,7 +102,7 @@ use constant MERGE_FILL_GAP    => 60; # minimum gap duration in seconds to be fi
 use constant ENABLE_SMOOTHING  =>  0; # by default disable smoothing
 use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackpoint to be smoothened and its neighbors
 
-# control insertion of points within long (time) gaps
+# control insertion of points within long time gaps
 use constant INSERT_POINTS       =>    1; # enable inserting points with interpolated data in long time gaps
 use constant INSERT_SEGMENT      =>    0; # enable inserting segment for long time gaps just before segment start
 use constant INSERTION_MAX_GAP   => 1800; # length of gap in seconds between consecutive trackpoints before
@@ -1108,7 +1108,7 @@ for (my $state = 0,
             info("initial track, from file $name");
             info_trkpt( "first   segment at", "" );
         } elsif ($state == 2) {
-            info_trkpt("further segment at", " after a gap of ".timediff_string($diff_time)." and ".dis_string($dis));
+            info_trkpt("further segment at", " after a time gap of ".timediff_string($diff_time)." and ".dis_string($dis));
         }
 
         if ($state < 3) { # now handle first point in trkseg
@@ -2262,7 +2262,7 @@ $final_text .= plural($num_ext_below, "extension element")." with name '$min_ext
 $final_text .= plural($num_ext_above, "extension element")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "" );
 $final_text .= points($num_inserted_trkpts)." inserted ".(INSERT_SEGMENT ? "and ".points($num_duplicated_trkpts)." duplicated " : "").
-    "due to gaps > ".INSERTION_MAX_GAP." seconds\n" if INSERT_POINTS;
+    "due to time gaps > ".INSERTION_MAX_GAP." seconds\n" if INSERT_POINTS;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
 
