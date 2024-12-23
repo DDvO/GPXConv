@@ -14,7 +14,7 @@
 # Optionally prunes comments, extensions, or extension elements with value below or above given limits.
 # By default carries over missing altitude and time data between segments.
 # By default fills in missing altitude and time data by interpolation within segments.
-# Optionally inserts interpolated points in long time gaps (default 1800 seconds sufficient for exiftool).
+# By default inserts interpolated points in long time gaps (default 1800 seconds sufficient for exiftool).
 # Optionally corrects elevation and smoothens tracks.
 # (Orthometric height = GPS ellipsoidal height - geoid height,
 #  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
@@ -36,6 +36,7 @@ Command-line options:
   -version                     - print tool name and version and exit
   -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
   -no_sanitize                 - do not sanitize trackpoints with implausible data
+  -no_insert                   - do not insert trackpoints on long time gaps
   -smooth                      - smoothen tracks
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs <n>..[<m>][(+|-)<d>]   - add statistics per segment n..m, adapt their numbers +/-d
@@ -104,6 +105,7 @@ use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackp
 
 # control insertion of points within long time gaps
 use constant INSERT_POINTS       =>    1; # enable inserting points with interpolated data in long time gaps
+my $insert_points = INSERT_POINTS;
 use constant INSERT_SEGMENT      =>    0; # enable inserting segment for long time gaps just before segment start
 use constant INSERTION_MAX_GAP   => 1800; # length of gap in seconds between consecutive trackpoints before
 # insertion should be used (1800 for exiftool default GeoMaxIntSecs; for TrailGuru 3600 would be sufficient)
@@ -730,6 +732,9 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     }
     elsif ( $opt eq "-no_sanitize" ) {
         $sanitize = !SANITIZE_TRKPTS;
+    }
+    elsif ( $opt eq "-no_insert" ) {
+        $insert_points = !INSERT_POINTS;
     }
     elsif ( $opt eq "-smooth" ) {
         $smoothing = 1;
@@ -2231,7 +2236,7 @@ sub insert_points_in_gap {
     }
     return ($num_inserted_trkpts, $num_duplicated_trkpts);
 }
-my ($num_inserted_trkpts, $num_duplicated_trkpts) = INSERT_POINTS ? insert_points_in_gap() : (0, 0);
+my ($num_inserted_trkpts, $num_duplicated_trkpts) = $insert_points ? insert_points_in_gap() : (0, 0);
 
 
 ### generate final output
@@ -2262,7 +2267,7 @@ $final_text .= plural($num_ext_below, "extension element")." with name '$min_ext
 $final_text .= plural($num_ext_above, "extension element")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "" );
 $final_text .= points($num_inserted_trkpts)." inserted ".(INSERT_SEGMENT ? "and ".points($num_duplicated_trkpts)." duplicated " : "").
-    "due to time gaps > ".INSERTION_MAX_GAP." seconds\n" if INSERT_POINTS;
+    "due to time gaps > ".INSERTION_MAX_GAP." seconds\n" if $insert_points;
 $final_text .= "elevation ". ( !GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ( $found_corr ? "last retrieved" : "assumed" ) . " geoid height = $ele_corr m") . "\n";
 

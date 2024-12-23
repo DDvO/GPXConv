@@ -13,7 +13,7 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
 * Optionally prunes comments, extensions, or extension elements with value below or above given limits.
 * By default carries over missing altitude and time data between segments.
 * By default fills in missing altitude and time data by interpolation within segments.
-* Optionally inserts interpolated points in long time gaps (default 1800 seconds sufficient for exiftool).
+* By default inserts interpolated points in long time gaps (default 1800 seconds sufficient for exiftool).
 * Optionally corrects elevation and and smoothens tracks.
   (Orthometric height = GPS ellipsoidal height - geoid height,
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
@@ -32,6 +32,7 @@ Command-line options:
   -version                     - print tool name and version and exit
   -swim, -walk, -cycle, -drive, -fly - type of recorded activity, default: drive
   -no_sanitize                 - do not sanitize trackpoints with implausible data
+  -no_insert                   - do not insert trackpoints on long time gaps
   -smooth                      - smoothen tracks
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs <n>..[<m>][(+|-)<d>]   - add statistics per segment n..m, adapt their numbers +/-d
