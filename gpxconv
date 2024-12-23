@@ -328,7 +328,8 @@ sub debug_log {
 # alternatively to making explicit individual calls to stacktras, may use: perl -d:Confess
 sub stacktrace {
     use Devel::StackTrace;
-    debug Devel::StackTrace->new->as_string;
+    print_line("");
+    debug(Devel::StackTrace->new->as_string);
     # { # further alternative:
     #     use Carp qw<longmess>;
     #   # local $Carp::CarpLevel = -1;
