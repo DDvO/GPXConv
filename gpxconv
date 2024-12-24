@@ -440,9 +440,11 @@ sub spd_string {
     return " " x ($spd_prec_len - length($s)) . $s;
 }
 
-my $lat_prec_len = my $lat_full_len =
-my $lon_prec_len = my $lon_full_len =
-my $ele_prec_len = my $ele_full_len = my $tim_len = 1; # used only for formatting
+# used only for formatting:
+my $lat_prec_len = my $lat_full_len = lat_str(0);
+my $lon_prec_len = my $lon_full_len = lon_str(0);
+my $ele_prec_len = my $ele_full_len = length((sprintf ELE_PRECISION0, 0));
+my $tim_len = length(epoch_to_str(0));
 sub lat_str { return (sprintf LAT_PRECISION, $_[0]) =~ s/^\s*-(0(\.0*)?)$/$1/r; }
 sub lon_str { return (sprintf LON_PRECISION, $_[0]) =~ s/^\s*-(0(\.0*)?)$/$1/r; }
 sub lat_string {
