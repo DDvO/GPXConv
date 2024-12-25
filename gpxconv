@@ -39,8 +39,8 @@ Command-line options:
   -no_insert                   - do not insert trackpoints on long time gaps
   -smooth                      - smoothen tracks
   -phases                      - analyze and provide statistics for ascent/descent phases
-  -segs <n>..[<m>][(+|-)<d>]   - add statistics per segment n..m, adapt their numbers +/-d
-  -days <n>..[<m>][(+|-)<d>]   - add statistics per day n..m, may adapt their numbers +/-d
+  -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
+  -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
   -merge <file>                - complete gaps in infile(s) by data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
@@ -264,7 +264,7 @@ my ($min_sec, $max_sec);
 my ($min_tim, $max_tim) = ("", ""); # $max_tim is not really used
 
 my ($segs, $days);
-my ($part, $part_start, $part_end, $part_offset);
+my ($part_start, $part_end, $part_offset);
 # in the following arrays, index ($part_start - 1) will be used for the overall values
 my (@MAX_SPD      , @MIN_ELE      , @MAX_ELE      , @MAX_GAIN      , @MAX_LOSS      ); # TODO remove these redundant arrays (GAIN/LOSS via RAT)
 my (@MAX_SPD_INDEX, @MIN_ELE_INDEX, @MAX_ELE_INDEX, @MAX_GAIN_INDEX, @MAX_LOSS_INDEX);
@@ -750,18 +750,19 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     }
     elsif ($opt eq "-segs" || $opt eq "-days") {
-        abort("missing argument for -$opt option") if $#ARGV - $i < 1;
-        abort("argument '$arg1' of -$opt option is not of the form <n>..[<m>][(+|-)<d>] with natural numbers n, m, and integer d")
-            unless $arg1 =~ m/^(\d+)\.\.(\d+)?([-+]\d+)?+$/ && $1 > 0;
         if ($opt eq "-segs") {
             abort("cannot use both -days and -$opt option") if $days;
-            $segs = $arg1;
+            $segs = 1;
         } else {
             abort("cannot use both -segs and -$opt option") if $segs;
-            $days = $arg1;
+            $days = 1;
         }
-        ($part_start, $part_end, $part_offset) = ($1, $2, $3); # $part_end < $part_start will lead to empty selection, just like without $opt
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        if ($#ARGV - $i >= 1 && $arg1 =~ m/^\d/) {
+            abort("argument '$arg1' of -$opt option is not of the form <n>..[<m>][(+|-)<d>] with natural numbers n, m, and integer d")
+            unless $arg1 =~ m/^(\d+)\.\.(\d+)?([-+]\d+)?+$/ && $1 > 0;
+            ($part_start, $part_end, $part_offset) = ($1, $2, $3); # $part_end < $part_start will lead to empty selection, just like without $opt
+            splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        }
     }
     elsif ( $opt eq "-weight" ) {
         abort("missing value argument for -$opt option") if $#ARGV - $i < 1;
@@ -1710,8 +1711,8 @@ sub push_phase {
 
 $part_start = 1 unless defined $part_start;
 $part_offset = 0 unless defined $part_offset;
-my $all = $part_start - 1;
-my $part_or_all = $all;
+my $part;
+my $part_or_all = my $all = $part_start - 1;
 sub next_part {
     $part = $part_or_all = $_[0] if $_[0] >= $part_start;
     ($part, $part_or_all) = (undef, $all) if defined $part_end && $_[0] > $part_end;
@@ -1735,7 +1736,7 @@ for (my $spd, my $direction,
         $ele = $prev_turn_ele;
     }
     if ($SEG[$i]) { # track segment start (which includes the start: $i == 0)
-        next_part(++$seg) if defined $segs;
+        next_part(++$seg) if $segs;
         # (re-)start climb phase recognition
         $direction       = 0;
         $prev_turn_ele   = $local_max_ele   = $local_min_ele = "";
@@ -2043,7 +2044,7 @@ sub add_stat_point { # generate trackpoint-related statistics output and waypoin
 
 my $part_last = $part_end // $part // $all;
 for (my $i = $all; $i <= $part_last; $i++) {
-    my $Part = $i == $all ? "" : (defined $segs ? "segment" : "day")." ".(' ' x (length($part_last) - length($i))).($i + $part_offset)." ";
+    my $Part = $i == $all ? "" : ($segs ? "segment" : "day")." ".(' ' x (length($part_last) - length($i))).($i + $part_offset)." ";
     my $Min_ele      = defined $MIN_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]) : "";
     my $Max_ele      = defined $MAX_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]) : "";
     my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? " ".spd_full($SPD[$MAX_SPD_INDEX [$i]]) : "";

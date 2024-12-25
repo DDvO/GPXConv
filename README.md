@@ -35,8 +35,8 @@ Command-line options:
   -no_insert                   - do not insert trackpoints on long time gaps
   -smooth                      - smoothen tracks
   -phases                      - analyze and provide statistics for ascent/descent phases
-  -segs <n>..[<m>][(+|-)<d>]   - add statistics per segment n..m, adapt their numbers +/-d
-  -days <n>..[<m>][(+|-)<d>]   - add statistics per day n..m, may adapt their numbers +/-d
+  -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
+  -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
   -merge <file>                - complete gaps in infile(s) by data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
