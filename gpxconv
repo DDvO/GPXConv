@@ -1621,7 +1621,8 @@ if ($smoothing) {
     recalculate_all($i) if $pending_recalculation;
 }
 
-## perform analysis/statistics
+## perform general statistics, optionally also for parts (segements or days)
+## with optional ascent/descent phase analysis and optional energy calculation
 
 my $num_energy_missing = 0;
 my $energy_missing_ele = 0;
@@ -1710,43 +1711,36 @@ sub push_phase {
     push @PHASE_END_INDEX,      $end_index;
 }
 
-$part_start = 1 unless defined $part_start;
+# prepare optional statistics for parts (segements or days)
+$part_start  = 1 unless defined $part_start;
 $part_offset = 0 unless defined $part_offset;
 my $part;
 my $part_or_all = my $all = $part_start - 1;
 sub next_part {
-    $part = $part_or_all = $_[0] if $_[0] >= $part_start;
+    $part = $part_or_all = $_[0]          if $_[0] >= $part_start;
     ($part, $part_or_all) = (undef, $all) if defined $part_end && $_[0] > $part_end;
 }
 my $seg = 0 if $segs;
 my $day = 0, my $prev_date, my $date if $days;
 my ($part_start_sec, $part_end_sec);
-my $prev_spd;
-for (my $spd, my $direction,
+
+for (my $direction, my $prev_spd,
      my $prev_turn_index, my $prev_turn_ele, my $prev_turn_sec,
      my $local_max_index = 0, my $local_min_index = 0,
      my $local_max_sec, my $local_min_sec,
      my $local_max_ele = "", my $local_min_ele = "",
      my $i = 0; $i <= $#TIM; $i++) {
-    my $new_part = 0;
-    if ($i <= $#TIM) { # should always be true
-        ( $lat, $lon, $ele, $tim, $sec, $spd ) =
-          ( $LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i] );
-        $date = $1 if $days && $tim =~ m/^(.*?)T/;
-        $new_part = 1
-            if ($days && ($i == 0 || (defined $date && defined $prev_date
-                                      && $date ne $prev_date))) # assuming that dates, as far as available, are ascending
+    ($lat    , $lon    , $ele    , $tim    , $sec , my $dis , my $spd    ) =
+    ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $DIS[$i], $SPD[$i]);
+    my $timediff = diff_defined($sec, $prev_sec) // ""; # not meaningful and unused if $SEG[$i]
 
-    }
-    else {
-        $ele = $prev_turn_ele;
-    }
-    if ($SEG[$i]) { # track segment start (which includes the start: $i == 0)
-        $new_part = 1 if $segs;
-        # (re-)start climb phase recognition
-        $direction       = 0;
-        $prev_turn_ele   = $local_max_ele   = $local_min_ele = "";
-    }
+    # local inititialization of optional statistics for parts (segements or days)
+    my $new_part = 0;
+    $date = $1 if $days && $tim =~ m/^(.*?)T/;
+    $new_part = 1
+        if ($days && ($i == 0 || (defined $date && defined $prev_date
+                                  && $date ne $prev_date))); # assuming that dates, as far as available, are ascending
+    $new_part = 1 if $segs && $SEG[$i];
     $DURATION[$part] = diff_defined($part_end_sec, $part_start_sec)
         if defined $part && ($new_part || $i == $#TIM); # implies $i != 0
     next_part(++$day) if $new_part && $days;
@@ -1757,11 +1751,15 @@ for (my $spd, my $direction,
     } else {
         $part_start_sec = $part_end_sec = $SEC[$i] unless defined $part_start_sec;
     }
-    if ($i <= $#TIM) { # should always be true
-        # values are updated on each iteration
-        $part_end_sec = $SEC[$i] if defined $SEC[$i];
-        $PART_END_INDEX[$all ] = $i;
-        $PART_END_INDEX[$part] = $i if defined $part;
+    # preliminary values are updated on each iteration:
+    $part_end_sec = $SEC[$i] if defined $SEC[$i];
+    $PART_END_INDEX[$all ] = $i;
+    $PART_END_INDEX[$part] = $i if defined $part;
+
+    if ($SEG[$i]) { # track segment start (which includes the start: $i == 0)
+        # (re-)start climb phase recognition
+        $direction       = 0;
+        $prev_turn_ele   = $local_max_ele   = $local_min_ele = "";
     }
     if ($ele ne "") {
         ( $prev_turn_ele, $prev_turn_index ) = ( $ele, $i ) if ( $prev_turn_ele eq "" );
@@ -1770,7 +1768,7 @@ for (my $spd, my $direction,
         ( $local_min_ele, $local_min_index ) = ( $ele, $i ) if $direction <= 0
             && ( $local_min_ele eq "" || $ele < $local_min_ele );
     }
-    if (!$SEG[$i]) {    # not at segment start
+    if (!$SEG[$i]) { # not at segment start
       check_next:
         $prev_turn_sec = $SEC[$prev_turn_index];
         $local_max_sec = $SEC[$local_max_index];
@@ -1834,9 +1832,7 @@ for (my $spd, my $direction,
             goto check_next;
         }
     }
-    if ($i <= $#TIM # should always be true
-        && !$SEG[$i]) { # not at segment start, implies $i >= 1
-        my $timediff = diff_defined($sec, $prev_sec) // "";
+    if (!$SEG[$i]) { # not at segment start, implies $i >= 1
         if ($debug) {
             (my $diff_ele_unused, my $td, my $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs();
             my $rate_str = $rate eq "" ? "" : sprintf "%.3f", $rate;
@@ -1845,14 +1841,6 @@ for (my $spd, my $direction,
             abort("$msg time difference: '$timediff' vs. '$td'") if $timediff ne $td;
             abort("$msg distance value:". " $DIS[$i] vs. $dis" ) if abs($DIS[$i] -  $dis) > 0.001;
             abort("$msg rate" ." value: '$RAT[$i]' vs. '$rate'") if $RAT[$i] ne $rate;
-        }
-        my $dis = $DIS[$i];
-        $SUM_DIS[$all ] += $dis;
-        $SUM_DIS[$part] += $dis if defined $part;
-        $spd = $SPD[$i];
-        if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
-            $sum_dis_mov += $dis;
-            $sum_timediff_mov += $timediff;
         }
 
         if ($weight) {
@@ -1867,6 +1855,7 @@ for (my $spd, my $direction,
         }
     }
 
+    # perform general statistics, optionally also for parts (segements or days)
     $min_lat = $lat if $i == 0 || $min_lat > $lat;
     $max_lat = $lat if $i == 0 || $max_lat < $lat;
     $min_lon = $lon if $i == 0 || $min_lon > $lon;
@@ -1875,12 +1864,6 @@ for (my $spd, my $direction,
     $min_sec = $sec if !defined $min_sec || defined $sec && $sec < $min_sec;
     $max_tim = $tim if $max_tim eq ""    || defined $sec && $sec > $max_sec;
     $max_sec = $sec if !defined $max_sec || defined $sec && $sec > $max_sec;
-
-    if ($spd ne "") {
-        ($MAX_SPD[$all ], $MAX_SPD_INDEX[$all ]) = ($spd, $i) if (!defined $MAX_SPD[$all ] || $MAX_SPD[$all ] < $spd);
-        ($MAX_SPD[$part], $MAX_SPD_INDEX[$part]) = ($spd, $i) if defined $part
-                                                              && (!defined $MAX_SPD[$part] || $MAX_SPD[$part] < $spd);
-    }
     if ($ele ne "") {
         ($MIN_ELE[$all ], $MIN_ELE_INDEX[$all ]) = ($ele , $i) if !defined $MIN_ELE[$all ] || $MIN_ELE[$all ] > $ele;
         ($MAX_ELE[$all ], $MAX_ELE_INDEX[$all ]) = ($ele , $i) if !defined $MAX_ELE[$all ] || $MAX_ELE[$all ] < $ele;
@@ -1889,16 +1872,28 @@ for (my $spd, my $direction,
         ($MAX_ELE[$part], $MAX_ELE_INDEX[$part]) = ($ele , $i) if !defined $MAX_ELE[$part] || $MAX_ELE[$part] < $ele;
         }
     }
-    my $rate = $RAT[$i];
-    if (!$SEG[$i] && $rate ne "") {
-        ($MAX_GAIN[$all ], $MAX_GAIN_INDEX[$all ]) = ($rate, $i) if $rate > 0 && (!defined $MAX_GAIN[$all ] ||  $MAX_GAIN[$all ] <  $rate);
-        ($MAX_LOSS[$all ], $MAX_LOSS_INDEX[$all ]) = ($rate, $i) if $rate < 0 && (!defined $MAX_LOSS[$all ] || -$MAX_LOSS[$all ] < -$rate);
-        if (defined $part) {
-        ($MAX_GAIN[$part], $MAX_GAIN_INDEX[$part]) = ($rate, $i) if $rate > 0 && (!defined $MAX_GAIN[$part] ||  $MAX_GAIN[$part] <  $rate);
-        ($MAX_LOSS[$part], $MAX_LOSS_INDEX[$part]) = ($rate, $i) if $rate < 0 && (!defined $MAX_LOSS[$part] || -$MAX_LOSS[$part] < -$rate);
+    if ($spd ne "") { # may be meaningful also at segment start: recorded speed
+        ($MAX_SPD[$all ], $MAX_SPD_INDEX[$all ]) = ($spd, $i) if (!defined $MAX_SPD[$all ] || $MAX_SPD[$all ] < $spd);
+        ($MAX_SPD[$part], $MAX_SPD_INDEX[$part]) = ($spd, $i) if defined $part
+                                                              && (!defined $MAX_SPD[$part] || $MAX_SPD[$part] < $spd);
+    }
+    if (!$SEG[$i]) {
+        $SUM_DIS[$all ] += $dis;
+        $SUM_DIS[$part] += $dis if defined $part;
+        if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
+            $sum_dis_mov      += $dis;
+            $sum_timediff_mov += $timediff;
+        }
+        my $rate = $RAT[$i];
+        if ($rate ne "") {
+            ($MAX_GAIN[$all ], $MAX_GAIN_INDEX[$all ]) = ($rate, $i) if $rate > 0 && (!defined $MAX_GAIN[$all ] ||  $MAX_GAIN[$all ] <  $rate);
+            ($MAX_LOSS[$all ], $MAX_LOSS_INDEX[$all ]) = ($rate, $i) if $rate < 0 && (!defined $MAX_LOSS[$all ] || -$MAX_LOSS[$all ] < -$rate);
+            if (defined $part) {
+            ($MAX_GAIN[$part], $MAX_GAIN_INDEX[$part]) = ($rate, $i) if $rate > 0 && (!defined $MAX_GAIN[$part] ||  $MAX_GAIN[$part] <  $rate);
+            ($MAX_LOSS[$part], $MAX_LOSS_INDEX[$part]) = ($rate, $i) if $rate < 0 && (!defined $MAX_LOSS[$part] || -$MAX_LOSS[$part] < -$rate);
+            }
         }
     }
-
     ($prev_lat, $prev_lon, $prev_ele, $prev_date, $prev_sec, $prev_spd) =
         ( $lat,      $lon,      $ele,      $date,      $sec,      $spd) if $i < $#TIM;
 }
