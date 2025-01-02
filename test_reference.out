@@ -7,7 +7,7 @@
 <text>GPXconv test data<value>101</value><value>102</value></text>
 </link>
 <time>2001-01-01T10:00:00Z</time>
-<bounds minlat="-0.04500" minlon="0.00000" maxlat="45.90000" maxlon="4.30000"/>
+<bounds minlat="-0.08100" minlon="0.00000" maxlat="45.90000" maxlon="4.30000"/>
 <extensions><value>101</value></extensions>
 <extensions>in metadata second extension, which is not really allowed but supported here;
 newlines are kept</extensions>
@@ -139,15 +139,15 @@ trk comment</cmt>
 <trkpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><cmt>second ascent 100</cmt></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="-0.04500" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:00:00Z</time><cmt>no ascent/descent due to singleton segment; 1 hour time gap before, so 1 point would be inserted (and optionally 2 duplicated), but linear speed would be too high</cmt></trkpt>
-<trkpt lat="-0.03600" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
-<trkpt lat="-0.02700" lon="0.00000"><ele> 500</ele><time>2001-01-02T17:00:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
-<trkpt lat="-0.01800" lon="0.00000"><ele> 500</ele><time>2001-01-02T17:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
+<trkpt lat="-0.08100" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:00:00Z</time><cmt>no ascent/descent due to singleton segment; 1 hour time gap before, so 1 point would be inserted (and optionally 2 duplicated), but linear speed would be too high</cmt></trkpt>
+<trkpt lat="-0.06300" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
+<trkpt lat="-0.04500" lon="0.00000"><ele> 500</ele><time>2001-01-02T17:00:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
+<trkpt lat="-0.02700" lon="0.00000"><ele> 500</ele><time>2001-01-02T17:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted (but by default not 2 duplicated); gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed></extensions></trkpt>
+<trkpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before over 8 km, so 3 points to be inserted (but by default not 2 duplicated); gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed></extensions></trkpt>
 <trkpt lat="-0.00450" lon="0.00000"><ele> 512</ele><time>2001-01-02T18:15:01Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
-<trkpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before, so point to be inserted; third ascent should be counted: 25; all given speed to be ignored except for plausibility check</cmt><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before over 1 km, so point to be inserted; third ascent should be counted: 25; all given speed to be ignored except for plausibility check</cmt><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
 <trkpt lat="0.00900" lon="0.00000"><cmt>at the end no elevation and time</cmt><extensions><gpxtpx:TrackPointExtension><gpxtpx:some>text</gpxtpx:some></gpxtpx:TrackPointExtension></extensions></trkpt>
 </trkseg>
 </trk>

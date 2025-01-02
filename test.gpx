@@ -67,12 +67,12 @@ newlines are kept</extensions>
  </trkseg>
 
  <trkseg>
-  <trkpt lat="-0.045" lon="0"><ele>500</ele><time>2001-01-02T16:00:00Z</time><cmt>no ascent/descent due to singleton segment; 1 hour time gap before, so 1 point would be inserted (and optionally 2 duplicated), but linear speed would be too high</cmt></trkpt>
+  <trkpt lat="-0.081" lon="0"><ele>500</ele><time>2001-01-02T16:00:00Z</time><cmt>no ascent/descent due to singleton segment; 1 hour time gap before, so 1 point would be inserted (and optionally 2 duplicated), but linear speed would be too high</cmt></trkpt>
  </trkseg>
 
  <trkseg>
-  <trkpt lat="-0.009" lon="0"><ele>500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before, so 3 points to be inserted (but by default not 2 duplicated); gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed><gpxtpx:TrackPointExtension><gpxtpx:speed>11</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
-  <trkpt lat= "0.000" lon="0"><ele>525</ele><time>2001-01-02T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before, so point to be inserted; third ascent should be counted: 25; all given speed to be ignored except for plausibility check</cmt><extensions><speed>20</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>10</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+  <trkpt lat="-0.009" lon="0"><ele>500</ele><time>2001-01-02T18:00:00Z</time><cmt>2 hours time gap before over 8 km, so 3 points to be inserted (but by default not 2 duplicated); gpxtpx:speed to be ignored</cmt><extensions><speed>10</speed><keep_after_speed></keep_after_speed><gpxtpx:TrackPointExtension><gpxtpx:speed>11</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+  <trkpt lat= "0.000" lon="0"><ele>525</ele><time>2001-01-02T18:30:01Z</time><cmt>a bit more than 0.5 hour time gap before over 1 km, so point to be inserted; third ascent should be counted: 25; all given speed to be ignored except for plausibility check</cmt><extensions><speed>20</speed><gpxtpx:TrackPointExtension><gpxtpx:speed>10</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
   <trkpt lat= "0.009" lon="0"><cmt>at the end no elevation and time</cmt><extensions><gpxtpx:TrackPointExtension><gpxtpx:some>text</gpxtpx:some></gpxtpx:TrackPointExtension></extensions></trkpt>
  </trkseg>
 </trk>
