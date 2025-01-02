@@ -115,7 +115,7 @@ use constant PRINT_WARNINGS      =>    1; # whether printing warnings is enabled
 use constant PRINT_INFO          =>    1; # whether printing information is enabled by default
 use constant WARNING_TPT_DIST    => 2000; # threshold for trackpoint distance warning (in meters)
 use constant WARNING_WPT_DIST    =>  100; # threshold for waypoint distance warning (in meters)
-use constant MAX_SPEED_DEVIATION =>    2; # threshold for speed measuring deviation warning (in km/h)
+use constant MAX_SPEED_DEVIATION =>0.025; # threshold for speed measuring deviation warning (fraction of MAX_PLAUSIBLE_SPEED)
 # using absolute value for MAX_SPEED_DEVIATION because we compute speed from absolute values (coordinates and time)
 
 # sanitization control
@@ -879,6 +879,7 @@ elsif ( $activity eq "-fly" ) {
     abort("unknown activity: $activity\naborting");
 }
 my $INSERTION_MAX_SPEED = $MAX_PLAUSIBLE_SPEED / 2;
+my $MAX_SPEED_DEVIATION = $MAX_PLAUSIBLE_SPEED * MAX_SPEED_DEVIATION;
 
 
 ### main loops
@@ -1414,10 +1415,10 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             $spd_prec_len = max($spd_prec_len, length(spd_str($spd_diff))); # used only for spd_string
             $sum_speed_deviation += $spd_diff;
             $sum_speed += $comp_spd + $spd; # will later divide by 2 for average;
-            warn_trkpt("           before ",
-                       "recorded speed is ".spd_string($spd).", computed speed is $Comp_spd km/h ".
+            warn_trkpt("before  ",
+                       " recorded speed is ".spd_string($spd).", computed speed is $Comp_spd, ".
                        "deviation is " . spd_string($spd_diff) . " km/h" .
-                       " (more than " . MAX_SPEED_DEVIATION . ")") if $spd_diff > (MAX_SPEED_DEVIATION + 0.5) / MPS2KMPH;
+                       " (more than " . $MAX_SPEED_DEVIATION . ")") if $spd_diff > ($MAX_SPEED_DEVIATION + 0.5) / MPS2KMPH;
         }
         # from now on, use for $spd and $SPD[$i] the computed speed (average since previous point) if recorded speed is not available or previous point is not very recent
         if ($spd eq "" || $timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED) {
