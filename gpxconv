@@ -128,7 +128,7 @@ my $MAX_PLAUSIBLE_DECEL   ; # maximal deceleration m/s/s
 my $MAX_PLAUSIBLE_ELE_GAIN; # maximal ascent rate in m/h
 my $MAX_PLAUSIBLE_ELE_LOSS; # maximal descent rate in m/h
 use constant MAX_PLAUSIBLE_ANGLE_DIFF =>  170; # maximal plausible turning angle above speed threshold
-use constant MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD => 2; # speed threshold for maximal plausible turning angle: 7.2 km/h
+use constant MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD => 5; # speed threshold for maximal plausible turning angle in km/h
 use constant MIN_PLAUSIBLE_ELE        => -450; # minimal plausible altitude; actual elevation values on Earth may be as low as -450 m at Dead Sea
 
 # time control
@@ -1391,7 +1391,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             my      $dis2 =      $dis_before eq "" ||      $dis eq "" ? 0 :      $dis_before +      $dis;
             my $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed between three most recent points
             $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))) if $spd2 ne ""; # used only for spd_string
-            if ($spd2 ne "" && $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
+            if ($spd2 ne "" && MPS2KMPH * $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
                 # calculate horizontal direction change (i.e., turning angle) for spike detection
                 my $prev_lon_diff = nearest(.00001, $prev_lon) - nearest(.00001, $LON[$i - 2]);
                 my $prev_lat_diff = nearest(.00001, $prev_lat) - nearest(.00001, $LAT[$i - 2]);
