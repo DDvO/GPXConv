@@ -637,7 +637,7 @@ sub remove_trkpt { my ($i, $last, $undo_time_gap_fill) = @_;
     # undo_time_gap_fill implies: do not count the previously inserted point being ignored, ignore segment start,
     # and due to linear interpolation keep the speed but re-calculate the distance (simply by addition) and rate
     $IGN[ $i + 1 ] += $IGN[$i] + ($undo_time_gap_fill ? 0 : 1); # indicate that previous point has been ignored, in addition to any previous ignores
-    $SEG[ $i + 1 ] = 1 if $i < $last && $SEG[$i] && !$undo_time_gap_fill; # copy over any segment start
+    $SEG[ $i + 1 ] = 1 if $i <= $last && $SEG[$i] && !$undo_time_gap_fill; # copy over any segment start
     my $dis_before = $DIS[$i];
     splice @IGN, $i, 1;
     splice @SEG, $i, 1;
