@@ -1489,20 +1489,17 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             }
         }
     }
+
+    # must delay output by one point because current point may be ignored in next iteration
+    if (!$ignore_before && !$last_ignore) { # previous point not ignored this time and in iteration before
+        warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
+        $num_removals_in_row = 0;
+    }
+
     if ($ignore) {
-        if (!$ignore_before && $last_ignore == -1) { # must delay output by one point because current point may be ignored in next iteration
-            warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
-            $num_removals_in_row = 0;
-        }
         $num_removals_in_row++;
         remove_trkpt($i, $i); # also recalculates speed etc. of former point $i + 1 relative to its new previous point
         $i--;
-    }
-    elsif (!$ignore_before) {
-        if ($last_ignore != 1) { # must delay output by one point because current point may be ignored in next iteration
-            warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
-            $num_removals_in_row = 0;
-        }
     }
     if ($ignore_before) {
         if ($timediff ne "") {
@@ -1517,7 +1514,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         }
     }
     ($timediff_before, $dis_before) = ($timediff, $dis);
-    $last_ignore = $ignore ? 1 : $ignore_before ? -1 : 0;
+    $last_ignore = $ignore;
 }
 warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
 
