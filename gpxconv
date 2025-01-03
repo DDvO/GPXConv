@@ -1377,7 +1377,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     } elsif ($spd ne "" && ($spd < 0 || MPS2KMPH * $spd > $MAX_PLAUSIBLE_SPEED)) {
         $num_removals_spd++;
         $ignore = 1;
-        ignore_trkpt(spd_string($spd), $spd < 0 ? "recorded speed is negative" : "recorded speed is higher than ".$MAX_PLAUSIBLE_SPEED);
+        ignore_trkpt(spd_string($spd), "recorded speed is ". ($spd < 0 ? "negative" : "higher than ".$MAX_PLAUSIBLE_SPEED));
     }
 
     my $comp_spd = "";
@@ -2285,7 +2285,7 @@ $final_text .= points($num_elem_above    )." with $max_elem above $max_elem_limi
 $final_text .= points($num_elem_below    )." with $min_elem below $min_elem_limit"      ." filtered out\n" if $min_elem;
 $final_text .= points($num_removals_ele  )." ignored due to altitude less than "            .MIN_PLAUSIBLE_ELE                                      ." m\n" if $num_removals_ele;
 $final_text .= points($num_removals_dir  )." ignored due to direction change out of range -".MAX_PLAUSIBLE_ANGLE_DIFF."°..+".MAX_PLAUSIBLE_ANGLE_DIFF."°\n" if $num_removals_dir;
-$final_text .= points($num_removals_spd  )." ignored due to speed more than $MAX_PLAUSIBLE_SPEED km/h\n"          if $num_removals_spd;
+$final_text .= points($num_removals_spd  )." ignored due to speed out of range 0..$MAX_PLAUSIBLE_SPEED km/h\n"    if $num_removals_spd;
 $final_text .= points($num_removals_acc  )." ignored due to acceleration more than $MAX_PLAUSIBLE_ACCEL m/s/s\n"  if $num_removals_acc;
 $final_text .= points($num_removals_dec  )." ignored due to deceleration more than $MAX_PLAUSIBLE_DECEL m/s/s\n"  if $num_removals_dec;
 $final_text .= points($num_removals_gain )." ignored due to ascent rate more than $MAX_PLAUSIBLE_ELE_GAIN m/s\n"  if $num_removals_gain;
