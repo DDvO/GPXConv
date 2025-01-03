@@ -255,7 +255,6 @@ my $HEAD;
 my $found_corr = 0;
 
 my $lat, my $lon, my $ele, my $tim, my $sec, my $spd; # TODO make local
-my $prev_lat, my $prev_lon, my $prev_ele, my $prev_tim, my $prev_sec, my $prev_comp_spd, my $prev_rate, my $prev_acc; # TODO make local
 
 my $min_lat, my $max_lat;
 my $min_lon, my $max_lon;
@@ -693,20 +692,23 @@ sub distance_curr {    # of $lat, $lon, $ele
     return distance( $lat, $lon, $ele, $_[0], $_[1], $_[2] );
 }
 
-sub comp_diffs()
-{ # of $lat, $lon, $ele relative to $prev_lat, $prev_lon, $prev_ele, so speed is relative to previous point
+sub comp_diffs
+{
+    my $i = shift; # calculate differences relative to previous point $i -1
     # $prev_comp_spd is assumed to be average speed computed between previous points
-    # recalculation of distance and elevation difference since coordinates may have been smoothened # TODO recalculate DIS on smoothing
-    my $dis = distance_curr( $prev_lat, $prev_lon, $prev_ele );
+    my ($prev_ele, $prev_sec, $prev_dis, $prev_comp_spd) = ($ELE[$i - 1], $SEC[$i - 1], $DIS[$i - 1], $SPD[$i - 1]);
+    my (     $ele,      $sec,      $dis,           $spd) = ($ELE[$i    ], $SEC[$i    ], $DIS[$i    ], $SPD[$i    ]);
     my $diff_ele = diff_nonempty($ele, $prev_ele);
 
     #http://forums.howwhatwhy.com/showflat.php?Cat=&Board=scigen&Number=-208125
     my $timediff = diff_defined($sec, $prev_sec);
-    my $rate = rate($diff_ele, $timediff);
+    my $rate = $RAT[$i];
+    my $rate_new = rate($diff_ele, $timediff);
+    abort("FATAL: internal inconsistency on ascent/descent rate: $rate vs. $rate_new") if $rate ne $rate_new;
     my $comp_spd = defined $timediff ? ($timediff > 0 ? $dis / $timediff : $prev_comp_spd) : "";
     $spd_prec_len = max($spd_prec_len, length(spd_str($comp_spd))) if $comp_spd ne ""; # used only for spd_string
     my $acc = $comp_spd ne "" && $prev_comp_spd ne "" && $timediff ? ($comp_spd - $prev_comp_spd) / $timediff : "";
-    return ( $diff_ele // "", $timediff // "", $rate, $dis, $comp_spd, $acc );
+    return ($diff_ele // "", $timediff // "", $rate, $dis, $comp_spd, $acc);
 }
 
 
@@ -893,8 +895,6 @@ my $num_no_ele      = 0;
 my $ele_gap_length  = 0;
 my $num_no_time     = 0;
 my $time_gap_length = 0;
-my $prev_tim        = "";
-my $prev_sec;
 # $prev_avail_tim = "";
 
 $/ = "<trkpt ";
@@ -925,6 +925,7 @@ if ($merge && !next_trkpt2()) {
 
 # TODO before further complicating input handling, split file reading and parsing from any further processing
 for (my $state = 0,
+     my $prev_lat, my $prev_lon, my $prev_ele, my $prev_tim = "", my $prev_sec,
      my $prev_avail_sec, my $prev_avail_ele  = "", my $ele_miss_length = 0, my $tim_miss_length = 0,
      my $i = 0;
      $in_merge ? (next_trkpt2() ? 1 : ($in_merge = -$in_merge, $in_merge != -2 && defined($_ = <>))) # EOF in $merge
@@ -1384,7 +1385,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         $acc = $rate = ""; # keep any recorded speed, but reset acceleration and climb/descent rate
     }
     elsif (!$ignore) {
-        ( my $diff_ele, $timediff, $rate, $dis, $comp_spd, $acc ) = comp_diffs();
+        (my $diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
         my ($theta_diff, $Spd2) = (0, "");
         if (!$SEG[$i - 1]) { # previous point not at segment start, implies $i >= 2 here
             my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
@@ -1393,6 +1394,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))) if $spd2 ne ""; # used only for spd_string
             if ($spd2 ne "" && MPS2KMPH * $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
                 # calculate horizontal direction change (i.e., turning angle) for spike detection
+                my ($prev_lat, $prev_lon) = ($LAT[$i - 1], $LON[$i - 1]);
                 my $prev_lon_diff = nearest(.00001, $prev_lon) - nearest(.00001, $LON[$i - 2]);
                 my $prev_lat_diff = nearest(.00001, $prev_lat) - nearest(.00001, $LAT[$i - 2]);
                 my $curr_lon_diff = nearest(.00001,      $lon) - nearest(.00001, $prev_lon   );
@@ -1501,12 +1503,8 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
             $num_removals_in_row = 0;
         }
-        ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_comp_spd, $prev_rate, $prev_acc) =
-            ( $lat,      $lon,      $ele,      $tim,      $sec,      $comp_spd,      $rate,      $acc);
     }
     if ($ignore_before) {
-        ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_comp_spd, $prev_rate, $prev_acc) =
-            ( $lat,      $lon,      $ele,      $tim,      $sec,      $comp_spd, $prev_rate, $prev_acc);
         $timediff += $timediff_before;
         $dis += $dis_before;
     }
@@ -1725,15 +1723,18 @@ my $seg = 0 if $segs;
 my $day = 0, my $prev_date, my $date if $days;
 my ($part_start_sec, $part_end_sec);
 
-for (my $direction, my $prev_spd,
+for (my $direction, my $prev_sec, my $timediff,
      my $prev_turn_index, my $prev_turn_ele, my $prev_turn_sec,
      my $local_max_index = 0, my $local_min_index = 0,
      my $local_max_sec, my $local_min_sec,
      my $local_max_ele = "", my $local_min_ele = "",
      my $i = 0; $i <= $#TIM; $i++) {
     ($lat    , $lon    , $ele    , $tim    , $sec , my $dis , my $spd    ) =
-    ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $DIS[$i], $SPD[$i]);
-    my $timediff = diff_defined($sec, $prev_sec) // ""; # not meaningful and unused if $SEG[$i]
+        ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $DIS[$i], $SPD[$i]);
+    if (!$SEG[$i]) {
+        $prev_sec = $SEC[$i - 1];
+        $timediff = diff_defined($sec, $prev_sec) // "";
+    }
 
     # local inititialization of optional statistics for parts (segements or days)
     my $new_part = 0;
@@ -1835,7 +1836,7 @@ for (my $direction, my $prev_spd,
     }
     if (!$SEG[$i]) { # not at segment start, implies $i >= 1
         if ($debug) {
-            (my $diff_ele_unused, my $td, my $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs();
+            (my $diff_ele_unused, my $td, my $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs($i);
             my $rate_str = $rate eq "" ? "" : sprintf "%.3f", $rate;
             debug_log "phase analysis ".point_str($i)." dis=".(sprintf "%.3f", $dis)." rate=$rate_str spd=".spd_or_none($spd);
             my $msg = "FATAL: internal inconsistency on ";
@@ -1851,7 +1852,7 @@ for (my $direction, my $prev_spd,
             } else {
                 my $start_sec = $SEC[0] // 0; # used just for smaller time arguments to sub energy()
                 $sum_energy += energy($i, $prev_sec - $start_sec, $sec - $start_sec,
-                                      $dis, $prev_ele, $ele, $prev_spd, $spd);
+                                      $dis, $ELE[$i - 1], $ele, $SPD[$i - 1], $spd);
             }
         }
     }
@@ -1895,8 +1896,6 @@ for (my $direction, my $prev_spd,
             }
         }
     }
-    ($prev_lat, $prev_lon, $prev_ele, $prev_date, $prev_sec, $prev_spd) =
-        ( $lat,      $lon,      $ele,      $date,      $sec,      $spd) if $i < $#TIM;
 }
 $lat_prec_len = max(length(lat_str($max_lat)), length(lat_str($min_lat)));
 $lon_prec_len = max(length(lon_str($max_lon)), length(lon_str($min_lon)));
