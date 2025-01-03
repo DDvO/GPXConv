@@ -293,6 +293,7 @@ use List::Util qw[min max];
 # http://stackoverflow.com/questions/178539/how-do-you-round-a-floating-point-number-in-perl
 use Math::Round qw( nearest );
 use Math::Trig qw( deg2rad pi2 );   # use Math::Trig 'great_circle_distance';
+use constant   RAD2DEG => 360 / pi2;
 use File::Temp qw/ tempfile /;
 
 # use DateTime::Format::ISO8601;
@@ -1394,16 +1395,17 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))) if $spd2 ne ""; # used only for spd_string
             if ($spd2 ne "" && MPS2KMPH * $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
                 # calculate horizontal direction change (i.e., turning angle) for spike detection
+                my $resultion = .00001; # corresponds to at most 1.11 m
                 my ($prev_lat, $prev_lon) = ($LAT[$i - 1], $LON[$i - 1]);
-                my $prev_lon_diff = nearest(.00001, $prev_lon) - nearest(.00001, $LON[$i - 2]);
-                my $prev_lat_diff = nearest(.00001, $prev_lat) - nearest(.00001, $LAT[$i - 2]);
-                my $curr_lon_diff = nearest(.00001,      $lon) - nearest(.00001, $prev_lon   );
-                my $curr_lat_diff = nearest(.00001,      $lat) - nearest(.00001, $prev_lat   );
+                my $prev_lon_diff = nearest($resultion, $prev_lon - $LON[$i - 2]);
+                my $prev_lat_diff = nearest($resultion, $prev_lat - $LAT[$i - 2]);
+                my $curr_lon_diff = nearest($resultion,      $lon - $prev_lon   );
+                my $curr_lat_diff = nearest($resultion,      $lat - $prev_lat   );
                 if ($prev_lon_diff && $prev_lat_diff && $curr_lon_diff && $curr_lat_diff)
                 {
-                    my $theta1 = atan2($prev_lon_diff, $prev_lat_diff) * 360 / pi2;
-                    my $theta2 = atan2($curr_lon_diff, $curr_lat_diff) * 360 / pi2;
-                    $theta_diff = ($theta2 - $theta1) % 360;
+                    my $theta1 = atan2($prev_lon_diff, $prev_lat_diff);
+                    my $theta2 = atan2($curr_lon_diff, $curr_lat_diff);
+                    $theta_diff = ($theta2 - $theta1) * RAD2DEG % 360;
                     $theta_diff -= 360 if $theta_diff >= 180;
                 }
                 $Spd2 = spd_string($spd2);
