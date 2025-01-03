@@ -1345,10 +1345,10 @@ my ($num_removals_ele, $num_removals_dir, $num_removals_spd, $num_removals_acc, 
     $num_removals_gain, $num_removals_loss, $num_removals_diff) = (0, 0, 0, 0, 0, 0, 0, 0);
 if ($sanitize) { # TODO re-format
 my $num_removals_in_row = 0;
-my $last_ignore = 0;
+my $prev_ignore = 0;
 my $sum_timediff_mov0 = 0;
 my $num_pts_mov       = 0;
-my ($timediff_before, $timediff, $dis_before, $dis) = ("", "", "", "");
+my ($prev_timediff, $timediff, $prev_dis, $dis) = ("", "", "", "");
 $spd = "";
 for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
 
@@ -1387,8 +1387,8 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         (my $diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
         my ($theta_diff, $Spd2) = (0, "");
         if (!$SEG[$i - 1]) { # previous point not at segment start, implies $i >= 2 here
-            my $timediff2 = $timediff_before eq "" || $timediff eq "" ? 0 : $timediff_before + $timediff;
-            my      $dis2 =      $dis_before eq "" ||      $dis eq "" ? 0 :      $dis_before +      $dis;
+            my $timediff2 = $prev_timediff eq "" || $timediff eq "" ? 0 : $prev_timediff + $timediff;
+            my      $dis2 =      $prev_dis eq "" ||      $dis eq "" ? 0 :      $prev_dis +      $dis;
             my $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed between three most recent points
             $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))) if $spd2 ne ""; # used only for spd_string
             if ($spd2 ne "" && MPS2KMPH * $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
@@ -1491,7 +1491,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     }
 
     # must delay output by one point because current point may be ignored in next iteration
-    if (!$ignore_before && !$last_ignore) { # previous point not ignored this time and in iteration before
+    if (!$ignore_before && !$prev_ignore) { # previous point not ignored this time and in iteration before
         warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
         $num_removals_in_row = 0;
     }
@@ -1503,18 +1503,17 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     }
     if ($ignore_before) {
         if ($timediff ne "") {
-            $timediff += $timediff_before if $timediff_before ne "";
+            $timediff += $prev_timediff if $prev_timediff ne "";
         } else {
-            $timediff = $timediff_before;
+            $timediff = $prev_timediff;
         }
         if ($dis ne "") {
-            $dis += $dis_before if $dis_before ne "";
+            $dis += $prev_dis if $prev_dis ne "";
         } else {
-            $dis = $dis_before;
+            $dis = $prev_dis;
         }
     }
-    ($timediff_before, $dis_before) = ($timediff, $dis);
-    $last_ignore = $ignore;
+    ($prev_ignore, $prev_timediff, $prev_dis) = ($ignore, $timediff, $dis);
 }
 warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
 
