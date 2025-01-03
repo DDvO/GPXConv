@@ -1348,8 +1348,7 @@ my $num_removals_in_row = 0;
 my $last_ignore = 0;
 my $sum_timediff_mov0 = 0;
 my $num_pts_mov       = 0;
-my ($timediff_before, $dis_before, $dis);
-my $timediff = "";
+my ($timediff_before, $timediff, $dis_before, $dis) = ("", "", "", "");
 $spd = "";
 for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
 
@@ -1382,10 +1381,9 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     }
 
     my $comp_spd = "";
-    if ( $SEG[$i] ) { # at segment start
+    if ($SEG[$i]) { # at segment start
         $acc = $rate = ""; # keep any recorded speed, but reset acceleration and climb/descent rate
-    }
-    elsif (!$ignore) {
+    } elsif (!$ignore) {
         (my $diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
         my ($theta_diff, $Spd2) = (0, "");
         if (!$SEG[$i - 1]) { # previous point not at segment start, implies $i >= 2 here
@@ -1507,8 +1505,16 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         }
     }
     if ($ignore_before) {
-        $timediff += $timediff_before;
-        $dis += $dis_before;
+        if ($timediff ne "") {
+            $timediff += $timediff_before if $timediff_before ne "";
+        } else {
+            $timediff = $timediff_before;
+        }
+        if ($dis ne "") {
+            $dis += $dis_before if $dis_before ne "";
+        } else {
+            $dis = $dis_before;
+        }
     }
     ($timediff_before, $dis_before) = ($timediff, $dis);
     $last_ignore = $ignore ? 1 : $ignore_before ? -1 : 0;
