@@ -1491,9 +1491,17 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     }
 
     # must delay output by one point because current point may be ignored in next iteration
+    my $num_removals_in_row2 = $i == 0 ? 0 : $IGN[$i - 1];
+    my $prev_not_ignored = $IGN[$i] == 0;
+    # warning("ignored $num_removals_in_row2 points in a row") if $num_removals_in_row2 > 1 && $prev_not_ignored;
     if (!$ignore_before && !$prev_ignore) { # previous point not ignored this time and in iteration before
+        abort("FATAL: internal inconsistency on number of most recent removals in a row: ".
+              "$num_removals_in_row vs. $num_removals_in_row2, condition 1 vs. $prev_not_ignored")
+            if $num_removals_in_row != $num_removals_in_row2 || !$prev_not_ignored;
         warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
         $num_removals_in_row = 0;
+    } elsif ($prev_not_ignored) {
+        abort("FATAL: internal inconsistency on condition for reporting number of most recent removals in a row");
     }
 
     if ($ignore) {
@@ -1515,7 +1523,13 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     }
     ($prev_ignore, $prev_timediff, $prev_dis) = ($ignore, $timediff, $dis);
 }
+my $num_removals_in_row_final = $IGN[$#TIM + 1] // 0;
+# warning("ignored $num_removals_in_row_final points in a row") if $num_removals_in_row_final > 1;
+abort("FATAL: internal inconsistency on reporting number of final removals in a row: ".
+      "$num_removals_in_row vs. $num_removals_in_row_final")
+    if $num_removals_in_row != $num_removals_in_row_final;
 warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
+# note that in the GPX output information on points sanitzed at the end of the track will get lost
 
 $avg_timediff = $num_pts_mov ? $sum_timediff_mov0 / $num_pts_mov : 0; # used for smoothing
 # $sum_timediff_mov will be recalculated thereafter, since points may have been ignored or smoothened
