@@ -636,8 +636,8 @@ sub recalculate_all {
 sub remove_trkpt { my ($i, $last, $undo_time_gap_fill) = @_;
     # undo_time_gap_fill implies: do not count the previously inserted point being ignored, ignore segment start,
     # and due to linear interpolation keep the speed but re-calculate the distance (simply by addition) and rate
-    $IGN[ $i + 1 ] += $IGN[$i] + ($undo_time_gap_fill ? 0 : 1); # indicate that previous point has been ignored, in addition to any previous ignores
-    $SEG[ $i + 1 ] = 1 if $i <= $last && $SEG[$i] && !$undo_time_gap_fill; # copy over any segment start
+    $IGN[$i + 1] += $IGN[$i] + ($undo_time_gap_fill ? 0 : 1); # indicate that previous point has been ignored, in addition to any previous ignores
+    $SEG[$i + 1] = 1 if $i <= $last && $SEG[$i] && !$undo_time_gap_fill; # copy over any segment start
     my $dis_before = $DIS[$i];
     splice @IGN, $i, 1;
     splice @SEG, $i, 1;
@@ -1081,10 +1081,10 @@ for (my $state = 0,
         if ($state < 3) { # at the first point in trkseg, first handle last point of segment before
             $prev_avail_ele = "";
             if ( CARRY_OVER_ELE && $ele ne "" ) {
-                if ( $i > 0 && $ELE[ $i - 1 ] eq "" ) {
+                if ( $i > 0 && $ELE[$i - 1] eq "" ) {
                     # fill in altitude in last point of segment before
-                    $FLG[ $i - 1 ] |= SUBSTITUTED_ELE;
-                    $ELE[ $i - 1 ] = $prev_ele = $ele;
+                    $FLG[$i - 1] |= SUBSTITUTED_ELE;
+                    $ELE[$i - 1] = $prev_ele = $ele;
                     recalculate_all($i - 1);
                     $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # recalculation
                     $ele_miss_length += $DIS[$i - 1] if $ele_miss_start;
@@ -1097,11 +1097,11 @@ for (my $state = 0,
                 $ele_miss_start = 0;
             }
             if ( CARRY_OVER_TIME && $tim ne "" ) {
-                if ( $i > 0 && $TIM[ $i - 1 ] eq "" ) {
+                if ( $i > 0 && $TIM[$i - 1] eq "" ) {
                     # fill in time in last point of segment before
-                    $FLG[ $i - 1 ] |= SUBSTITUTED_TIM;
-                    $TIM[ $i - 1 ] = $tim;
-                    $SEC[ $i - 1 ] = $sec;
+                    $FLG[$i - 1] |= SUBSTITUTED_TIM;
+                    $TIM[$i - 1] = $tim;
+                    $SEC[$i - 1] = $sec;
                     recalculate_SPD($i - 1);
                     recalculate_RAT($i - 1);
                     $tim_miss_length += $DIS[$i - 1] if $tim_miss_start;
