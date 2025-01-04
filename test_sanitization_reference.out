@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx creator="" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata>
+<name><![CDATA[GPXconv sanitization test data]]></name>
+<link href="https://github.com/DDvO/GPXConv">
+<text>GPXconv sanitization test data</text>
+</link>
+<time>1970-01-01T00:00:00Z</time>
+<bounds minlat="0.00000" minlon="1.00000" maxlat="0.00016" maxlon="1.00800"/>
+</metadata>
+<wpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:00:00Z</time><name>[start]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:00:00Z</time><name>[min altitude = 0 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:30:00Z</time><name>[max ascent rate = +1804 m/h at 1 km/h]</name></wpt>
+<wpt lat="0.00016" lon="1.00800"><ele>   1</ele><time>1970-01-01T00:41:00Z</time><name>[max speed = 50 km/h]</name></wpt>
+<wpt lat="0.00016" lon="1.00800"><ele>   1</ele><time>1970-01-01T00:41:00Z</time><name>[max descent rate = -195 m/h at 50 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time><name>[max altitude = 12 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time><name>[end; total track length = 1.289 km; total track duration = 1:00:00 h; total moving time = 0:01:00 h, with speed being at least 1 km/h; average moving speed = 50.3 km/h]</name></wpt>
+<trk>
+<cmt>
+GPXConv statistics (not including 10 sanitized trackpoints nor periods between segments)
+At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:00:00Z: start
+At lat,lon,ele = 0.00016,1.00800,   1 time = 1970-01-01T00:41:00Z: max speed        =    50 km/h
+At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:00:00Z: min altitude     =     0 m
+At lat,lon,ele = 0.00000,1.00000,  12 time = 1970-01-01T01:00:00Z: max altitude     =    12 m
+At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:30:00Z: max  ascent rate = +1804 m/h at 1 km/h
+At lat,lon,ele = 0.00016,1.00800,   1 time = 1970-01-01T00:41:00Z: max descent rate =  -195 m/h at 50 km/h
+At lat,lon,ele = 0.00000,1.00000,  12 time = 1970-01-01T01:00:00Z: end
+total track length   = 1.289 km
+total track duration = 1:00:00 h
+total moving time    = 0:01:00 h, with speed being at least 1 km/h
+average moving speed = 50.3 km/h
+1 point ignored due to altitude less than -450 m
+1 point ignored due to direction change out of range -170°..+170°
+3 points ignored due to speed out of range 0..200 km/h
+1 point ignored due to acceleration more than 5 m/s/s
+1 point ignored due to deceleration more than 10 m/s/s
+1 point ignored due to ascent rate more than 20000 m/s
+1 point ignored due to descent rate more than 20000 m/s
+1 point ignored due to time difference less than 2 sec
+0 points inserted due to time gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end
+</cmt>
+<trkseg>
+<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:00:00Z</time><cmt>2 previous points ignored</cmt></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:30:00Z</time><cmt>2 previous points ignored</cmt><src>computed speed</src><extensions><speed>  1</speed></extensions></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="0.00016" lon="1.00048"><ele>   1</ele><time>1970-01-01T00:40:00Z</time></trkpt>
+<trkpt lat="0.00016" lon="1.00800"><ele>   1</ele><time>1970-01-01T00:41:00Z</time><cmt>2 previous points ignored</cmt><src>computed speed</src><extensions><speed> 50</speed></extensions></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time><cmt>2 previous points ignored</cmt></trkpt>
+</trkseg>
+</trk>
+</gpx>

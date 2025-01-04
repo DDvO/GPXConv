@@ -10,3 +10,6 @@ gpxconv $GPXCONV_TEST_ARGS test.gpx  >test.out  2>test.log; diff test{_reference
 gpxconv $GPXCONV_TEST_ARGS test.out  >test.out2 2>test.log2
 # 3rd iteration should not lead to changes compared to 2nd one:
 gpxconv $GPXCONV_TEST_ARGS test.out2 >test.out3 2>test.log3; diff test.out{2,3}; diff test.log{2,3}
+
+gpxconv test_sanitization.gpx >test_sanitization.out 2>test_sanitization.log
+diff test_sanitization{_reference,}.out; diff test_sanitization{_reference,}.log

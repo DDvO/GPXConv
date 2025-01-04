@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gpx creator="" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata>
+<name><![CDATA[GPXconv sanitization test data]]></name>
+<link href="https://github.com/DDvO/GPXConv">
+<text>GPXconv sanitization test data</text>
+</link>
+<time>2024-07-11T23:30:00Z</time><bounds maxlat="" maxlon="" minlat="0.0" minlon="0.0"/>
+</metadata>
+
+<trk>
+ <trkseg>
+  <trkpt lat="0.0" lon="1.0"><ele>0</ele><time>1969-12-31T23:30:00Z</time><cmt>recorded speed is negative; at track start</cmt><extensions><gpxtpx:TrackPointExtension><gpxtpx:speed>-0.01</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+  <trkpt lat="0.0" lon="1.0"><ele>0</ele><time>1969-12-31T23:45:00Z</time><cmt>recorded speed 360 is higher than 200</cmt><extensions><gpxtpx:TrackPointExtension><gpxtpx:speed>100</gpxtpx:speed></gpxtpx:TrackPointExtension></extensions></trkpt>
+  <trkpt lat="0.0" lon="1.0"><ele>0</ele><time>1970-01-01T00:00:00Z</time></trkpt>
+  <trkpt lat="0.0" lon="1.00101"><ele>0</ele><time>1970-01-01T00:00:02Z</time><cmt>speed 202 is higher than 200</cmt></trkpt>
+  <trkpt lat="0.0" lon="1.0"><ele>-450.0001</ele><time>1970-01-01T00:15:02Z</time><cmt>altitude is less than -450</cmt></trkpt>
+  <trkpt lat="0.0" lon="1.0"><ele>0</ele><time>1970-01-01T00:30:00Z</time></trkpt>
+ </trkseg>
+ <trkseg>
+   <trkpt lat="0.00016" lon="1.00048"><ele>1</ele><time>1970-01-01T00:40:00Z</time></trkpt>
+   <trkpt lat="0.00000" lon="1.00000"><ele>2</ele><time>1970-01-01T00:40:21Z</time><cmt>direction change = +171°</cmt></trkpt>
+   <trkpt lat="0.00023" lon="1.00045"><ele>3</ele><time>1970-01-01T00:40:23Z</time><cmt>acceleration = 12.7 m/s/s</cmt></trkpt>
+   <trkpt lat="0.00016" lon="1.00800"><ele>1</ele><time>1970-01-01T00:41:00Z</time></trkpt>
+   <trkpt lat="0.00016" lon="1.00801"><ele>1</ele><time>1970-01-01T00:41:01Z</time><cmt>deceleration = 12.9 m/s/s</cmt></trkpt>
+   <trkpt lat="0.00016" lon="1.00802"><ele>1</ele><time>1970-01-01T00:41:01.5Z</time><cmt>time difference = 1.5 sec</cmt></trkpt>
+ </trkseg>
+ <trkseg>
+  <trkpt lat="0.0" lon="1.0"><ele>12</ele><time>1970-01-01T01:00:00Z</time></trkpt>
+  <trkpt lat="0.0" lon="1.0"><ele>00</ele><time>1970-01-01T01:00:02Z</time><cmt>descent rate = -21600 m/h</cmt></trkpt>
+  <trkpt lat="0.0" lon="1.0"><ele>36</ele><time>1970-01-01T01:00:04Z</time><cmt> ascent rate = +21600 m/h; at track end</cmt></trkpt>
+ </trkseg>
+</trk>
+
+</gpx>
