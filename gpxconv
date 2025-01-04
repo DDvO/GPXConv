@@ -1344,9 +1344,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     }
 
     my $comp_spd = "";
-    if ($SEG[$i]) { # at segment start
-        $acc = $rate = ""; # keep any recorded speed, but reset acceleration and climb/descent rate
-    } elsif (!$ignore) {
+    if (!$ignore && !$SEG[$i]) { # not already ignoring current point, not at segment start
         (my $diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
         my ($theta_diff, $Spd2) = (0, "");
         if (!$SEG[$i - 1]) { # previous point not at segment start, implies $i >= 2 here
@@ -1400,23 +1398,19 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         warn_trkpt("before  ", "$Spd_txt distance between points = $Dis (more than ".(WARNING_TPT_DIST / 1000).")") if $dis > WARNING_TPT_DIST;
 
         # handle case(s) that involve (one or) two points before and may lead to removing point before
-        $ignore = 1; # tentatively remove point before
         if (MAX_PLAUSIBLE_ANGLE_DIFF < abs($theta_diff)) {
             $num_removals_dir++;
             ignore_trkpt_before($Spd2, "direction change = $Theta_diff° (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_PLAUSIBLE_ANGLE_DIFF."°)");
-        } else {
-            $ignore = 0;
+            $ignore_before = 1;
         }
-        if ($ignore) {
+        if ($ignore_before) {
             $num_removals_in_row++;
             remove_trkpt($i - 1, $i); # also recalculates speed etc. of former point $i relative to its new previous point
             $i--;
-            $ignore_before = 1;
-            $ignore = 0;
         }
 
         # handle cases that involves point before may lead to removing current point
-        $ignore = 1; # tentatively remove current point
+        $ignore = 1; # tentatively indicate removal of current point
         if ($spd ne "" && $Spd > $MAX_PLAUSIBLE_SPEED) {
             $num_removals_spd++;
             ignore_trkpt($Spd, "speed is higher than ".$MAX_PLAUSIBLE_SPEED);
