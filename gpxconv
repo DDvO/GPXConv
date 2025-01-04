@@ -551,7 +551,7 @@ sub parse_point {
     my $ignore = 0;
     $ignore = 1 if
         (diff_defined($sec, $begin_sec) // 0) < 0 && ++$num_ignored_before ||
-        (diff_defined($sec,   $end_sec) // 0) < 0 && ++$num_ignored_after  ||
+        (diff_defined($sec,   $end_sec) // 0) > 0 && ++$num_ignored_after  ||
          $max_elem  && $_[0] =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
          $min_elem  && $_[0] =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below;
 
