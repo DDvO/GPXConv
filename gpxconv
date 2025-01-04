@@ -1419,7 +1419,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         $ignore = 1; # tentatively remove current point
         if ($spd ne "" && $Spd > $MAX_PLAUSIBLE_SPEED) {
             $num_removals_spd++;
-            ignore_trkpt($Spd, "speed higher than ".$MAX_PLAUSIBLE_SPEED);
+            ignore_trkpt($Spd, "speed is higher than ".$MAX_PLAUSIBLE_SPEED);
         } elsif ($acc ne "" &&  $acc > $MAX_PLAUSIBLE_ACCEL &&
                  ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
             $num_removals_acc++;
@@ -1439,8 +1439,8 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         {
             my $inter = $FLG[$i] & INTERPOLATED_TIM ? "interpolated " : "";
             $num_removals_diff++;
-            ignore_trkpt($Spd, $inter."time difference = ".int($timediff).
-                         " sec (less than $MIN_TIMEDIFF) over a distance of $Dis") if $timediff > 1.001;
+            ignore_trkpt($Spd, $inter."time difference = $timediff sec (less than $MIN_TIMEDIFF)");
+            #" over a distance of $Dis" if $timediff > 1.001
         } else {
             $ignore = 0;
             if (!$ignore_before && $timediff ne "" && $spd ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH)
