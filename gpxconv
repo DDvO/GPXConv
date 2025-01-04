@@ -1296,8 +1296,9 @@ for (my $state = 0,
             $time_gap_length = 0;
         }
         my $sec_str = defined $sec ? epoch_to_str($sec) : "";
-        abort("FATAL: inconsistent time data for trkpt ".($i + 1).": tim=$tim != $sec_str (=$sec)")
-            if $tim ne $sec_str && !($tim =~ m/\.999Z/ && defined $sec && $tim eq epoch_to_str($sec - 0.001));
+        abort("FATAL: internally inconsistent time data for trkpt ".($i + 1).": tim=$tim != $sec_str (=$sec)")
+            if $tim =~ s/(\.\d*?)0+Z/$1Z/r ne $sec_str =~ s/(\.\d*?)0+Z/$1Z/r &&
+            !($tim =~ m/\.999Z/ && defined $sec && $tim eq epoch_to_str($sec - 0.001));
 
         # will go wrong if previous trkpt gets ignored: $ELE[$#ELE] = $ELE[$#ELE-1] if $ele eq "" && !$SEG[$#ELE]; # implies $#ELE > 0
         $i++;
