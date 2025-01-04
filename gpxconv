@@ -1332,15 +1332,37 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         warn_trkpt_i($index, "ignoring", "$Spd_txt because $reason");
     }
 
+    # debug "$i $tim $num_removals_in_row vs. $IGN[$i - 1] $IGN[$i]";
+    # must delay report by one point because current point may be ignored in next iteration,
+    # yet better report before any output on current point being ignored
+    sub report_ignored_in_row {
+        my $num_removals_in_row2 = $i == 0 ? 0 : $IGN[$i - 1];
+        my $prev_not_ignored = $IGN[$i] == 0;
+        # warning("ignored $num_removals_in_row2 points in a row") if $num_removals_in_row2 > 1 && $prev_not_ignored;
+        if (!$ignore_before && !$prev_ignore) { # previous point not ignored this time and in iteration before
+            abort("FATAL: internal inconsistency on number of most recent removals in a row: ".
+                  "$num_removals_in_row vs. $num_removals_in_row2, condition 1 vs. $prev_not_ignored")
+                if $num_removals_in_row != $num_removals_in_row2 || !$prev_not_ignored;
+            warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
+            $num_removals_in_row = 0;
+        } elsif ($prev_not_ignored) {
+            abort("FATAL: internal inconsistency on condition for reporting number of most recent removals in a row");
+        }
+    }
+
     # handle case(s) that do not involve earlier points and lead to removing current point
     if ($ele ne "" && $ele < MIN_PLAUSIBLE_ELE) {
         $num_removals_ele++;
         $ignore = 1;
+        report_ignored_in_row();
         ignore_trkpt("", "altitude is less than ".MIN_PLAUSIBLE_ELE);
     } elsif ($spd ne "" && ($spd < 0 || MPS2KMPH * $spd > $MAX_PLAUSIBLE_SPEED)) {
         $num_removals_spd++;
         $ignore = 1;
+        report_ignored_in_row();
         ignore_trkpt(spd_string($spd), "recorded speed is ". ($spd < 0 ? "negative" : "higher than ".$MAX_PLAUSIBLE_SPEED));
+    } elsif ($SEG[$i]) {
+        report_ignored_in_row();
     }
 
     my $comp_spd = "";
@@ -1403,6 +1425,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             ignore_trkpt_before($Spd2, "direction change = $Theta_diff° (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_PLAUSIBLE_ANGLE_DIFF."°)");
             $ignore_before = 1;
         }
+        report_ignored_in_row();
         if ($ignore_before) {
             $num_removals_in_row++;
             remove_trkpt($i - 1, $i); # also recalculates speed etc. of former point $i relative to its new previous point
@@ -1443,20 +1466,6 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
                 $num_pts_mov++;                  # used for smoothing
             }
         }
-    }
-
-    # must delay output by one point because current point may be ignored in next iteration
-    my $num_removals_in_row2 = $i == 0 ? 0 : $IGN[$i - 1];
-    my $prev_not_ignored = $IGN[$i] == 0;
-    # warning("ignored $num_removals_in_row2 points in a row") if $num_removals_in_row2 > 1 && $prev_not_ignored;
-    if (!$ignore_before && !$prev_ignore) { # previous point not ignored this time and in iteration before
-        abort("FATAL: internal inconsistency on number of most recent removals in a row: ".
-              "$num_removals_in_row vs. $num_removals_in_row2, condition 1 vs. $prev_not_ignored")
-            if $num_removals_in_row != $num_removals_in_row2 || !$prev_not_ignored;
-        warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
-        $num_removals_in_row = 0;
-    } elsif ($prev_not_ignored) {
-        abort("FATAL: internal inconsistency on condition for reporting number of most recent removals in a row");
     }
 
     if ($ignore) {

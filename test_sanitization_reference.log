@@ -7,17 +7,17 @@ INFO   : further segment at <trkpt lat="0.0"     lon="1.0"     <ele>  12      <t
 INFO   : last   segment end <trkpt lat="0.0"     lon="1.0"     <ele>  36      <time>1970-01-01T01:00:04Z
 WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>   0      <time>1969-12-31T23:30:00Z   at speed =  -0 km/h because recorded speed is negative
 WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>   0      <time>1969-12-31T23:45:00Z   at speed = 360 km/h because recorded speed is higher than 200
-WARNING: ignoring <trkpt lat="0.0"     lon="1.00101" <ele>   0      <time>1970-01-01T00:00:02Z   at speed = 202 km/h because speed is higher than 200
 WARNING: ignored 2 points in a row
+WARNING: ignoring <trkpt lat="0.0"     lon="1.00101" <ele>   0      <time>1970-01-01T00:00:02Z   at speed = 202 km/h because speed is higher than 200
 WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>-450.0001 <time>1970-01-01T00:15:02Z   because altitude is less than -450
 WARNING: ignored 2 points in a row
 WARNING: ignoring <trkpt lat="0.00000" lon="1.00000" <ele>   2      <time>1970-01-01T00:40:21Z   at speed =  18 km/h because direction change = +171° (more than  170°)
 WARNING: ignoring <trkpt lat="0.00023" lon="1.00045" <ele>   3      <time>1970-01-01T00:40:23Z   at speed = 101 km/h because acceleration = 12.7 m/s/s (more than 5)
+WARNING: ignored 2 points in a row
 WARNING: ignoring <trkpt lat="0.00016" lon="1.00801" <ele>   1      <time>1970-01-01T00:41:01Z   at speed =   4 km/h because deceleration = 12.9 m/s/s (more than 10)
-WARNING: ignored 2 points in a row
 WARNING: ignoring <trkpt lat="0.00016" lon="1.00802" <ele>   1      <time>1970-01-01T00:41:01.5Z at speed =   3 km/h because time difference = 1.5 sec (less than 2)
-WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  00      <time>1970-01-01T01:00:02Z   at speed =  22 km/h because descent rate = -21600 m/h (less than -20000)
 WARNING: ignored 2 points in a row
+WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  00      <time>1970-01-01T01:00:02Z   at speed =  22 km/h because descent rate = -21600 m/h (less than -20000)
 WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  36      <time>1970-01-01T01:00:04Z   at speed =  32 km/h because  ascent rate = +21600 m/h (more than  20000)
 WARNING: ignored 2 points in a row
 
