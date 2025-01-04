@@ -1489,7 +1489,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     }
     ($prev_ignore, $prev_timediff, $prev_dis) = ($ignore, $timediff, $dis);
 }
-my $num_removals_in_row_final = $IGN[$#TIM + 1] // 0;
+my $num_removals_in_row_final = $IGN[$#TIM + 1] // $IGN[$#TIM] // 0;
 # warning("ignored $num_removals_in_row_final points in a row") if $num_removals_in_row_final > 1;
 abort("FATAL: internal inconsistency on reporting number of final removals in a row: ".
       "$num_removals_in_row vs. $num_removals_in_row_final")

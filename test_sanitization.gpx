@@ -29,6 +29,7 @@
   <trkpt lat="0.0" lon="1.0"><ele>12</ele><time>1970-01-01T01:00:00Z</time></trkpt>
   <trkpt lat="0.0" lon="1.0"><ele>00</ele><time>1970-01-01T01:00:02Z</time><cmt>descent rate = -21600 m/h</cmt></trkpt>
   <trkpt lat="0.0" lon="1.0"><ele>36</ele><time>1970-01-01T01:00:04Z</time><cmt> ascent rate = +21600 m/h; at track end</cmt></trkpt>
+  <trkpt_ lat="0.0" lon="1.0"><ele>12</ele><time>1970-01-01T01:00:06Z</time><cmt>may be inserted to test with point at track end not being ignored</cmt></trkpt_>
  </trkseg>
 </trk>
 
