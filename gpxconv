@@ -1942,6 +1942,11 @@ sub correct_ele {    # may update $ele_corr; uses $ele_corr
 
 ## prepare output header
 
+# compensate for any missing essential start tags
+$HEAD = "<gpx>\n".$HEAD unless $HEAD =~ m/<gpx[ >]/;
+$HEAD = $HEAD."<trkseg>\n" unless $HEAD =~ m/<trkseg>/;
+$HEAD =~ s/(<trkseg>)/<trk>\n$1/s unless $HEAD =~ m/<trk>/;
+
 $HEAD =~ s|(<gpx)([ >])|$1 version="1.1"$2|     unless $HEAD =~ m|<gpx.*? version\s*=.*?>|s;
 $HEAD =~ s|(<gpx)([ >])|$1 creator="$TOOL_ID"$2| unless $HEAD =~ m|<gpx.*? creator\s*=.*?>|s;
 # $HEAD =~ s|(<gpx[ >])|$1xmlns:x="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" |; # would not fit for our simple speed extension, and if so, should not be duplicated
@@ -1970,7 +1975,7 @@ if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' op
             ||     $HEAD =~ s|(\r?\n?[ \t]*<bounds[ >])|$indent<time>$min_tim</time>$1|s;
     }
 } else {
-    abort("FATAL: cannot find </metadata> in header");
+    abort("FATAL: cannot find </metadata>, which is usually part of header");
 }
 $HEAD =~ s/(\r?\n)*[ \t]*(<trk>)/$1$2/sg; # remove empty lines (after metadata) and indentation before <trk>
 $HEAD =~ s/ *$//;
