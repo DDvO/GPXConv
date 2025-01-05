@@ -633,11 +633,13 @@ sub recalculate_all {
     recalculate_RAT($i);
 }
 
-sub remove_trkpt { my ($i, $curr, $undo_time_gap_fill) = @_; # so far, used only with $i == $curr - 1 or $i == $curr
+sub remove_trkpt {
     # undo_time_gap_fill implies: do not count the previously inserted point being ignored, ignore segment start,
-    # and due to linear interpolation keep the speed but re-calculate the distance (simply by addition) and rate
-    $IGN[$i + 1] += $IGN[$i] + ($undo_time_gap_fill ? 0 : 1); # indicate that previous point has been ignored, in addition to any previous ignores
-    $SEG[$i + 1] = 1 if $SEG[$i] && !$undo_time_gap_fill; # copy over any segment start
+    # and due to linear interpolation keep the speed but re-calculate the distance (simply by addition) and rate.
+    my ($i, $undo_time_gap_fill) = @_;
+    # indicate that previous point has been ignored, in addition to any previous ignores:
+    $IGN[$i + 1] += $IGN[$i] + ($undo_time_gap_fill ? 0 : 1); # do this also if  $i == $#TIM
+    $SEG[$i + 1] = 1 if $i < $#TIM && $SEG[$i] && !$undo_time_gap_fill; # copy over any segment start
     my $dis_before = $DIS[$i];
     splice @IGN, $i, 1;
     splice @SEG, $i, 1;
@@ -657,7 +659,7 @@ sub remove_trkpt { my ($i, $curr, $undo_time_gap_fill) = @_; # so far, used only
     if ($undo_time_gap_fill) {
         $DIS[$i] += $dis_before if $i > 0;
         recalculate_RAT($i);
-    } elsif ($i < $curr) {
+    } elsif ($i <= $#TIM) { # note that $#TIM has been decremented
         recalculate_DIS($i);
         recalculate_SPD($i);
         recalculate_RAT($i);
@@ -1320,7 +1322,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
 
     # silently ignore any point inserted or duplicated by a previous run of this tool
     while ($SRC[$i] =~ m#(^|\W)bridging time gap($|\W)# && $FIX[$i] =~ m#(^|\W)none($|\W)#) {
-        remove_trkpt($i, $i, 1);
+        remove_trkpt($i, 1);
     }
     ($lat    , $lon    , $ele    , $tim    , $sec    , $spd    ) =
     ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i]);
@@ -1430,8 +1432,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         report_ignored_in_row();
         if ($ignore_before) {
             $num_removals_in_row++;
-            remove_trkpt($i - 1, $i); # also recalculates speed etc. of former point $i relative to its new previous point
-            $i--;
+            remove_trkpt(--$i); # also recalculates speed etc. of former point $i relative to its new previous point
         }
 
         # handle cases that involves point before may lead to removing current point
@@ -1472,8 +1473,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
 
     if ($ignore) {
         $num_removals_in_row++;
-        remove_trkpt($i, $i); # also recalculates speed etc. of former point $i + 1 relative to its new previous point
-        $i--;
+        remove_trkpt($i--); # also recalculates speed etc. of former point $i + 1 relative to its new previous point
     }
     if ($ignore_before) {
         if ($timediff ne "") {

@@ -1,45 +1,50 @@
 INFO   : initial track, from file test_sanitization.gpx
 INFO   : first   segment at <trkpt lat="0.0" lon="1.0" <ele>0 <time>1969-12-31T23:30:00Z
-INFO   : end of  segment at <trkpt lat="0.0" lon="1.0"     <ele>   0      <time>1970-01-01T00:30:00Z
-INFO   : further segment at <trkpt lat="0.00016" lon="1.00048" <ele>   1      <time>1970-01-01T00:40:00Z after a time gap of 0:10:00 h and 0.056 km
-INFO   : end of  segment at <trkpt lat="0.00016" lon="1.00802" <ele>   1      <time>1970-01-01T00:41:01.5Z
-INFO   : further segment at <trkpt lat="0.0"     lon="1.0"     <ele>  12      <time>1970-01-01T01:00:00Z   after a time gap of 0:18:59 h and 0.891 km
-INFO   : last   segment end <trkpt lat="0.0"     lon="1.0"     <ele>  36      <time>1970-01-01T01:00:04Z
-WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>   0      <time>1969-12-31T23:30:00Z   at speed =  -0 km/h because recorded speed is negative
-WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>   0      <time>1969-12-31T23:45:00Z   at speed = 360 km/h because recorded speed is higher than 200
+INFO   : end of  segment at <trkpt lat="0.0" lon="1.0"     <ele>   0    <time>1970-01-01T00:30:00Z
+INFO   : further segment at <trkpt lat="0.00016" lon="1.00048" <ele>   1    <time>1970-01-01T00:40:00Z after a time gap of 0:10:00 h and 0.056 km
+INFO   : end of  segment at <trkpt lat="0.00016" lon="1.00803" <ele>   1    <time>1970-01-01T00:41:01.5Z
+INFO   : further segment at <trkpt lat="0.0000"  lon="1"       <ele>  45    <time>1970-01-01T00:45:00Z   after a time gap of 0:03:59 h and 0.893 km
+INFO   : end of  segment at <trkpt lat="0.0007"  lon="0.9997"  <ele>  15    <time>1970-01-01T00:45:10Z
+INFO   : further segment at <trkpt lat="0.0"     lon="1.0"     <ele>  12    <time>1970-01-01T01:00:00Z   after a time gap of 0:14:50 h and 0.085 km
+INFO   : last   segment end <trkpt lat="0.0"     lon="1.0"     <ele>  36    <time>1970-01-01T01:00:04Z
+WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>   0    <time>1969-12-31T23:30:00Z   at speed =  -0 km/h because recorded speed is negative
+WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>   0    <time>1969-12-31T23:45:00Z   at speed = 360 km/h because recorded speed is higher than 200
 WARNING: ignored 2 points in a row
-WARNING: ignoring <trkpt lat="0.0"     lon="1.00101" <ele>   0      <time>1970-01-01T00:00:02Z   at speed = 202 km/h because speed is higher than 200
-WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>-450.0001 <time>1970-01-01T00:15:02Z   because altitude is less than -450
+WARNING: ignoring <trkpt lat="0.0"     lon="1.00101" <ele>   0    <time>1970-01-01T00:00:02Z   at speed = 202 km/h because speed is higher than 200
+WARNING: ignoring <trkpt lat="0.0"     lon="1"       <ele>-450.01 <time>1970-01-01T00:15:02Z   because altitude is less than -450
 WARNING: ignored 2 points in a row
-WARNING: ignoring <trkpt lat="0.00000" lon="1.00000" <ele>   2      <time>1970-01-01T00:40:21Z   at speed =  18 km/h because direction change = +171° (more than  170°)
-WARNING: ignoring <trkpt lat="0.00023" lon="1.00045" <ele>   3      <time>1970-01-01T00:40:23Z   at speed = 101 km/h because acceleration = 12.7 m/s/s (more than 5)
+WARNING: ignoring <trkpt lat="0.00000" lon="1.00000" <ele>   2    <time>1970-01-01T00:40:21Z   at speed =  18 km/h because direction change = +171° (more than  170°)
+WARNING: ignoring <trkpt lat="0.00023" lon="1.00045" <ele>   3    <time>1970-01-01T00:40:23Z   at speed = 101 km/h because acceleration = 12.7 m/s/s (more than 5)
 WARNING: ignored 2 points in a row
-WARNING: ignoring <trkpt lat="0.00016" lon="1.00801" <ele>   1      <time>1970-01-01T00:41:01Z   at speed =   4 km/h because deceleration = 12.9 m/s/s (more than 10)
-WARNING: ignoring <trkpt lat="0.00016" lon="1.00802" <ele>   1      <time>1970-01-01T00:41:01.5Z at speed =   3 km/h because time difference = 1.5 sec (less than 2)
+WARNING: ignoring <trkpt lat="0.00016" lon="1.00802" <ele>   1    <time>1970-01-01T00:41:01Z   at speed =   4 km/h because deceleration = 12.8 m/s/s (more than 10)
+WARNING: ignoring <trkpt lat="0.00016" lon="1.00803" <ele>   1    <time>1970-01-01T00:41:01.5Z at speed =   5 km/h because time difference = 1.5 sec (less than 2)
 WARNING: ignored 2 points in a row
-WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  00      <time>1970-01-01T01:00:02Z   at speed =  22 km/h because descent rate = -21600 m/h (less than -20000)
-WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  36      <time>1970-01-01T01:00:04Z   at speed =  32 km/h because  ascent rate = +21600 m/h (more than  20000)
+WARNING: ignoring <trkpt lat="0.0001"  lon="1"       <ele>  30    <time>1970-01-01T00:45:02Z   at speed =  34 km/h because descent rate = -27000 m/h (less than -20000)
+WARNING: ignoring <trkpt lat="0.0003"  lon="1"       <ele>  20    <time>1970-01-01T00:45:04Z   at speed =  38 km/h because descent rate = -22500 m/h (less than -20000)
+WARNING: ignored 2 points in a row
+WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  00    <time>1970-01-01T01:00:02Z   at speed =  22 km/h because descent rate = -21600 m/h (less than -20000)
+WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  36    <time>1970-01-01T01:00:04Z   at speed =  32 km/h because  ascent rate = +21600 m/h (more than  20000)
 WARNING: ignored 2 points in a row
 
-INFO   : GPXConv statistics (not including 10 sanitized trackpoints nor periods between segments)
+INFO   : GPXConv statistics (not including 12 sanitized trackpoints nor periods between segments)
 At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:00:00Z: start
-At lat,lon,ele = 0.00016,1.00800,   1 time = 1970-01-01T00:41:00Z: max speed        =    50 km/h
+At lat,lon,ele = 0.00070,1.00000,  15 time = 1970-01-01T00:45:08Z: max speed        =    60 km/h
 At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:00:00Z: min altitude     =     0 m
-At lat,lon,ele = 0.00000,1.00000,  12 time = 1970-01-01T01:00:00Z: max altitude     =    12 m
-At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:30:00Z: max  ascent rate = +1804 m/h at 1 km/h
-At lat,lon,ele = 0.00016,1.00800,   1 time = 1970-01-01T00:41:00Z: max descent rate =  -195 m/h at 50 km/h
+At lat,lon,ele = 0.00000,1.00000,  45 time = 1970-01-01T00:45:00Z: max altitude     =    45 m
+At lat,lon,ele = 0.00040,1.00000,  15 time = 1970-01-01T00:45:06Z: total descent    =   -30 m; avg rate  = -18000 m/h
+At lat,lon,ele = 0.00040,1.00000,  15 time = 1970-01-01T00:45:06Z: max descent rate = -18000 m/h at 32 km/h
 At lat,lon,ele = 0.00000,1.00000,  12 time = 1970-01-01T01:00:00Z: end
-total track length   = 1.289 km
+total track length   = 0.957 km
 total track duration = 1:00:00 h
-total moving time    = 0:01:00 h, with speed being at least 1 km/h
-average moving speed = 50.3 km/h
+total moving time    = 0:01:10 h, with speed being at least 1 km/h
+average moving speed = 49.2 km/h
 1 point ignored due to altitude less than -450 m
 1 point ignored due to direction change out of range -170°..+170°
 3 points ignored due to speed out of range 0..200 km/h
 1 point ignored due to acceleration more than 5 m/s/s
 1 point ignored due to deceleration more than 10 m/s/s
 1 point ignored due to ascent rate more than 20000 m/s
-1 point ignored due to descent rate more than 20000 m/s
+3 points ignored due to descent rate more than 20000 m/s
 1 point ignored due to time difference less than 2 sec
 0 points inserted due to time gaps > 1800 seconds
 elevation not corrected
