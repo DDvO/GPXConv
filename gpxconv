@@ -11,6 +11,7 @@
 #
 # Reports missing data and by default ignores points containing implausible data w.r.t.
 # altitude, ascent/descent rate, speed, acceleration/deceleration, and direction change.
+# Corrects implausible elevation gain/loss after gaps, typically on exit of tunnel or building
 # Optionally filters out points before or after given time limits.
 # Optionally filters out points with an element value below or above given limits.
 # Optionally prunes comments, extensions, or extension elements with value below or above given limits.
@@ -129,6 +130,7 @@ my $MAX_PLAUSIBLE_ACCEL   ; # maximal acceleration m/s/s
 my $MAX_PLAUSIBLE_DECEL   ; # maximal deceleration m/s/s
 my $MAX_PLAUSIBLE_ELE_GAIN; # maximal ascent rate in m/h
 my $MAX_PLAUSIBLE_ELE_LOSS; # maximal descent rate in m/h
+use constant MIN_TUNNEL_GAP           =>   20; # threshold for assuming exit of tunnel or building before elevation gain/loss correction (in seconds)
 use constant MAX_PLAUSIBLE_ANGLE_DIFF =>  170; # maximal plausible turning angle above speed threshold
 use constant MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD => 5; # speed threshold for maximal plausible turning angle in km/h
 use constant MIN_PLAUSIBLE_ELE        => -450; # minimal plausible altitude; actual elevation values on Earth may be as low as -450 m at Dead Sea
@@ -171,6 +173,7 @@ use constant INTERPOLATED_TIM   => 1 << 3;
 use constant SUBSTITUTED_ELE    => 1 << 4;
 use constant SUBSTITUTED_TIM    => 1 << 5;
 use constant COMPUTED_SPEED     => 1 << 6;
+use constant CORRECTED_ELE      => 1 << 7;
 
 # global option variables
 
@@ -1371,6 +1374,17 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
 
     my $comp_spd = "";
     if (!$ignore && !$SEG[$i]) { # not already ignoring current point, not at segment start
+
+        # correct implausible elevation gain/loss after somewhat long gap, typically on exit of tunnel or building
+        $rate = $RAT[$i];
+        if ($rate ne "" && ($rate > $MAX_PLAUSIBLE_ELE_GAIN || $rate < -$MAX_PLAUSIBLE_ELE_LOSS)
+            && !$SEG[$i - 1] && $prev_timediff ne "" && $prev_timediff >= MIN_TUNNEL_GAP) {
+            $ELE[$i - 1] = $ELE[$i];
+            $FLG[$i - 1] |= CORRECTED_ELE;
+            recalculate_all($i - 1);
+            recalculate_all($i);
+        }
+
         (my $diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
         my ($theta_diff, $Spd2) = (0, "");
         if (!$SEG[$i - 1]) { # previous point not at segment start, implies $i >= 2 here
@@ -2333,6 +2347,7 @@ for (my $i = 0; $i <= $#TIM ;$i++) {
         $src .= append_unless_present($src, "substituted altitude" ) if $FLG[$i] & SUBSTITUTED_ELE;
         $src .= append_unless_present($src, "substituted time"     ) if $FLG[$i] & SUBSTITUTED_TIM;
         $src .= append_unless_present($src, "computed speed"       ) if $FLG[$i] & COMPUTED_SPEED && INCLUDE_SPEED;
+        $src .= append_unless_present($src, "corrected altitude"   ) if $FLG[$i] & CORRECTED_ELE;
         print $out "<src>$src</src>" if $src;
     }
     if (!DISABLE_TRKPT_FIX) {

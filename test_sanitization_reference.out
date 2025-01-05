@@ -10,25 +10,29 @@
 </metadata>
 <wpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:00:00Z</time><name>[start]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:00:00Z</time><name>[min altitude = 0 m]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>  45</ele><time>1970-01-01T00:45:00Z</time><name>[max altitude = 45 m]</name></wpt>
-<wpt lat="0.00040" lon="1.00000"><ele>  15</ele><time>1970-01-01T00:45:06Z</time><name>[total descent = -30 m; avg rate = -18000 m/h]</name></wpt>
 <wpt lat="0.00040" lon="1.00000"><ele>  15</ele><time>1970-01-01T00:45:06Z</time><name>[max descent rate = -18000 m/h at 32 km/h]</name></wpt>
 <wpt lat="0.00070" lon="1.00000"><ele>  15</ele><time>1970-01-01T00:45:08Z</time><name>[max speed = 60 km/h]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time><name>[end; total track length = 0.957 km; total track duration = 1:00:00 h; total moving time = 0:01:10 h, with speed being at least 1 km/h; average moving speed = 49.2 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>  90</ele><time>1970-01-01T00:48:00Z</time><name>[max altitude = 90 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:48:24Z</time><name>[total descent = -120 m; avg rate = -14400 m/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>  81</ele><time>1970-01-01T00:49:24Z</time><name>[total ascent = +81 m; avg rate = +12150 m/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>  81</ele><time>1970-01-01T00:49:24Z</time><name>[max ascent rate = +19800 m/h at 20 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time><name>[end; total track length = 1.128 km; total track duration = 1:00:00 h; total moving time = 0:01:54 h, with speed being at least 1 km/h; average moving speed = 35.6 km/h]</name></wpt>
 <trk>
 <cmt>
 GPXConv statistics (not including 12 sanitized trackpoints nor periods between segments)
 At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:00:00Z: start
 At lat,lon,ele = 0.00070,1.00000,  15 time = 1970-01-01T00:45:08Z: max speed        =    60 km/h
 At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:00:00Z: min altitude     =     0 m
-At lat,lon,ele = 0.00000,1.00000,  45 time = 1970-01-01T00:45:00Z: max altitude     =    45 m
-At lat,lon,ele = 0.00040,1.00000,  15 time = 1970-01-01T00:45:06Z: total descent    =   -30 m; avg rate  = -18000 m/h
+At lat,lon,ele = 0.00000,1.00000,  90 time = 1970-01-01T00:48:00Z: max altitude     =    90 m
+At lat,lon,ele = 0.00000,1.00000,  81 time = 1970-01-01T00:49:24Z: total  ascent    =   +81 m; avg rate  = +12150 m/h
+At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:48:24Z: total descent    =  -120 m; avg rate  = -14400 m/h
+At lat,lon,ele = 0.00000,1.00000,  81 time = 1970-01-01T00:49:24Z: max  ascent rate = +19800 m/h at 20 km/h
 At lat,lon,ele = 0.00040,1.00000,  15 time = 1970-01-01T00:45:06Z: max descent rate = -18000 m/h at 32 km/h
 At lat,lon,ele = 0.00000,1.00000,  12 time = 1970-01-01T01:00:00Z: end
-total track length   = 0.957 km
+total track length   = 1.128 km
 total track duration = 1:00:00 h
-total moving time    = 0:01:10 h, with speed being at least 1 km/h
-average moving speed = 49.2 km/h
+total moving time    = 0:01:54 h, with speed being at least 1 km/h
+average moving speed = 35.6 km/h
 1 point ignored due to altitude less than -450 m
 1 point ignored due to direction change out of range -170°..+170°
 3 points ignored due to speed out of range 0..200 km/h
@@ -54,6 +58,18 @@ GPXConv statistics end
 <trkpt lat="0.00040" lon="1.00000"><ele>  15</ele><time>1970-01-01T00:45:06Z</time><cmt>2 previous points ignored; max descent rate = -18000 at 32 km/h</cmt><src>computed speed</src><extensions><speed> 32</speed></extensions></trkpt>
 <trkpt lat="0.00070" lon="1.00000"><ele>  15</ele><time>1970-01-01T00:45:08Z</time><cmt>max speed = 60 km/h</cmt><src>computed speed</src><extensions><speed> 60</speed></extensions></trkpt>
 <trkpt lat="0.00070" lon="0.99970"><ele>  15</ele><time>1970-01-01T00:45:10Z</time><cmt>max speed = 60 km/h</cmt><src>computed speed</src><extensions><speed> 60</speed></extensions></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="0.00000" lon="1.00000"><ele>  90</ele><time>1970-01-01T00:48:00Z</time><cmt>altitude correction after gap</cmt></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  10</ele><time>1970-01-01T00:48:20Z</time><cmt>exit of tunnel</cmt><src>computed speed; corrected altitude</src><extensions><speed> 14</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  10</ele><time>1970-01-01T00:48:22Z</time><cmt>descent rate = -36000 m/h</cmt><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:48:24Z</time><cmt>descent rate = -27000 m/h after ignore</cmt><src>computed speed</src><extensions><speed> 18</speed></extensions></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:49:00Z</time><cmt>altitude correction after gap</cmt></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  70</ele><time>1970-01-01T00:49:20Z</time><cmt>exit of tunnel</cmt><src>computed speed; corrected altitude</src><extensions><speed> 13</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  70</ele><time>1970-01-01T00:49:22Z</time><cmt>ascent rate = +36000 m/h</cmt><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  81</ele><time>1970-01-01T00:49:24Z</time><cmt>ascent rate = +27900 m/h after ignore</cmt><src>computed speed</src><extensions><speed> 20</speed></extensions></trkpt>
 </trkseg>
 <trkseg>
 <trkpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time></trkpt>

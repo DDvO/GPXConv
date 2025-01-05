@@ -33,6 +33,18 @@
    <trkpt lat="0.0007" lon="1"><ele>15</ele><time>1970-01-01T00:45:08Z</time><cmt>max speed = 60 km/h</cmt></trkpt>
    <trkpt lat="0.0007" lon="0.9997"><ele>15</ele><time>1970-01-01T00:45:10Z</time><cmt>max speed = 60 km/h</cmt></trkpt>
  </trkseg>
+<trkseg>
+<trkpt lat="0" lon="1"><ele>90</ele><time>1970-01-01T00:48:00Z</time><cmt>altitude correction after gap</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>30</ele><time>1970-01-01T00:48:20Z</time><cmt>exit of tunnel</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>10</ele><time>1970-01-01T00:48:22Z</time><cmt>descent rate = -36000 m/h</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>00</ele><time>1970-01-01T00:48:24Z</time><cmt>descent rate = -27000 m/h after ignore</cmt></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="0" lon="1"><ele>00</ele><time>1970-01-01T00:49:00Z</time><cmt>altitude correction after gap</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>50</ele><time>1970-01-01T00:49:20Z</time><cmt>exit of tunnel</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>70</ele><time>1970-01-01T00:49:22Z</time><cmt> ascent rate = +36000 m/h</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>81</ele><time>1970-01-01T00:49:24Z</time><cmt> ascent rate = +27900 m/h after ignore</cmt></trkpt>
+</trkseg>
  <trkseg>
   <trkpt lat="0.0" lon="1.0"><ele>12</ele><time>1970-01-01T01:00:00Z</time></trkpt>
   <trkpt lat="0.0" lon="1.0"><ele>00</ele><time>1970-01-01T01:00:02Z</time><cmt>descent rate = -21600 m/h</cmt></trkpt>

@@ -5,7 +5,11 @@ INFO   : further segment at <trkpt lat="0.00016" lon="1.00048" <ele>   1    <tim
 INFO   : end of  segment at <trkpt lat="0.00016" lon="1.00803" <ele>   1    <time>1970-01-01T00:41:01.5Z
 INFO   : further segment at <trkpt lat="0.0000"  lon="1"       <ele>  45    <time>1970-01-01T00:45:00Z   after a time gap of 0:03:59 h and 0.893 km
 INFO   : end of  segment at <trkpt lat="0.0007"  lon="0.9997"  <ele>  15    <time>1970-01-01T00:45:10Z
-INFO   : further segment at <trkpt lat="0.0"     lon="1.0"     <ele>  12    <time>1970-01-01T01:00:00Z   after a time gap of 0:14:50 h and 0.085 km
+INFO   : further segment at <trkpt lat="0"       lon="1"       <ele>  90    <time>1970-01-01T00:48:00Z   after a time gap of 0:02:50 h and 0.113 km
+INFO   : end of  segment at <trkpt lat="0"       lon="1"       <ele>  00    <time>1970-01-01T00:48:24Z
+INFO   : further segment at <trkpt lat="0"       lon="1"       <ele>  00    <time>1970-01-01T00:49:00Z   after a time gap of 0:00:36 h and 0.000 km
+INFO   : end of  segment at <trkpt lat="0"       lon="1"       <ele>  81    <time>1970-01-01T00:49:24Z
+INFO   : further segment at <trkpt lat="0.0"     lon="1.0"     <ele>  12    <time>1970-01-01T01:00:00Z   after a time gap of 0:10:36 h and 0.069 km
 INFO   : last   segment end <trkpt lat="0.0"     lon="1.0"     <ele>  36    <time>1970-01-01T01:00:04Z
 WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>   0    <time>1969-12-31T23:30:00Z   at speed =  -0 km/h because recorded speed is negative
 WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>   0    <time>1969-12-31T23:45:00Z   at speed = 360 km/h because recorded speed is higher than 200
@@ -23,21 +27,23 @@ WARNING: ignoring <trkpt lat="0.0001"  lon="1"       <ele>  30    <time>1970-01-
 WARNING: ignoring <trkpt lat="0.0003"  lon="1"       <ele>  20    <time>1970-01-01T00:45:04Z   at speed =  38 km/h because descent rate = -22500 m/h (less than -20000)
 WARNING: ignored 2 points in a row
 WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  00    <time>1970-01-01T01:00:02Z   at speed =  22 km/h because descent rate = -21600 m/h (less than -20000)
-WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  36    <time>1970-01-01T01:00:04Z   at speed =  32 km/h because  ascent rate = +21600 m/h (more than  20000)
+WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  36    <time>1970-01-01T01:00:04Z   at speed =  22 km/h because  ascent rate = +21600 m/h (more than  20000)
 WARNING: ignored 2 points in a row
 
 INFO   : GPXConv statistics (not including 12 sanitized trackpoints nor periods between segments)
 At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:00:00Z: start
 At lat,lon,ele = 0.00070,1.00000,  15 time = 1970-01-01T00:45:08Z: max speed        =    60 km/h
 At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:00:00Z: min altitude     =     0 m
-At lat,lon,ele = 0.00000,1.00000,  45 time = 1970-01-01T00:45:00Z: max altitude     =    45 m
-At lat,lon,ele = 0.00040,1.00000,  15 time = 1970-01-01T00:45:06Z: total descent    =   -30 m; avg rate  = -18000 m/h
+At lat,lon,ele = 0.00000,1.00000,  90 time = 1970-01-01T00:48:00Z: max altitude     =    90 m
+At lat,lon,ele = 0.00000,1.00000,  81 time = 1970-01-01T00:49:24Z: total  ascent    =   +81 m; avg rate  = +12150 m/h
+At lat,lon,ele = 0.00000,1.00000,   0 time = 1970-01-01T00:48:24Z: total descent    =  -120 m; avg rate  = -14400 m/h
+At lat,lon,ele = 0.00000,1.00000,  81 time = 1970-01-01T00:49:24Z: max  ascent rate = +19800 m/h at 20 km/h
 At lat,lon,ele = 0.00040,1.00000,  15 time = 1970-01-01T00:45:06Z: max descent rate = -18000 m/h at 32 km/h
 At lat,lon,ele = 0.00000,1.00000,  12 time = 1970-01-01T01:00:00Z: end
-total track length   = 0.957 km
+total track length   = 1.128 km
 total track duration = 1:00:00 h
-total moving time    = 0:01:10 h, with speed being at least 1 km/h
-average moving speed = 49.2 km/h
+total moving time    = 0:01:54 h, with speed being at least 1 km/h
+average moving speed = 35.6 km/h
 1 point ignored due to altitude less than -450 m
 1 point ignored due to direction change out of range -170°..+170°
 3 points ignored due to speed out of range 0..200 km/h
