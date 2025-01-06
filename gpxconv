@@ -124,6 +124,7 @@ use constant MAX_SPEED_DEVIATION => 0.25; # threshold for speed measuring deviat
 # sanitization control
 use constant   SANITIZE_TRKPTS   =>    1; # whether trackpoint sanitization is enabled by default
 my $sanitize = SANITIZE_TRKPTS;
+use constant   MIN_TIMEDIFF_PARSING => 2;
 my $MIN_TIMEDIFF          ; # in seconds
 my $MAX_PLAUSIBLE_SPEED   ; # maximal speed in km/h
 my $MAX_PLAUSIBLE_ACCEL   ; # maximal acceleration m/s/s
@@ -175,10 +176,11 @@ use constant SUBSTITUTED_TIM    => 1 << 5;
 use constant COMPUTED_SPEED     => 1 << 6;
 use constant CORRECTED_ELE      => 1 << 7;
 
-# global option variables
+# global option variables with related num_* state variables
 
 my $debug = 0;
 my $merge;
+my $num_ignored_diff = 0;
 my $num_ignored_hdrs   = 0;
 my $begin_sec;
 my $num_ignored_before = 0;
@@ -916,6 +918,7 @@ if ($merge) {
 }
 my ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1) if $merge; # current end of gap to be merged
 my ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2) if $merge; # current trkpt from alternative input
+my $prev_sec2;
 sub next_trkpt2() {
     my $trkpt2;
     my $ignore2 = 1;
@@ -923,7 +926,9 @@ sub next_trkpt2() {
         $trkpt2 =~ m#(.*?</trkpt>)#s;
         $trkpt2 = $1;
         abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt2;
+        $prev_sec2 = $sec2;
         ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $cmt2, $src2, $fix2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
+        $ignore2 |= (diff_defined($sec2, $prev_sec2) // MIN_TIMEDIFF_PARSING) < MIN_TIMEDIFF_PARSING && ++$num_ignored_diff;
     }
     ## debug_log "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=".($sec2 // "none")." spd=".spd_or_none($spd2) if $trkpt2;
     return $trkpt2;
@@ -1031,7 +1036,8 @@ for (my $state = 0,
             my $trkpt = $1;
             abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt;
             ($lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $src, $fix, $exts, my $ignore) = parse_point("<trkpt $trkpt");
-            next if $ignore;
+            next if $ignore
+                || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/) && (diff_defined($sec, $prev_sec) // MIN_TIMEDIFF_PARSING) < MIN_TIMEDIFF_PARSING && ++$num_ignored_diff;
             ## debug_log "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
         } elsif ($merge) {
             ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) = $in_merge == -1 ?
@@ -2246,6 +2252,7 @@ $final_text .= plural($num_pruned_cmts,              "cmt")." pruned\n" if $num_
 $final_text .= plural($num_pruned_descs,     "description")." pruned\n" if $num_pruned_descs;
 $final_text .= plural($num_pruned_links,            "link")." pruned\n" if $num_pruned_links;
 $final_text .= plural($num_pruned_exts,        "extension")." pruned\n" if $num_pruned_exts;
+$final_text .= points($num_ignored_diff  )." less than ".MIN_TIMEDIFF_PARSING ." sec apart filtered out\n" if $num_ignored_diff;
 $final_text .= points($num_ignored_before)." with time before ".epoch_to_str($begin_sec)." filtered out\n" if defined $begin_sec;
 $final_text .= points($num_ignored_after )." with time after  ".epoch_to_str($end_sec  )." filtered out\n" if defined $end_sec;
 $final_text .= points($num_elem_above    )." with $max_elem above $max_elem_limit"      ." filtered out\n" if $max_elem;
