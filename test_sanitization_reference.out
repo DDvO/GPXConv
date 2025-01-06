@@ -47,33 +47,33 @@ GPXConv statistics end
 </cmt>
 <trkseg>
 <trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:00:00Z</time><cmt>2 previous points ignored</cmt></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:30:00Z</time><cmt>2 previous points ignored</cmt><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:30:00Z</time><cmt>2 previous points ignored; segment moving time 0 sec</cmt><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="0.00016" lon="1.00048"><ele>   1</ele><time>1970-01-01T00:40:00Z</time></trkpt>
+<trkpt lat="0.00016" lon="1.00048"><ele>   1</ele><time>1970-01-01T00:40:00Z</time><cmt>segment moving time 58 sec</cmt></trkpt>
 <trkpt lat="0.00016" lon="1.00048"><ele>   1</ele><time>1970-01-01T00:40:02Z</time><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
 <trkpt lat="0.00016" lon="1.00801"><ele>   1</ele><time>1970-01-01T00:41:00Z</time><cmt>2 previous points ignored</cmt><src>computed speed</src><extensions><speed> 52</speed></extensions></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="0.00000" lon="1.00000"><ele>  45</ele><time>1970-01-01T00:45:00Z</time><cmt>2 previous points ignored; test for correct recalculation by remove_trkpt</cmt></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  45</ele><time>1970-01-01T00:45:00Z</time><cmt>2 previous points ignored; test for correct recalculation by remove_trkpt; segment moving time 10 sec</cmt></trkpt>
 <trkpt lat="0.00040" lon="1.00000"><ele>  15</ele><time>1970-01-01T00:45:06Z</time><cmt>2 previous points ignored; max descent rate = -18000 at 32 km/h</cmt><src>computed speed</src><extensions><speed> 32</speed></extensions></trkpt>
 <trkpt lat="0.00070" lon="1.00000"><ele>  15</ele><time>1970-01-01T00:45:08Z</time><cmt>max speed = 60 km/h</cmt><src>computed speed</src><extensions><speed> 60</speed></extensions></trkpt>
 <trkpt lat="0.00070" lon="0.99970"><ele>  15</ele><time>1970-01-01T00:45:10Z</time><cmt>max speed = 60 km/h</cmt><src>computed speed</src><extensions><speed> 60</speed></extensions></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="0.00000" lon="1.00000"><ele>  90</ele><time>1970-01-01T00:48:00Z</time><cmt>altitude correction after gap</cmt></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  90</ele><time>1970-01-01T00:48:00Z</time><cmt>altitude correction after gap; segment moving time 22 sec</cmt></trkpt>
 <trkpt lat="0.00000" lon="1.00000"><ele>  10</ele><time>1970-01-01T00:48:20Z</time><cmt>exit of tunnel</cmt><src>computed speed; corrected altitude</src><extensions><speed> 14</speed></extensions></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>  10</ele><time>1970-01-01T00:48:22Z</time><cmt>descent rate = -36000 m/h</cmt><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:48:24Z</time><cmt>descent rate = -27000 m/h after ignore</cmt><src>computed speed</src><extensions><speed> 18</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  10</ele><time>1970-01-01T00:48:22Z</time><cmt>descent rate = -36000 m/h before correction</cmt><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:48:24Z</time><cmt>descent rate = -18000 m/h ok</cmt><src>computed speed</src><extensions><speed> 18</speed></extensions></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:49:00Z</time><cmt>altitude correction after gap</cmt></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:49:00Z</time><cmt>altitude correction after gap; segment moving time 22 sec</cmt></trkpt>
 <trkpt lat="0.00000" lon="1.00000"><ele>  70</ele><time>1970-01-01T00:49:20Z</time><cmt>exit of tunnel</cmt><src>computed speed; corrected altitude</src><extensions><speed> 13</speed></extensions></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>  70</ele><time>1970-01-01T00:49:22Z</time><cmt>ascent rate = +36000 m/h</cmt><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>  81</ele><time>1970-01-01T00:49:24Z</time><cmt>ascent rate = +27900 m/h after ignore</cmt><src>computed speed</src><extensions><speed> 20</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  70</ele><time>1970-01-01T00:49:22Z</time><cmt>ascent rate = +36000 m/h before correction</cmt><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  81</ele><time>1970-01-01T00:49:24Z</time><cmt>ascent rate = +19800 m/h ok</cmt><src>computed speed</src><extensions><speed> 20</speed></extensions></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time><cmt>segment moving time 0 sec</cmt></trkpt>
 </trkseg>
 </trk>
 </gpx>
