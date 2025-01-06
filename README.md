@@ -1,13 +1,15 @@
 # GPXConv
 
-GPX track converter: post-process routes and tracks typically produced by GPS loggers.
+GPX track converter: post-process routes and tracks produced by GPS loggers etc.
 
-* Reads from file(s) given as argument (or STDIN) and writes to STDOUT or a file.
-* Can append segments from multiple tracks and files (sequential composition), using the metadata of the first track.
-* Can complete gaps in input file(s) by merging data from an alternative GPX file (parallel composition).
-* Concatenates all given tracks (or routes) preserving segments, collecting waypoints.
-* The metadata (header) of the first input track is used for the output track.
-* Reports missing data and by default ignores points containing implausible data.
+* Reads from file(s) given as argument or STDIN and writes to STDOUT or a file.
+* Concatenates segments of multiple given tracks or routes (sequential composition),
+  using (header) metadata of the first track, preserving segments, and collecting waypoints.
+* Can fill gaps in main input by merging data from alternative input (from parallel tracks),
+* ignoring metadata and segment information of the alternative input.
+
+* Reports missing data and by default ignores points containing implausible data w.r.t.
+  altitude, ascent/descent rate, speed, acceleration/deceleration, and direction change.
 * Optionally filters out points before or after given time limits.
 * Optionally filters out points with an element value below or above given limits.
 * Optionally prunes comments, extensions, or extension elements with value below or above given limits.
@@ -19,7 +21,7 @@ GPX track converter: post-process routes and tracks typically produced by GPS lo
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
 * Produces statistics including ascent/descent rates, optionally also for climbing phases.
 * Optionally produces additional statistics on a per-segment or per-day basis.
-* Optionally calculates approx. total energy spent by biking along the resulting track.
+* Optionally calculates approximate total energy spent by biking along the resulting track.
 * Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
 
 Usage:
@@ -54,3 +56,9 @@ Command-line options:
   -debug                       - enable internal consistency checks and debug output
 ```
 Other options can be set by changing values of the configuration variables.
+
+<!--
+Local IspellDict: american
+LocalWords: GPXConv STDOUT STDERR exiftool gpxconv infile outfile nw ni segs ext wpts cmts exts
+LocalWords: trackpoint trackpoints waypoint
+-->
