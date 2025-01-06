@@ -19,10 +19,11 @@
  </trkseg>
  <trkseg>
    <trkpt lat="0.00016" lon="1.00048"><ele>1</ele><time>1970-01-01T00:40:00Z</time></trkpt>
-   <trkpt lat="0.00000" lon="1.00000"><ele>2</ele><time>1970-01-01T00:40:21Z</time><cmt>direction change = +171°</cmt></trkpt>
-   <trkpt lat="0.00023" lon="1.00045"><ele>3</ele><time>1970-01-01T00:40:23Z</time><cmt>acceleration = 12.7 m/s/s</cmt></trkpt>
+   <trkpt lat="0.00016" lon="1.00048"><ele>1</ele><time>1970-01-01T00:40:02Z</time></trkpt>
+   <trkpt lat="0.00000" lon="1.00000"><ele>2</ele><time>1970-01-01T00:40:03Z</time><cmt>direction change = +171°</cmt></trkpt>
+   <trkpt lat="0.00036" lon="1.00072"><ele>3</ele><time>1970-01-01T00:40:04Z</time><cmt>acceleration = 8.7 m/s/s</cmt></trkpt>
    <trkpt lat="0.00016" lon="1.00801"><ele>1</ele><time>1970-01-01T00:41:00Z</time></trkpt>
-   <trkpt lat="0.00016" lon="1.00802"><ele>1</ele><time>1970-01-01T00:41:01Z</time><cmt>deceleration = 12.9 m/s/s</cmt></trkpt>
+   <trkpt lat="0.00016" lon="1.00802"><ele>1</ele><time>1970-01-01T00:41:01Z</time><cmt>deceleration = 13.3 m/s/s</cmt></trkpt>
    <trkpt lat="0.00016" lon="1.00803"><ele>1</ele><time>1970-01-01T00:41:01.5Z</time><cmt>time difference = 1.5 sec</cmt></trkpt>
  </trkseg>
  <trkseg>

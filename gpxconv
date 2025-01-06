@@ -698,8 +698,7 @@ sub distance_curr { # of $lat, $lon, $ele
     return distance($lat, $lon, $ele, $_[0], $_[1], $_[2]);
 }
 
-sub comp_diffs
-{
+sub comp_diffs {
     my $i = shift; # calculate differences relative to previous point $i -1
     # $prev_comp_spd is assumed to be average speed computed between previous points
     my ($prev_ele, $prev_sec, $prev_dis, $prev_comp_spd) = ($ELE[$i - 1], $SEC[$i - 1], $DIS[$i - 1], $SPD[$i - 1]);
@@ -715,6 +714,36 @@ sub comp_diffs
     $spd_prec_len = max($spd_prec_len, length(spd_str($comp_spd))) if $comp_spd ne ""; # used only for spd_string
     my $acc = $comp_spd ne "" && $prev_comp_spd ne "" && $timediff ? ($comp_spd - $prev_comp_spd) / $timediff : "";
     return ($diff_ele // "", $timediff // "", $rate, $dis, $comp_spd, $acc);
+}
+
+sub comp_angle { # calculate horizontal direction change (i.e., turning angle)
+    # between last, current, and next point, 0 if not available
+    my ($i, $lat, $lon, $timediff, $dis) = @_;
+    my ($theta_diff, $spd2) = (0, "");
+
+    if ($i < $#TIM && !$SEG[$i + 1]) { # next point exists and is not at segment start
+        my $next_dis      =              $DIS[$i + 1];
+        my $next_timediff = diff_defined($SEC[$i + 1], $SEC[$i]);
+        my $timediff2 = $timediff eq "" || !defined $next_timediff  ? 0 : $timediff + $next_timediff;
+        my      $dis2 = $dis      eq "" ||          $next_dis eq "" ? 0 : $dis      + $next_dis;
+        $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed
+        if ($spd2 ne "" && MPS2KMPH * $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
+            my $resolution = .00001; # corresponds to at most 1.11 m
+            my $curr_lat_diff = nearest($resolution, $lat - $LAT[$i - 1]);
+            my $curr_lon_diff = nearest($resolution, $lon - $LON[$i - 1]);
+            my $next_lat_diff = nearest($resolution, $LAT[$i + 1] - $lat);
+            my $next_lon_diff = nearest($resolution, $LON[$i + 1] - $lon);
+            if ($curr_lat_diff && $curr_lon_diff && $next_lat_diff && $next_lon_diff)
+            {
+                my $theta1 = atan2($curr_lon_diff, $curr_lat_diff);
+                my $theta2 = atan2($next_lon_diff, $next_lat_diff);
+                # debug (($theta1 * RAD2DEG)." <$i> ".($theta2* RAD2DEG));
+                $theta_diff = ($theta2 - $theta1) * RAD2DEG % 360;
+                $theta_diff -= 360 if $theta_diff >= 180;
+            }
+        }
+    }
+    return ($theta_diff, $spd2);
 }
 
 
@@ -1309,6 +1338,11 @@ warn_trkpt("                at",
            " was unable to interpolate missing time by end of last segment") if $tim_miss_start;
 } # end TODO re-format
 
+sub ignore_trkpt {
+    my ($Spd, $reason) = @_;
+    my $Spd_txt = $Spd eq "" ? "" : " at speed = $Spd km/h";
+    warn_trkpt_i(-1, "ignoring", "$Spd_txt because $reason");
+}
 
 ## sanitize trackpoints with implausible data, silently ignoring previously inserted or duplicated points
 
@@ -1316,12 +1350,9 @@ my ($num_removals_ele, $num_removals_dir, $num_removals_spd, $num_removals_acc, 
     $num_removals_gain, $num_removals_loss, $num_removals_diff) = (0, 0, 0, 0, 0, 0, 0, 0);
 if ($sanitize) { # TODO re-format
 my $num_removals_in_row = 0;
-my $prev_ignore = 0;
 my $sum_timediff_mov0 = 0;
 my $num_pts_mov       = 0;
-my ($prev_timediff, $timediff, $prev_dis, $dis) = ("", "", "", "");
-$spd = "";
-for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
+for (my $i = 0; $i <= $#TIM; $i++) {
 
     # silently ignore any point inserted or duplicated by a previous run of this tool
     while ($SRC[$i] =~ m#(^|\W)bridging time gap($|\W)# && $FIX[$i] =~ m#(^|\W)none($|\W)#) {
@@ -1331,87 +1362,38 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
     ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i]);
 
     debug_log "consider sanitizing ".point_str($i)." spd=".spd_or_none($spd);
-    my ($ignore, $ignore_before) = (0, 0);
-    sub ignore_trkpt        { ignoring_trkpt(  -1, @_); }
-    sub ignore_trkpt_before { ignoring_trkpt($i-1, @_); }
-    sub ignoring_trkpt { my ($index, $Spd, $reason) = @_;
-        my $Spd_txt = $Spd eq "" ? "" : " at speed = $Spd km/h";
-        warn_trkpt_i($index, "ignoring", "$Spd_txt because $reason");
-    }
+    my $ignore = 0;
 
-    # debug "$i $tim $num_removals_in_row vs. $IGN[$i - 1] $IGN[$i]";
-    # must delay report by one point because current point may be ignored in next iteration,
-    # yet better report before any output on current point being ignored
-    sub report_ignored_in_row {
-        my $num_removals_in_row2 = $i == 0 ? 0 : $IGN[$i - 1];
-        my $prev_not_ignored = $IGN[$i] == 0;
-        # warning("ignored $num_removals_in_row2 points in a row") if $num_removals_in_row2 > 1 && $prev_not_ignored;
-        if (!$ignore_before && !$prev_ignore) { # previous point not ignored this time and in iteration before
-            abort("FATAL: internal inconsistency on number of most recent removals in a row: ".
-                  "$num_removals_in_row vs. $num_removals_in_row2, condition 1 vs. $prev_not_ignored")
-                if $num_removals_in_row != $num_removals_in_row2 || !$prev_not_ignored;
-            warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
-            $num_removals_in_row = 0;
-        } elsif ($prev_not_ignored) {
-            abort("FATAL: internal inconsistency on condition for reporting number of most recent removals in a row");
-        }
-    }
-
-    # handle case(s) that do not involve earlier points and lead to removing current point
+    # handle cases that do not involve earlier points and lead to removing current point
     if ($ele ne "" && $ele < MIN_PLAUSIBLE_ELE) {
         $num_removals_ele++;
         $ignore = 1;
-        report_ignored_in_row();
         ignore_trkpt("", "altitude is less than ".MIN_PLAUSIBLE_ELE);
     } elsif ($spd ne "" && ($spd < 0 || MPS2KMPH * $spd > $MAX_PLAUSIBLE_SPEED)) {
         $num_removals_spd++;
         $ignore = 1;
-        report_ignored_in_row();
         ignore_trkpt(spd_string($spd), "recorded speed is ". ($spd < 0 ? "negative" : "higher than ".$MAX_PLAUSIBLE_SPEED));
-    } elsif ($SEG[$i]) {
-        report_ignored_in_row();
     }
 
-    my $comp_spd = "";
     if (!$ignore && !$SEG[$i]) { # not already ignoring current point, not at segment start
 
         # correct implausible elevation gain/loss after somewhat long gap, typically on exit of tunnel or building
-        $rate = $RAT[$i];
-        if ($rate ne "" && ($rate > $MAX_PLAUSIBLE_ELE_GAIN || $rate < -$MAX_PLAUSIBLE_ELE_LOSS)
-            && !$SEG[$i - 1] && $prev_timediff ne "" && $prev_timediff >= MIN_TUNNEL_GAP) {
-            $ELE[$i - 1] = $ELE[$i];
-            $FLG[$i - 1] |= CORRECTED_ELE;
-            recalculate_all($i - 1);
-            recalculate_all($i);
-        }
-
-        (my $diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
-        my ($theta_diff, $Spd2) = (0, "");
-        if (!$SEG[$i - 1]) { # previous point not at segment start, implies $i >= 2 here
-            my $timediff2 = $prev_timediff eq "" || $timediff eq "" ? 0 : $prev_timediff + $timediff;
-            my      $dis2 =      $prev_dis eq "" ||      $dis eq "" ? 0 :      $prev_dis +      $dis;
-            my $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed between three most recent points
-            $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))) if $spd2 ne ""; # used only for spd_string
-            if ($spd2 ne "" && MPS2KMPH * $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
-                # calculate horizontal direction change (i.e., turning angle) for spike detection
-                my $resultion = .00001; # corresponds to at most 1.11 m
-                my ($prev_lat, $prev_lon) = ($LAT[$i - 1], $LON[$i - 1]);
-                my $prev_lon_diff = nearest($resultion, $prev_lon - $LON[$i - 2]);
-                my $prev_lat_diff = nearest($resultion, $prev_lat - $LAT[$i - 2]);
-                my $curr_lon_diff = nearest($resultion,      $lon - $prev_lon   );
-                my $curr_lat_diff = nearest($resultion,      $lat - $prev_lat   );
-                if ($prev_lon_diff && $prev_lat_diff && $curr_lon_diff && $curr_lat_diff)
-                {
-                    my $theta1 = atan2($prev_lon_diff, $prev_lat_diff);
-                    my $theta2 = atan2($curr_lon_diff, $curr_lat_diff);
-                    $theta_diff = ($theta2 - $theta1) * RAD2DEG % 360;
-                    $theta_diff -= 360 if $theta_diff >= 180;
-                }
-                $Spd2 = spd_string($spd2);
+        if (!$SEG[$i - 1]) {
+            my $prev_timediff = diff_defined($SEC[$i - 1], $SEC[$i - 2]);
+            my $rate = $RAT[$i];
+            if ($rate ne "" && ($rate > $MAX_PLAUSIBLE_ELE_GAIN || $rate < -$MAX_PLAUSIBLE_ELE_LOSS)
+                && defined $prev_timediff && $prev_timediff >= MIN_TUNNEL_GAP) {
+                $ELE[$i - 1] = $ELE[$i];
+                $FLG[$i - 1] |= CORRECTED_ELE;
+                recalculate_all($i - 1);
+                recalculate_all($i);
             }
         }
 
-        my $Theta_diff = sprintf "%+.0f", $theta_diff;
+        # handle cases that involve point(s) before and may lead to removing current point
+        my ($diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
+
+        my ($theta_diff, $spd2) = comp_angle($i, $lat, $lon, $timediff, $dis); # for spike detection
         my $Comp_spd = spd_string($comp_spd) if $comp_spd ne "";
         if ($comp_spd ne "" && $spd ne "" && $timediff ne "" && $timediff <= MAX_TIMEDIFF_RECORDED_SPEED) {
             my $spd_diff = abs($comp_spd - $spd);
@@ -1437,21 +1419,13 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         my $Dec      = $acc ne "" ? sprintf ACC_PRECISION, -$acc : "";
         warn_trkpt("before  ", "$Spd_txt distance between points = $Dis (more than ".(WARNING_TPT_DIST / 1000).")") if $dis > WARNING_TPT_DIST;
 
-        # handle case(s) that involve (one or) two points before and may lead to removing point before
+        $ignore = 1; # tentatively indicate removal of current point
         if (MAX_PLAUSIBLE_ANGLE_DIFF < abs($theta_diff)) {
             $num_removals_dir++;
-            ignore_trkpt_before($Spd2, "direction change = $Theta_diff° (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_PLAUSIBLE_ANGLE_DIFF."°)");
-            $ignore_before = 1;
-        }
-        report_ignored_in_row();
-        if ($ignore_before) {
-            $num_removals_in_row++;
-            remove_trkpt(--$i); # also recalculates speed etc. of former point $i relative to its new previous point
-        }
-
-        # handle cases that involves point before may lead to removing current point
-        $ignore = 1; # tentatively indicate removal of current point
-        if ($spd ne "" && $Spd > $MAX_PLAUSIBLE_SPEED) {
+            $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))); # used only for spd_string
+            my $Theta_diff = sprintf "%+.0f", $theta_diff;
+            ignore_trkpt(spd_string($spd2), "direction change = $Theta_diff° (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_PLAUSIBLE_ANGLE_DIFF."°)");
+        } elsif ($spd ne "" && $Spd > $MAX_PLAUSIBLE_SPEED) {
             $num_removals_spd++;
             ignore_trkpt($Spd, "speed is higher than ".$MAX_PLAUSIBLE_SPEED);
         } elsif ($acc ne "" &&  $acc > $MAX_PLAUSIBLE_ACCEL &&
@@ -1477,7 +1451,7 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
             #" over a distance of $Dis" if $timediff > 1.001
         } else {
             $ignore = 0;
-            if (!$ignore_before && $timediff ne "" && $spd ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH)
+            if ($timediff ne "" && $spd ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH)
             {
                 $sum_timediff_mov0 += $timediff; # used for smoothing
                 $num_pts_mov++;                  # used for smoothing
@@ -1489,21 +1463,22 @@ for (my $acc, my $rate, my $i = 0; $i <= $#TIM; $i++) {
         $num_removals_in_row++;
         remove_trkpt($i--); # also recalculates speed etc. of former point $i + 1 relative to its new previous point
     }
-    if ($ignore_before) {
-        if ($timediff ne "") {
-            $timediff += $prev_timediff if $prev_timediff ne "";
-        } else {
-            $timediff = $prev_timediff;
-        }
-        if ($dis ne "") {
-            $dis += $prev_dis if $prev_dis ne "";
-        } else {
-            $dis = $prev_dis;
-        }
+
+    # debug "$i $tim $num_removals_in_row vs. $IGN[$i] $IGN[$i + 1]";
+    my $num_removals_in_row2 = $IGN[$i];
+    my $curr_not_ignored = ($IGN[$i + 1] // 0) == 0;
+    # warning("ignored $num_removals_in_row2 points in a row") if $num_removals_in_row2 > 1 && $curr_not_ignored;
+    if (!$ignore) {
+        abort("FATAL: at $tim internal inconsistency on number of most recent removals in a row: ".
+              "$num_removals_in_row vs. $num_removals_in_row2, condition 1 vs. $curr_not_ignored")
+            if $num_removals_in_row != $num_removals_in_row2 || !$curr_not_ignored;
+        warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
+        $num_removals_in_row = 0;
+    } elsif ($curr_not_ignored) {
+        abort("FATAL: internal inconsistency on condition for reporting number of most recent removals in a row");
     }
-    ($prev_ignore, $prev_timediff, $prev_dis) = ($ignore, $timediff, $dis);
 }
-my $num_removals_in_row_final = $IGN[$#TIM + 1] // $IGN[$#TIM] // 0;
+my $num_removals_in_row_final = $IGN[$#TIM + 1] // 0;
 # warning("ignored $num_removals_in_row_final points in a row") if $num_removals_in_row_final > 1;
 abort("FATAL: internal inconsistency on reporting number of final removals in a row: ".
       "$num_removals_in_row vs. $num_removals_in_row_final")

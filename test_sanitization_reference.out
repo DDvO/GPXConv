@@ -16,7 +16,7 @@
 <wpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:48:24Z</time><name>[total descent = -120 m; avg rate = -14400 m/h]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>  81</ele><time>1970-01-01T00:49:24Z</time><name>[total ascent = +81 m; avg rate = +12150 m/h]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>  81</ele><time>1970-01-01T00:49:24Z</time><name>[max ascent rate = +19800 m/h at 20 km/h]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time><name>[end; total track length = 1.128 km; total track duration = 1:00:00 h; total moving time = 0:01:54 h, with speed being at least 1 km/h; average moving speed = 35.6 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time><name>[end; total track length = 1.128 km; total track duration = 1:00:00 h; total moving time = 0:01:52 h, with speed being at least 1 km/h; average moving speed = 36.3 km/h]</name></wpt>
 <trk>
 <cmt>
 GPXConv statistics (not including 12 sanitized trackpoints nor periods between segments)
@@ -31,8 +31,8 @@ At lat,lon,ele = 0.00040,1.00000,  15 time = 1970-01-01T00:45:06Z: max descent r
 At lat,lon,ele = 0.00000,1.00000,  12 time = 1970-01-01T01:00:00Z: end
 total track length   = 1.128 km
 total track duration = 1:00:00 h
-total moving time    = 0:01:54 h, with speed being at least 1 km/h
-average moving speed = 35.6 km/h
+total moving time    = 0:01:52 h, with speed being at least 1 km/h
+average moving speed = 36.3 km/h
 1 point ignored due to altitude less than -450 m
 1 point ignored due to direction change out of range -170°..+170°
 3 points ignored due to speed out of range 0..200 km/h
@@ -51,7 +51,8 @@ GPXConv statistics end
 </trkseg>
 <trkseg>
 <trkpt lat="0.00016" lon="1.00048"><ele>   1</ele><time>1970-01-01T00:40:00Z</time></trkpt>
-<trkpt lat="0.00016" lon="1.00801"><ele>   1</ele><time>1970-01-01T00:41:00Z</time><cmt>2 previous points ignored</cmt><src>computed speed</src><extensions><speed> 50</speed></extensions></trkpt>
+<trkpt lat="0.00016" lon="1.00048"><ele>   1</ele><time>1970-01-01T00:40:02Z</time><src>computed speed</src><extensions><speed>  0</speed></extensions></trkpt>
+<trkpt lat="0.00016" lon="1.00801"><ele>   1</ele><time>1970-01-01T00:41:00Z</time><cmt>2 previous points ignored</cmt><src>computed speed</src><extensions><speed> 52</speed></extensions></trkpt>
 </trkseg>
 <trkseg>
 <trkpt lat="0.00000" lon="1.00000"><ele>  45</ele><time>1970-01-01T00:45:00Z</time><cmt>2 previous points ignored; test for correct recalculation by remove_trkpt</cmt></trkpt>
