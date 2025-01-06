@@ -132,7 +132,7 @@ my $MAX_PLAUSIBLE_ELE_GAIN; # maximal ascent rate in m/h
 my $MAX_PLAUSIBLE_ELE_LOSS; # maximal descent rate in m/h
 use constant MIN_TUNNEL_GAP           =>   20; # threshold for assuming exit of tunnel or building before elevation gain/loss correction (in seconds)
 use constant MAX_PLAUSIBLE_ANGLE_DIFF =>  170; # maximal plausible turning angle above speed threshold
-use constant MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD => 5; # speed threshold for maximal plausible turning angle in km/h
+use constant MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD => 15; # speed threshold for maximal plausible turning angle in km/h
 use constant MIN_PLAUSIBLE_ELE        => -450; # minimal plausible altitude; actual elevation values on Earth may be as low as -450 m at Dead Sea
 
 # time control
