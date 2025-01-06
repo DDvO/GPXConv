@@ -118,7 +118,7 @@ use constant PRINT_WARNINGS      =>    1; # whether printing warnings is enabled
 use constant PRINT_INFO          =>    1; # whether printing information is enabled by default
 use constant WARNING_TPT_DIST    => 2000; # threshold for trackpoint distance warning (in meters)
 use constant WARNING_WPT_DIST    =>  100; # threshold for waypoint distance warning (in meters)
-use constant MAX_SPEED_DEVIATION =>0.025; # threshold for speed measuring deviation warning (fraction of MAX_PLAUSIBLE_SPEED)
+use constant MAX_SPEED_DEVIATION => 0.25; # threshold for speed measuring deviation warning (fraction of MAX_PLAUSIBLE_SPEED)
 # using absolute value for MAX_SPEED_DEVIATION because we compute speed from absolute values (coordinates and time)
 
 # sanitization control
