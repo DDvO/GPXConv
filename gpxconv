@@ -1349,6 +1349,11 @@ for (my $state = 0,
         close M;
     }
 }
+if ($in_merge == -1) {
+    info_trkpt("end   of    alternative input after                 ", "");
+    $in_merge = $merge = 0;
+    close M;
+}
 my $Len = dis_string($ele_gap_length); # TODO restrict scope
 warn_trkpt_i($#TIM, "no altitude  up to",
              " for " . $num_no_ele . " points over a distance of $Len") if $num_no_ele > 1;

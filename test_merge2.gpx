@@ -1,5 +1,6 @@
 <trk>
-<trkpt lat="0" lon="1"><ele>0</ele><time>2000-01-01T00:00:00Z</time><cmt>before start of base input</cmt></trkpt>
-<trkpt lat="0" lon="1"><ele>2</ele><time>2000-01-01T00:10:00Z</time></trkpt>
-<trkpt lat="0" lon="1"><ele>5</ele><time>2000-01-01T00:13:00Z</time><cmt>after end of base input</cmt></trkpt>
+<trkpt lat="0"     lon="1"><ele>0</ele><time>2000-01-01T00:00:00Z</time><cmt>before start of base input</cmt></trkpt>
+<trkpt lat="0.001" lon="1"><ele>2</ele><time>2000-01-01T00:10:00Z</time></trkpt>
+<trkpt lat="0.001" lon="1"><ele>4</ele><time>2000-01-01T00:21:00Z</time></trkpt>
+<trkpt lat="0"     lon="1"><ele>6</ele><time>2000-01-01T00:23:00Z</time><cmt>after end of base input</cmt></trkpt>
 </trk>
