@@ -909,7 +909,6 @@ my $num_no_ele      = 0;
 my $ele_gap_length  = 0;
 my $num_no_time     = 0;
 my $time_gap_length = 0;
-# $prev_avail_tim = "";
 
 $/ = "<trkpt ";
 if ($merge) {
@@ -945,7 +944,8 @@ if ($merge && !next_trkpt2()) {
 # TODO before further complicating input handling, split file reading and parsing from any further processing
 for (my $state = 0,
      my $prev_lat, my $prev_lon, my $prev_ele, my $prev_tim = "", my $prev_sec,
-     my $prev_avail_sec, my $prev_avail_ele  = "", my $ele_miss_length = 0, my $tim_miss_length = 0,
+     my $prev_avail_tim, my $prev_avail_sec, my $prev_avail_ele  = "",
+     my $ele_miss_length = 0, my $tim_miss_length = 0,
      my $i = 0;
      $in_merge ? (next_trkpt2() ||
                   ($in_merge = -1, !$infile_EOF)) # EOF in $merge
@@ -1098,11 +1098,11 @@ for (my $state = 0,
             my $severity = $state < 3 ? "WARNING" : "FATAL"; # at segment start, just warn
             print_trkpt("$severity: before", " negative time difference (-".timediff_string(-$diff_time).")")
                 if $diff_time < 0; # this implies defined $sec && defined $prev_sec
-            if (defined $sec && defined $prev_sec && $diff_time == 0) {
+            if (defined $sec && defined $prev_avail_sec && $tim eq $prev_avail_tim) { # really equal (before rounding seconds)
                 print_trkpt("$severity: point before      ",
                             " has same time but different position: $prev_lat, $prev_lon")
                     if $lat != $prev_lat || $lon != $prev_lon;
-                print_trkpt("$severity: point before      ",
+                print_trkpt("WARNING: point before      ",
                             " has same time but different altitude: $prev_ele m")
                     if $ele != $prev_ele;
             }
@@ -1331,10 +1331,9 @@ for (my $state = 0,
         (     $lat,      $lon,      $ele,      $tim,      $sec);
         $prev_avail_ele = $ele if $ele ne "";
 
-        # Commenting out $prev_avail_tim as it is currently unused, but referred to in another comment
-        # $prev_avail_tim = $tim if $tim ne "";
+        # enables checking negative time difference also across missing time entries:
+        ($prev_avail_tim, $prev_avail_sec) = ($tim, $sec) if defined $sec;
 
-        $prev_avail_sec = $sec if defined $sec; # enables checking negative time difference also across missing time entries
         $state = 3; # ready to process further trkpt(s) in trkseg (or new trkseg or new track)
     }
     if (!$in_merge && m#</trkseg>.*<trkseg>#s) { # taking segments only from infile(s)
