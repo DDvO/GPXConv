@@ -17,7 +17,7 @@ WARNING: ignored 2 points in a row
 WARNING: ignoring <trkpt lat="0.0"     lon="1.00101" <ele>   0    <time>1970-01-01T00:00:02Z   at speed = 202 km/h because speed is higher than 200
 WARNING: ignoring <trkpt lat="0.0"     lon="1"       <ele>-450.01 <time>1970-01-01T00:15:02Z   because altitude is less than -450
 WARNING: ignored 2 points in a row
-WARNING: ignoring <trkpt lat="0.00000" lon="1.00000" <ele>   2    <time>1970-01-01T00:40:03Z   at speed = 262 km/h because direction change = +171° (more than  170°)
+WARNING: ignoring <trkpt lat="0.00000" lon="1.00000" <ele>   2    <time>1970-01-01T00:40:03Z   at speed = 262 km/h because direction change = +171 degrees (more than  170)
 WARNING: ignoring <trkpt lat="0.00036" lon="1.00072" <ele>   3    <time>1970-01-01T00:40:04Z   at speed =  63 km/h because acceleration = 8.7 m/s/s (more than 5)
 WARNING: ignored 2 points in a row
 WARNING: ignoring <trkpt lat="0.00016" lon="1.00802" <ele>   1    <time>1970-01-01T00:41:01Z   at speed =   4 km/h because deceleration = 13.3 m/s/s (more than 10)
@@ -45,7 +45,7 @@ total track duration = 1:00:00 h
 total moving time    = 0:01:52 h, with speed being at least 1 km/h
 average moving speed = 36.3 km/h
 1 point ignored due to altitude less than -450 m
-1 point ignored due to direction change out of range -170°..+170°
+1 point ignored due to direction change out of range -170..+170 degrees
 3 points ignored due to speed out of range 0..200 km/h
 1 point ignored due to acceleration more than 5 m/s/s
 1 point ignored due to deceleration more than 10 m/s/s

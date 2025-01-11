@@ -150,8 +150,8 @@ use constant H2S            =>    3600 ; # factor for converting hours to second
 use constant M2KM           =>    0.001; # factor for converting m to km
 use constant MPS2KMPH       =>H2S * M2KM;# factor for converting m/s to km/h
 use constant METERS_PER_DEGREE_LAT => 10000 * 1000 / 90; # on Earth, by definition
-use constant LAT_PRECISION  =>   "%.5f"; #  latitude resolution = 0.00001° (<= 1.11 meters)
-use constant LON_PRECISION  =>   "%.5f"; # longitude resolution = 0.00001° (<= 1.11 meters)
+use constant LAT_PRECISION  =>   "%.5f"; #  latitude resolution = 0.00001 degrees (<= 1.11 meters)
+use constant LON_PRECISION  =>   "%.5f"; # longitude resolution = 0.00001 degrees (<= 1.11 meters)
 use constant ELE_PRECISION  =>  "%5.0f"; #  altitude resolution = 1 meters
 use constant ELE_PRECISION0 =>   "%.0f";
 use constant ELE_PRECISION3 =>   "%.3f";
@@ -1448,7 +1448,7 @@ for (my $i = 0; $i <= $#TIM; $i++) {
             $num_removals_dir++;
             $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))); # used only for spd_string
             my $Theta_diff = sprintf "%+.0f", $theta_diff;
-            ignore_trkpt(spd_string($spd2), "direction change = $Theta_diff° (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_PLAUSIBLE_ANGLE_DIFF."°)");
+            ignore_trkpt(spd_string($spd2), "direction change = $Theta_diff degrees (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_PLAUSIBLE_ANGLE_DIFF.")");
         } elsif ($spd ne "" && $Spd > $MAX_PLAUSIBLE_SPEED) {
             $num_removals_spd++;
             ignore_trkpt($Spd, "speed is higher than ".$MAX_PLAUSIBLE_SPEED);
@@ -1656,7 +1656,7 @@ sub energy { # calculate energy difference between trackpoints  # TODO simplify 
     my $m = $weight;               # total mass including vehicle and rider in kg
     my $cr = 0.003;                # coefficient of rolling friction for racing bike      - adapt
     my $cdA = 0.39;                # coefficient of wind resistance * frontal area in m^2 - adapt
-    my $r = 1.2;                   # air density on average weather (20 °C) at sea level in kg/(m^3)
+    my $r = 1.2;                   # air density on average weather (20 degree Celsius) at sea level in kg/(m^3)
     my $density = $r - (0.55 * $r) * $h / 5000; # roughly corrected air density depending on altitude
 
     # energy components and their sum along the distance $d in Joule
@@ -2276,7 +2276,7 @@ $final_text .= points($num_ignored_after )." with time after  ".epoch_to_str($en
 $final_text .= points($num_elem_above    )." with $max_elem above $max_elem_limit"      ." filtered out\n" if $max_elem;
 $final_text .= points($num_elem_below    )." with $min_elem below $min_elem_limit"      ." filtered out\n" if $min_elem;
 $final_text .= points($num_removals_ele  )." ignored due to altitude less than "            .MIN_PLAUSIBLE_ELE                                      ." m\n" if $num_removals_ele;
-$final_text .= points($num_removals_dir  )." ignored due to direction change out of range -".MAX_PLAUSIBLE_ANGLE_DIFF."°..+".MAX_PLAUSIBLE_ANGLE_DIFF."°\n" if $num_removals_dir;
+$final_text .= points($num_removals_dir  )." ignored due to direction change out of range -".MAX_PLAUSIBLE_ANGLE_DIFF."..+".MAX_PLAUSIBLE_ANGLE_DIFF." degrees\n" if $num_removals_dir;
 $final_text .= points($num_removals_spd  )." ignored due to speed out of range 0..$MAX_PLAUSIBLE_SPEED km/h\n"    if $num_removals_spd;
 $final_text .= points($num_removals_acc  )." ignored due to acceleration more than $MAX_PLAUSIBLE_ACCEL m/s/s\n"  if $num_removals_acc;
 $final_text .= points($num_removals_dec  )." ignored due to deceleration more than $MAX_PLAUSIBLE_DECEL m/s/s\n"  if $num_removals_dec;

@@ -34,7 +34,7 @@ total track duration = 1:00:00 h
 total moving time    = 0:01:52 h, with speed being at least 1 km/h
 average moving speed = 36.3 km/h
 1 point ignored due to altitude less than -450 m
-1 point ignored due to direction change out of range -170°..+170°
+1 point ignored due to direction change out of range -170..+170 degrees
 3 points ignored due to speed out of range 0..200 km/h
 1 point ignored due to acceleration more than 5 m/s/s
 1 point ignored due to deceleration more than 10 m/s/s
