@@ -1034,6 +1034,7 @@ for (my $state = 0,
         # when $state == 1 || $state == 2: processing first trkpt in new trkseg
         # when $state == 3: processing further trkpt in trkseg
         my ($sec, $spd, $cmt, $src, $fix, $exts);
+        my $start_merge = "start using alternative input";
         if (!$in_merge) {
             m#(.*?</trkpt>)#s;
             my $trkpt = $1;
@@ -1042,22 +1043,18 @@ for (my $state = 0,
             next if $ignore
                 || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/) && (diff_defined($sec, $prev_sec) // MIN_TIMEDIFF_PARSING) < MIN_TIMEDIFF_PARSING && ++$num_ignored_diff;
             ## debug_log "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
-        } elsif ($merge) {
-            ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) = $in_merge == -1 && !$infile_EOF ?
-            ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1) : # EOF in $merge but not in infile(s), so restore next point from infile(s)
-            ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2);  # trying to continue from $merge
-        }
-        my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
+            # debug "$tim: read from input";
 
-        if ($merge) {
-            if (!$in_merge) {
-                if (($diff_time >= MERGE_FILL_GAP || $state == 1) && (diff_defined($sec2, $sec) // 0) < 0) { # alternative input form $merge currently is before infile(s)
+            if ($merge) {
+                my $gap_time = diff_defined($sec, $prev_avail_sec) // 0;
+                if (($gap_time >= MERGE_FILL_GAP || $state == 1) &&
+                    (diff_defined($sec2, $sec) // 0) < 0) { # infile(s) went past current alternative input
                     # (re-)start merge
                     $in_merge = 1;
                     if ($state == 1) {
-                        info("start using alternative input before infile(s)");
+                        info("$start_merge before infile(s)");
                     } else { # certainly $i > 0
-                        info_trkpt_i($i - 1, "start using alternative input on ".timediff_string($diff_time)." gap after", "");
+                        info_trkpt_i($i - 1, "$start_merge on ".timediff_string($gap_time)." gap after", "");
                     }
                     # save next point from infile(s)
                     ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1) =
@@ -1065,29 +1062,37 @@ for (my $state = 0,
                     # switch to point from $merge
                     ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
                     ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2);
+                    # debug "$tim: switched to merge";
                 } else {
                     while ($merge && defined $sec && defined $sec2 && $sec2 <= $sec) {
-                        # advance $merge as far as possible to catch up with infile(s)
+                        # advance $merge as far as possible to get past infile(s)
                         ($merge = 0, close M) unless next_trkpt2();
+                        # debug "$tim2: advanced merge";
                     }
                 }
-            } else { # $in_merge != 0
-                if ($infile_EOF == 1) {
-                    info_trkpt_i($i - 1, "start using alternative input on end of infile(s) at", "");
-                    $infile_EOF = 2;
-                }
-                if ($in_merge == -1 ||
-                    defined $sec && !$infile_EOF && defined $sec1 && $sec1 <= $sec) { # alternative input form $merge is no more before infiles(s)
-                    # restore next point from infile(s)
-                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
-                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1);
-                    $in_merge = 0 if $in_merge == 1;
-                    info_trkpt_i($i - 1, ($in_merge == 0 ? "pause using" : "end   of   ")
-                                 ." alternative input after                 ", "");
-                }
             }
-            $diff_time = diff_defined($sec, $prev_avail_sec) // 0; # recalculation
+        } else { # $in_merge, currently merging from alternative input $merge
+            if ($infile_EOF == 1) {
+                info_trkpt_i($i - 1, "$start_merge on end of infile(s) at", "");
+                $infile_EOF = 2;
+            }
+            if ($in_merge == -1 # EOF in merge, implies !$infile_EOF
+                || !$infile_EOF && (diff_defined($sec2, $sec1) // -1) >= 0 # alternative input form $merge is no more at earlier time than infiles(s)
+               ) {
+                # restore next point from infile(s)
+                ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
+                ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1);
+                $in_merge = 0 if $in_merge == 1;
+                info_trkpt_i($i - 1, ($in_merge == 0 ? "pause using" : "end   of   ")
+                             ." alternative input after                 ", "");
+                # debug "$tim: restored from input";
+            } else { # continue from $merge
+                ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
+                ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2);
+                # debug "$tim: continued from merge";
+            }
         }
+        my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
 
         if ($state > 1) {
             my $severity = $state < 3 ? "WARNING" : "FATAL"; # at segment start, just warn
