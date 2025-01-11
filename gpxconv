@@ -101,8 +101,11 @@ use constant ELE_THRESHOLD    => 25; # threshold for detecting/accepting ascent 
                                      # should be larger than short-term altitude measurement error
 my $PHASES_REPORT_THRESHOLD = ELE_THRESHOLD; # default
 
+# merge control
+use constant MERGE_FILL_GAP  =>  60; # minimum gap duration in seconds to be filled by merging
+use constant MERGE_MAX_DIST  => 100; # maximum distance first point of merged path may be away
+
 # smoothing control
-use constant MERGE_FILL_GAP    => 60; # minimum gap duration in seconds to be filled by merging
 use constant ENABLE_SMOOTHING  =>  0; # by default disable smoothing
 use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackpoint to be smoothened and its neighbors
 
@@ -1061,8 +1064,8 @@ for (my $state = 0, my $skip_point = 0,
 
                 my $gap_time = diff_defined($sec, $prev_avail_sec) // 0;
                 if ($skip_point ||
-                    ($gap_time >= MERGE_FILL_GAP || $state == 1) &&
-                    $timediff_merge < 0) { # infile(s) went past current alternative input
+                    ($timediff_merge < 0 && # infile(s) went past current alternative input
+                     ($state == 1 || $gap_time >= MERGE_FILL_GAP && distance_curr($lat2, $lon2, $ele2) <= MERGE_MAX_DIST))) {
                     # (re-)start merge
                     $in_merge = 1;
                     if ($state == 1) {

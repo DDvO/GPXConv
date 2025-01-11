@@ -5,19 +5,19 @@ INFO   : pause using alternative input after                  <trkpt lat="0"    
 INFO   : start using alternative input on 0:10:00 h gap after <trkpt lat="0"       lon="1" <ele>1 <time>2000-01-01T00:01:00Z
 INFO   : alternative input is 0.011 km away, skipping regular <trkpt lat="0"       lon="1" <ele>3 <time>2000-01-01T00:11:00Z
 INFO   : pause using alternative input after                  <trkpt lat="0.00010" lon="1" <ele>4 <time>2000-01-01T00:21:00Z
-INFO   : start using alternative input on end of infile(s) at <trkpt lat="0"       lon="1" <ele>5 <time>2000-01-01T00:22:00Z
-INFO   : end   of    alternative input after                  <trkpt lat="0"       lon="1" <ele>6 <time>2000-01-01T00:23:00Z
-INFO   : last   segment end <trkpt lat="0"       lon="1" <ele>6 <time>2000-01-01T00:23:00Z
+INFO   : start using alternative input on end of infile(s) at <trkpt lat="0"       lon="1" <ele>7 <time>2000-01-01T00:24:00Z
+INFO   : end   of    alternative input after                  <trkpt lat="0"       lon="1" <ele>8 <time>2000-01-01T00:25:00Z
+INFO   : last   segment end <trkpt lat="0"       lon="1" <ele>8 <time>2000-01-01T00:25:00Z
 
 INFO   : GPXConv statistics (not including periods between segments)
 At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T00:00:00Z: start
 At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T00:22:00Z: max speed        =     1 km/h
 At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T00:00:00Z: min altitude     =     0 m
-At lat,lon,ele = 0.00000,1.00000,6 time = 2000-01-01T00:23:00Z: max altitude     =     6 m
+At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-01T00:25:00Z: max altitude     =     8 m
 At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T00:01:00Z: max  ascent rate =   +60 m/h at 0 km/h
-At lat,lon,ele = 0.00000,1.00000,6 time = 2000-01-01T00:23:00Z: end
-total track length   = 0.026 km
-total track duration = 0:23:00 h
+At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-01T00:25:00Z: end
+total track length   = 0.028 km
+total track duration = 0:25:00 h
 1 regular point skipped during merge
 0 points inserted due to time gaps > 1800 seconds
 elevation not corrected
