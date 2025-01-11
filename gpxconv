@@ -266,7 +266,11 @@ my $found_corr = 0;
 
 my $lat, my $lon, my $ele, my $tim, my $sec, my $spd; # TODO make local
 
+my $num_merges = 0;
+my $num_merged_points = 0;
 my $num_skip_points = 0;
+my $num_merged_points_last = 0;
+my $num_skip_points_last = 0;
 
 my $min_lat, my $max_lat;
 my $min_lon, my $max_lon;
@@ -946,6 +950,14 @@ if ($merge && !next_trkpt2()) {
     close M;
 }
 
+sub warn_skiped_merged_ratio
+{
+    my $merged  = $num_merged_points - $num_merged_points_last;
+    my $skipped = $num_skip_points   - $num_skip_points_last;
+    warn_trkpt("skipped $skipped regular points while merging $merged ones before", "")
+        if $skipped > $merged;
+}
+
 # TODO before further complicating input handling, split file reading and parsing from any further processing
 for (my $state = 0, my $skip_point = 0,
      my $prev_lat, my $prev_lon, my $prev_ele, my $prev_tim = "", my $prev_sec,
@@ -1068,6 +1080,7 @@ for (my $state = 0, my $skip_point = 0,
                      ($state == 1 || $gap_time >= MERGE_FILL_GAP && distance_curr($lat2, $lon2, $ele2) <= MERGE_MAX_DIST))) {
                     # (re-)start merge
                     $in_merge = 1;
+                    $num_merges++ unless $skip_point;
                     if ($state == 1) {
                         info("$start_merge before infile(s)");
                     } elsif (!$skip_point) { # certainly $i > 0
@@ -1080,6 +1093,7 @@ for (my $state = 0, my $skip_point = 0,
                     ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
                     ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2);
                     # debug "$tim: ".($skip_point ? "continue" : "switched to")." merge";
+                    $num_merged_points++;
                     $skip_point = 0;
                 } else {
                     while ($merge && defined $sec && defined $sec2 && $sec2 <= $sec) {
@@ -1091,6 +1105,7 @@ for (my $state = 0, my $skip_point = 0,
             }
         } else { # $in_merge, currently merging from alternative input $merge
             if ($infile_EOF == 1) {
+                $num_merges++;
                 unless ($skip_point) {
                     info_trkpt_i($i - 1, "$start_merge on end of infile(s) at", "");
                 }
@@ -1120,10 +1135,14 @@ for (my $state = 0, my $skip_point = 0,
                 info_trkpt_i($i - 1, ($in_merge == 0 ? "pause using" : "end   of   ")
                              ." alternative input after                 ", "");
                 # debug "$tim: restored from input";
+                warn_skiped_merged_ratio();
+                ($num_merged_points_last, $num_skip_points_last) =
+                ($num_merged_points     , $num_skip_points     );
             } else { # continue from $merge
                 ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
                 ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2);
                 # debug "$tim: continued from merge";
+                $num_merged_points++;
             }
         }
         my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
@@ -1385,6 +1404,7 @@ for (my $state = 0, my $skip_point = 0,
         close M;
     }
 }
+warn_skiped_merged_ratio();
 if ($in_merge == -1) {
     info_trkpt("end   of    alternative input after                 ", "");
     $in_merge = $merge = 0;
@@ -2311,6 +2331,8 @@ $final_text .= plural($num_pruned_cmts,              "cmt")." pruned\n" if $num_
 $final_text .= plural($num_pruned_descs,     "description")." pruned\n" if $num_pruned_descs;
 $final_text .= plural($num_pruned_links,            "link")." pruned\n" if $num_pruned_links;
 $final_text .= plural($num_pruned_exts,        "extension")." pruned\n" if $num_pruned_exts;
+$final_text .= plural($num_merges,                  "path")." merged from alternative input\n" if $num_merges;
+$final_text .= plural($num_merged_points,   "merged point")."\n" if $num_merged_points;
 $final_text .= plural($num_skip_points,    "regular point")." skipped during merge\n" if $num_skip_points;
 $final_text .= points($num_ignored_diff  )." less than ".MIN_TIMEDIFF_PARSING ." sec apart filtered out\n" if $num_ignored_diff;
 $final_text .= points($num_ignored_before)." with time before ".epoch_to_str($begin_sec)." filtered out\n" if defined $begin_sec;

@@ -18,6 +18,8 @@ At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T00:01:00Z: max  ascent rate
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-01T00:25:00Z: end
 total track length   = 0.028 km
 total track duration = 0:25:00 h
+3 paths merged from alternative input
+4 merged points
 1 regular point skipped during merge
 0 points inserted due to time gaps > 1800 seconds
 elevation not corrected
