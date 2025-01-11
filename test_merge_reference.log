@@ -1,0 +1,21 @@
+INFO   : start using alternative input before infile(s)
+INFO   : initial track, from file test_merge1.gpx and alternative input test_merge2.gpx
+INFO   : first   segment at <trkpt lat="0" lon="1" <ele>0 <time>2000-01-01T00:00:00Z
+INFO   : pause using alternative input after                  <trkpt lat="0" lon="1" <ele>0 <time>2000-01-01T00:00:00Z
+INFO   : start using alternative input on 0:10:00 h gap after <trkpt lat="0" lon="1" <ele>1 <time>2000-01-01T00:01:00Z
+INFO   : pause using alternative input after                  <trkpt lat="0" lon="1" <ele>2 <time>2000-01-01T00:10:00Z
+INFO   : start using alternative input on end of infile(s) at <trkpt lat="0" lon="1" <ele>4 <time>2000-01-01T00:12:00Z
+INFO   : last   segment end <trkpt lat="0" lon="1" <ele>5 <time>2000-01-01T00:13:00Z
+
+INFO   : GPXConv statistics (not including periods between segments)
+At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T00:00:00Z: start
+At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T00:01:00Z: max speed        =     0 km/h
+At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T00:00:00Z: min altitude     =     0 m
+At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T00:13:00Z: max altitude     =     5 m
+At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T00:01:00Z: max  ascent rate =   +60 m/h at 0 km/h
+At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T00:13:00Z: end
+total track length   = 0.005 km
+total track duration = 0:13:00 h
+0 points inserted due to time gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end
