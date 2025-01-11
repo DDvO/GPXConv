@@ -1291,10 +1291,9 @@ for (my $state = 0,
         push @FIX, $fix;
         push @EXT, $exts;
 
-        # detect and report missing time and/or altitude
+        # detect and report missing altitude
         my $ele_solution  = "cannot calculate ascent/descent";
         $ele_solution  = "trying to interpolate altitude" if $ele_miss_start;
-
         if ($ele eq "") {
             $num_no_ele++;
             $ele_gap_length += $dis; # using $dis == 0 for first point
@@ -1306,6 +1305,7 @@ for (my $state = 0,
             $ele_gap_length = 0;
         }
 
+        # detect and report missing time
         my $time_solution = "cannot calculate speed and acceleration";
         $time_solution = "trying to interpolate time" if $tim_miss_start;
         unless (defined $sec) {
@@ -1318,13 +1318,15 @@ for (my $state = 0,
             $num_no_time     = 0;
             $time_gap_length = 0;
         }
+
+        $i++;
+
         my $sec_str = defined $sec ? epoch_to_str($sec) : "";
-        abort("FATAL: internally inconsistent time data for trkpt ".($i + 1).": tim=$tim != $sec_str (=$sec)")
+        abort("FATAL: internally inconsistent time data for trkpt $i: tim=$tim != $sec_str (=$sec)")
             if $tim =~ s/(\.\d*?)0+Z/$1Z/r ne $sec_str =~ s/(\.\d*?)0+Z/$1Z/r &&
             !($tim =~ m/\.999Z/ && defined $sec && $tim eq epoch_to_str($sec - 0.001));
 
         # will go wrong if previous trkpt gets ignored: $ELE[$#ELE] = $ELE[$#ELE-1] if $ele eq "" && !$SEG[$#ELE]; # implies $#ELE > 0
-        $i++;
         ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec) =
         (     $lat,      $lon,      $ele,      $tim,      $sec);
         $prev_avail_ele = $ele if $ele ne "";
