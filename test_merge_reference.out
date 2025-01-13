@@ -18,7 +18,7 @@ At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-01T00:25:00Z: end
 total track length   = 0.028 km
 total track duration = 0:25:00 h
 3 paths merged from alternative input
-4 merged points
+5 merged points
 1 regular point skipped during merge
 0 points inserted due to time gaps > 1800 seconds
 elevation not corrected
@@ -27,6 +27,7 @@ GPXConv statistics end
 <trkseg>
 <trkpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T00:00:00Z</time><cmt>before start of base input</cmt></trkpt>
 <trkpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T00:01:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00010" lon="1.00000"><ele>2</ele><time>2000-01-01T00:09:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00010" lon="1.00000"><ele>2</ele><time>2000-01-01T00:10:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00010" lon="1.00000"><ele>4</ele><time>2000-01-01T00:21:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T00:22:00Z</time><src>computed speed</src><extensions><speed>1</speed></extensions></trkpt>
