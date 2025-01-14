@@ -722,7 +722,7 @@ sub comp_diffs {
     my $timediff = diff_defined($sec, $prev_sec);
     my $rate = $RAT[$i];
     my $rate_new = rate($diff_ele, $timediff);
-    abort("FATAL: internal inconsistency on ascent/descent rate: $rate vs. $rate_new") if $rate ne $rate_new;
+    abort("FATAL: internal inconsistency on ascent/descent rate at $TIM[$i]: $rate vs. $rate_new") if $rate ne $rate_new;
     my $comp_spd = defined $timediff ? ($timediff > 0 ? $dis / $timediff : $prev_comp_spd) : "";
     $spd_prec_len = max($spd_prec_len, length(spd_str($comp_spd))) if $comp_spd ne ""; # used only for spd_string
     my $acc = $comp_spd ne "" && $prev_comp_spd ne "" && $timediff ? ($comp_spd - $prev_comp_spd) / $timediff : "";
@@ -1036,7 +1036,7 @@ sub read_tracks
             if ($state > 1) {
                 my $severity = $state < 3 ? "WARNING" : "FATAL"; # at segment start, just warn
                 print_trkpt("$severity: before", " negative time difference (-".timediff_string(-$diff_time).")")
-                    if $diff_time < 0; # this implies defined $sec && defined $prev_sec
+                    if $diff_time < 0; # this implies defined $sec && defined $prev_avail_sec
                 if (defined $sec && defined $prev_avail_sec && $tim eq $prev_avail_tim) { # really equal (before rounding seconds)
                     print_trkpt("$severity: point before      ",
                                 " has same time but different position: $prev_lat, $prev_lon")
