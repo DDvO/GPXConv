@@ -218,8 +218,7 @@ my $num_pruned_exts  = 0;
 my $print_warnings   = PRINT_WARNINGS;
 my $print_info       = PRINT_INFO;
 
-# trackpoint data
-
+# regular trackpoint data from infile(s)
 my @IGN; # number of points ignored immediately before this one
 my @SEG;
 my @FLG;
@@ -235,6 +234,9 @@ my @CMT; # as given in input but without <cmt> and </cmt> tags, or "" if not ava
 my @SRC; # as given in input but without <src> and </src> tags, or "" if not available
 my @FIX; # as given in input but without <fix> and </fix> tags, or "" if not available
 my @EXT; # or "" if not available
+
+# trackpoint data from alternative input:
+my (@IGN2, @SEG2, @FLG2, @LAT2, @LON2, @ELE2, @TIM2, @SEC2, @DIS2, @RAT2, @SPD2, @CMT2, @SRC2, @FIX2, @EXT2);
 
 # waypoint data
 
@@ -911,11 +913,13 @@ my $MAX_SPEED_DEVIATION = $MAX_PLAUSIBLE_SPEED * MAX_SPEED_DEVIATION;
 
 ## read all trackpoints from all track segments, optionally completing them
 
-my ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1) if $merge; # end of current input gap, should merge any points before
-my ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2) if $merge; # current trkpt from alternative input, to be possibly merged
-my $prev_sec2;
 sub read_tracks
 {
+    my $merge = $_[0];
+    my  ( $SEG ,  $FLG ,  $LAT ,  $LON ,  $ELE ,  $TIM ,  $SEC ,  $DIS ,  $RAT ) = $merge ?
+        (\@SEG2, \@FLG2, \@LAT2, \@LON2, \@ELE2, \@TIM2, \@SEC2, \@DIS2, \@RAT2) :
+        (\@SEG , \@FLG , \@LAT , \@LON , \@ELE,  \@TIM , \@SEC , \@DIS , \@RAT );
+
     my $ele_miss_start  = 0; # first index of recent stretch with missing ele ; TODO restrict scope
     my $tim_miss_start  = 0; # first index of recent stretch with missing time; TODO restrict scope
     my $num_no_ele      = 0;
@@ -924,55 +928,16 @@ sub read_tracks
     my $time_gap_length = 0;
 
     $/ = "<trkpt ";
-    if ($merge) {
-        open M, $merge || abort("FATAL: cannot open alternative GPX source file $merge: $.") if $#TIM < 0;
-        <M>; # first item is before "<trktpt"
-    }
+    open M, $merge || abort("FATAL: cannot open alternative GPX source file $merge: $.") if $merge;
 
-    sub next_trkpt2() {
-        my $trkpt2;
-        $prev_sec2 = $sec2;
-        my $ignore2 = 1;
-        while ($ignore2 && defined($trkpt2 = <M>)) {
-            $trkpt2 =~ m#(.*?</trkpt>)#s;
-            $trkpt2 = $1;
-            abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt2;
-            ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $cmt2, $src2, $fix2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
-            $ignore2 |= (diff_defined($sec2, $prev_sec2) // MIN_TIMEDIFF_PARSING) < MIN_TIMEDIFF_PARSING && ++$num_ignored_diff;
-        }
-        ## debug_log "read non-ignored point   from alt input with lat=$lat2 lon=$lon2 ele=$ele2 tim=$tim2 sec=".($sec2 // "none")." spd=".spd_or_none($spd2) if $trkpt2;
-        return $trkpt2;
-    }
-
-    my $in_merge = 0; # 1 means using trkpt from $merge, -1 means EOF in $merge
-    my $infile_EOF = 0;
-    if ($merge && !next_trkpt2()) {
-        abort("FATAL: no trkpt found in alternative input $merge");
-        # code usually not reached due to FATAL:
-        $merge = 0;
-        close M;
-    }
-
-    sub warn_skiped_merged_ratio
-    {
-        my $merged  = $num_merged_points - $num_merged_points_last;
-        my $skipped = $num_skip_points   - $num_skip_points_last;
-        warn_trkpt("skipped $skipped regular points while merging $merged ones before", "")
-            if $skipped > $merged;
-    }
-
-    # TODO before further complicating input handling, split file reading and parsing from any further processing
-    for (my $state = 0, my $skip_point = 0,
-         my $prev_lat, my $prev_lon, my $prev_ele, my $prev_tim = "", my $prev_sec,
-         my $prev_avail_tim, my $prev_avail_sec, my $prev_avail_ele  = "",
-         my $ele_miss_length = 0, my $tim_miss_length = 0,
-         my $prev_lat2, my $prev_lon2, my $prev_ele2,
-         my $i = 0;
-         $in_merge ? (next_trkpt2() ||
-                      ($in_merge = -1, !$infile_EOF)) # EOF in $merge
-                   : (defined($_ = <>) ||
-                      ($merge && ($infile_EOF = $in_merge = 1))); # EOF in infile(s)
-        ) {
+    my $state = 0;
+    my ($prev_lat, $prev_lon, $prev_ele, $prev_sec);
+    my $prev_tim = "";
+    my ($prev_avail_tim, $prev_avail_sec);
+    my $prev_avail_ele = "";
+    (my $ele_miss_length = 0, my $tim_miss_length = 0);
+    my $i = 0;
+    while ($_ = ($merge ? <M> : <>)) {
         # anywhere (in headers, tracks, waypoints, trackpoints, ...):
         $num_pruned_cmts  += s#[ \t]*<cmts>.*?</cmt>\n?##sg              if $prune_cmts;
         $num_pruned_descs += s#[ \t]*<desc>.+?</desc>\n?##sg             if PRUNE_DESCS;
@@ -988,7 +953,7 @@ sub read_tracks
 
         #collect waypoints, possibly in later infile(s) headers
         my $prev_wpt_time_stripped = "";
-        while (!$in_merge && s#(<wpt .+?)(</wpt>)\n?##s)
+        while (s#(<wpt .+?)(</wpt>)\n?##s)
         {
             my $wpt = $1 . $2;
 
@@ -1039,15 +1004,15 @@ sub read_tracks
             }
             s#[ \t]+(\r?\n)$#$1#s;    #remove any trailing spaces on line before
             s#[ \t]*(<trkseg>)#$1#s;
-            $HEAD  = $_;
+            $HEAD  = $_ unless $merge; # ignore header of alternative input
             $state = 1;         # expecting the very first trkpt
-        } elsif (!$in_merge && m#(<gpx[ >])#s) { # processing further GPX header, typically from next file
+        } elsif (m#(<gpx[ >])#s) { # processing further GPX header, typically from next file
             ++$num_ignored_hdrs;
             if ($smoothing && m#\r?\nGPXConv statistics (.*?smoothened)(.*?)GPXConv statistics end\r?\n#)
             {
                 warn_smmooting($1);
             }
-            if ($#TIM >= 0) { # typically, new file
+            if ($#$TIM >= 0) { # typically, new file
                 info_trkpt_i($i - 1, "end of segment at", "") if $i > 0;
                 info("further track, from file $ARGV");
             }
@@ -1056,102 +1021,16 @@ sub read_tracks
             # when $state == 1 || $state == 2: processing first trkpt in new trkseg
             # when $state == 3: processing further trkpt in trkseg
             my ($sec, $spd, $cmt, $src, $fix, $exts);
-            my $start_merge = "start using alternative input";
-            if (!$in_merge) {
-                m#(.*?</trkpt>)#s;
-                my $trkpt = $1;
-                abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt;
-                ($lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $src, $fix, $exts, my $ignore) = parse_point("<trkpt $trkpt");
-                next if $ignore
-                    || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/)
-                       && (diff_defined($sec, $prev_sec) // MIN_TIMEDIFF_PARSING) < MIN_TIMEDIFF_PARSING && ++$num_ignored_diff;
-                ## debug_log "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
-                # debug "$tim: ".($skip_point ? "skipping" : "using")." input";
 
-                if ($merge) {
-                    my $timediff_merge = diff_defined($sec2, $sec) // 0;
+            m#(.*?</trkpt>)#s;
+            my $trkpt = $1;
+            abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt;
+            ($lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $src, $fix, $exts, my $ignore) = parse_point("<trkpt $trkpt");
+            next if $ignore
+                || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/)
+                   && (diff_defined($sec, $prev_sec) // MIN_TIMEDIFF_PARSING) < MIN_TIMEDIFF_PARSING && ++$num_ignored_diff;
+            ## debug_log "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
 
-                    # skipping continues until point from infile(s) is past current alternative input
-                    if ($skip_point && !($timediff_merge < 0)) {
-                        warn_trkpt("due to time diff ".timediff_string($timediff_merge).
-                                   ", skipping further regular", "");
-                        $num_skip_points++;
-                        $prev_sec = $sec;
-                        goto after_point;
-                    }
-
-                    my $gap_time = diff_defined($sec, $prev_avail_sec) // 0;
-                    if ($skip_point ||
-                        ($timediff_merge < 0 && # infile(s) went past current alternative input
-                         ($state == 1 || $gap_time >= MERGE_FILL_GAP && distance_curr($lat2, $lon2, $ele2) <= MERGE_MAX_DIST))) {
-                        # (re-)start merge
-                        $in_merge = 1;
-                        $num_merges++ unless $skip_point;
-                        if ($state == 1) {
-                            info("$start_merge before infile(s)");
-                        } elsif (!$skip_point) { # certainly $i > 0
-                            info_trkpt_i($i - 1, "$start_merge on ".timediff_string($gap_time)." gap after", "");
-                        }
-                        # save next point from infile(s)
-                        ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1) =
-                        ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts );
-                        # switch to point from $merge
-                        ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
-                        ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2);
-                        # debug "$tim: ".($skip_point ? "continue" : "switched to")." merge";
-                        $num_merged_points++;
-                        $skip_point = 0;
-                    } else {
-                        while ($merge && defined $sec && defined $sec2 && $sec2 <= $sec) {
-                            # advance $merge as far as possible to get past infile(s)
-                            ($merge = 0, close M) unless next_trkpt2();
-                            # debug "$tim2: skipped merge";
-                        }
-                    }
-                }
-            } else { # $in_merge, currently merging from alternative input $merge
-                if ($infile_EOF == 1) {
-                    $num_merges++;
-                    unless ($skip_point) {
-                        info_trkpt_i($i - 1, "$start_merge on end of infile(s) at", "");
-                    }
-                    $infile_EOF = 2;
-                }
-                if ($in_merge == -1 # EOF in merge, implies !$infile_EOF
-                    || !$infile_EOF && (diff_defined($sec2, $sec1) // -1) >= 0 # alternative input form $merge is no more at earlier time than infiles(s)
-                   ) {
-                    # restore next point from infile(s)
-                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
-                    ($lat1, $lon1, $ele1, $tim1, $sec1, $spd1, $cmt1, $src1, $fix1, $exts1);
-                    if ($in_merge == 1) {
-                        $in_merge = 0;
-                        my $dis_alternative  = distance     (     $lat2,      $lon2,      $ele2,
-                                                             $prev_lat2, $prev_lon2, $prev_ele2);
-                        my $dis1_from_infile = distance_curr($prev_lat2, $prev_lon2, $prev_ele2);
-                        my $dis2_from_infile = distance_curr(     $lat2,      $lon2,      $ele2);
-                        my $dis_from_infile = ($dis1_from_infile + $dis2_from_infile) / 2;
-                        if ($dis_alternative < $dis_from_infile) { # alternative input is away from infile(s)
-                            my $Dis      = dis_string($dis_from_infile);
-                            info_trkpt("alternative input is $Dis away, skipping regular", "");
-                            $skip_point = 1;
-                            $num_skip_points++;
-                            $prev_sec = $sec;
-                            goto after_point; # skip current point from infile(s)
-                        }
-                    }
-                    info_trkpt_i($i - 1, ($in_merge == 0 ? "pause using" : "end   of   ")
-                                 ." alternative input after                 ", "");
-                    # debug "$tim: restored from input";
-                    warn_skiped_merged_ratio();
-                    ($num_merged_points_last, $num_skip_points_last) =
-                    ($num_merged_points     , $num_skip_points     );
-                } else { # continue from $merge
-                    ($lat , $lon , $ele , $tim , $sec , $spd , $cmt , $src , $fix , $exts ) =
-                    ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2);
-                    # debug "$tim: continued from merge";
-                    $num_merged_points++;
-                }
-            }
             my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
 
             if ($state > 1) {
@@ -1173,13 +1052,13 @@ sub read_tracks
             if ($state < 3) { # at the first point in trkseg, first handle last point of segment before
                 $prev_avail_ele = "";
                 if (CARRY_OVER_ELE && $ele ne "") {
-                    if ($i > 0 && $ELE[$i - 1] eq "") {
+                    if ($i > 0 && $ELE->[$i - 1] eq "") {
                         # fill in altitude in last point of segment before
-                        $FLG[$i - 1] |= SUBSTITUTED_ELE;
-                        $ELE[$i - 1] = $prev_ele = $ele;
+                        $FLG->[$i - 1] |= SUBSTITUTED_ELE;
+                        $ELE->[$i - 1] = $prev_ele = $ele;
                         recalculate_all($i - 1);
                         $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # recalculation
-                        $ele_miss_length += $DIS[$i - 1] if $ele_miss_start;
+                        $ele_miss_length += $DIS->[$i - 1] if $ele_miss_start;
                         warn_trkpt_i($i - 1, "at segment end    ",
                                      " no altitude was given; using value from begin of next segment");
                     }
@@ -1189,14 +1068,14 @@ sub read_tracks
                     $ele_miss_start = 0;
                 }
                 if (CARRY_OVER_TIME && $tim ne "") {
-                    if ($i > 0 && $TIM[$i - 1] eq "") {
+                    if ($i > 0 && $TIM->[$i - 1] eq "") {
                         # fill in time in last point of segment before
-                        $FLG[$i - 1] |= SUBSTITUTED_TIM;
-                        $TIM[$i - 1] = $tim;
-                        $SEC[$i - 1] = $sec;
+                        $FLG->[$i - 1] |= SUBSTITUTED_TIM;
+                        $TIM->[$i - 1] = $tim;
+                        $SEC->[$i - 1] = $sec;
                         recalculate_SPD($i - 1);
                         recalculate_RAT($i - 1);
-                        $tim_miss_length += $DIS[$i - 1] if $tim_miss_start;
+                        $tim_miss_length += $DIS->[$i - 1] if $tim_miss_start;
                         warn_trkpt_i($i - 1, "at segment end    ",
                                      " no time     was given; using value from begin of next segment");
                     }
@@ -1209,7 +1088,7 @@ sub read_tracks
 
             if ($state == 1) {
                 my $name = $ARGV =~ s/^(test.*?\.out)\d$/$1/r; # avoid variation in test log output due to iteration count in file name
-                info("initial track, from file $name".($merge ? " and alternative input $merge" : ""));
+                info("initial track".($merge ? " from alternative input $merge" : ", from file $name"));
                 info_trkpt("first   segment at", "");
             } elsif ($state == 2) {
                 info_trkpt("further segment at", " after a time gap of ".timediff_string($diff_time)." and ".dis_string($dis));
@@ -1221,7 +1100,7 @@ sub read_tracks
                     if ($i == 0 || $prev_ele eq "") { # $prev_avail_ele
                         $resolution = " and no previous value available";
                     } elsif (CARRY_OVER_ELE) {
-                        $ele = $prev_ele; # $prev_avail_ele; # will become $ELE[$i]
+                        $ele = $prev_ele; # $prev_avail_ele; # will become $ELE->[$i]
                         $resolution = "; using previous available value";
                         $flags |= SUBSTITUTED_ELE;
                     } else {
@@ -1234,8 +1113,8 @@ sub read_tracks
                     if ($prev_tim eq "") {
                         $resolution = " and no previous value available";
                     } elsif (CARRY_OVER_TIME) {
-                        $tim = $prev_tim;    # will become $TIM[$i]
-                        $sec = $prev_sec;    # will become $SEC[$i]
+                        $tim = $prev_tim;    # will become $TIM->[$i]
+                        $sec = $prev_sec;    # will become $SEC->[$i]
                         $flags |= SUBSTITUTED_TIM;
                         $resolution = "; using previous value";
                     } else {
@@ -1254,11 +1133,11 @@ sub read_tracks
                 # substitute missing time if posssible using previous time, recorded speed, and distance from previous point
                 if (!defined $sec && defined $prev_sec && $spd ne "" && $dis > 0 && $spd > 0) {
                     my $comp_sec = $prev_sec + $dis / $spd;
-                    $tim = epoch_to_str($comp_sec);    # will become $TIM[$i]
-                    $sec = $comp_sec;                  # will become $SEC[$i]
+                    $tim = epoch_to_str($comp_sec);    # will become $TIM->[$i]
+                    $sec = $comp_sec;                  # will become $SEC->[$i]
                     warn_trkpt("at                ", " no time recognized, " .
                                " filled in using time difference calculated by distance / speed");
-                    $FLG[$i] |= SUBSTITUTED_TIM;
+                    $FLG->[$i] |= SUBSTITUTED_TIM;
                 } # any inconsistency where either $dis is (nearly) 0 or $spd is (nearly) 0 are covered by warning w.r.t. MAX_SPEED_DEVIATION
 
                 if ($tim eq "" && FILL_MISSING_TIME && ($tim_miss_start ||
@@ -1276,25 +1155,25 @@ sub read_tracks
                 } else {   # state == 3, further (i.e., not the first) point in trkseg
                     $ele_miss_length += $dis;
                 }
-                my $ele_curr = $ELE[$ele_miss_start - 1]; # $prev_avail_ele
+                my $ele_curr = $ELE->[$ele_miss_start - 1]; # $prev_avail_ele
                 my $ele_diff = $ele - $ele_curr;
                 # $ele_miss_length == 0 is special case of missing altitude over a stretch with all same lat/lon
                 my $ele_gradient = $ele_miss_length > 0 ? $ele_diff / $ele_miss_length : $ele_diff / ($i - $ele_miss_start + 1);
                 if ($ele_gradient != 0) {
                     my $j;
                     for ($j = $ele_miss_start; $j < $i_end; $j++) {
-                        $ele_curr += ($ele_miss_length > 0 ? $DIS[$j] : 1) * $ele_gradient;
-                        $ELE[$j] = sprintf ELE_PRECISION3, $ele_curr;
-                        $ele_full_len = max($ele_full_len, length($ELE[$j]));
+                        $ele_curr += ($ele_miss_length > 0 ? $DIS->[$j] : 1) * $ele_gradient;
+                        $ELE->[$j] = sprintf ELE_PRECISION3, $ele_curr;
+                        $ele_full_len = max($ele_full_len, length($ELE->[$j]));
                         recalculate_all($j);
                         # not changing $ele nor $prev_ele such that below time interpolation is not affected
-                        $FLG[$j] |= INTERPOLATED_ELE;
-                        ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE[$j] dis=$DIS[$j] rate=$RAT[$j]";
+                        $FLG->[$j] |= INTERPOLATED_ELE;
+                        ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE->[$j] dis=$DIS[$j] rate=$RAT->[$j]";
                     }
                     if ($i_end < $i) {
                         recalculate_all($j);
                     } else {
-                        $dis = distance_curr($LAT[$j - 1], $LON[$j - 1], $ELE[$j - 1]); # recalculation
+                        $dis = distance_curr($LAT->[$j - 1], $LON->[$j - 1], $ELE->[$j - 1]); # recalculation
                     }
                 }
                 $ele_miss_start = 0;
@@ -1308,7 +1187,7 @@ sub read_tracks
                 } else {   # state == 3, further (i.e., not the first) point in trkseg
                     $tim_miss_length += $dis;
                 }
-                my $sec_curr = $SEC[$tim_miss_start - 1]; # corresponds to $prev_tim
+                my $sec_curr = $SEC->[$tim_miss_start - 1]; # corresponds to $prev_tim
                 my $sec_diff = $sec - $sec_curr;
                 # $tim_miss_length == 0 is special case of missing time over a stretch with all same position;
                 # since altitude is interpolated in same iteration, a stretch with all same lat/lon looks like all same position
@@ -1317,13 +1196,13 @@ sub read_tracks
                     my $j;
                     ## debug_log "interpolating missing time over ".dis_string($tim_miss_length).", sec_diff = $sec_diff";
                     for ($j = $tim_miss_start; $j < $i_end; $j++) {
-                        $sec_curr += ($tim_miss_length > 0 ? $DIS[$j] : 1) * $sec_gradient;
-                        $SEC[$j] = $sec_curr;
-                        $TIM[$j] = epoch_to_str($sec_curr);
+                        $sec_curr += ($tim_miss_length > 0 ? $DIS->[$j] : 1) * $sec_gradient;
+                        $SEC->[$j] = $sec_curr;
+                        $TIM->[$j] = epoch_to_str($sec_curr);
                         recalculate_SPD($j);
                         recalculate_RAT($j);
-                        $FLG[$j] |= INTERPOLATED_TIM;
-                        ## debug_log "interpolating missing time at point $j with ele=$ELE[$j] new  time=$TIM[$j] dis=$DIS[$j] rate=".($RAT[$j] // "");
+                        $FLG->[$j] |= INTERPOLATED_TIM;
+                        ## debug_log "interpolating missing time at point $j with ele=$ELE->[$j] new  time=$TIM->[$j] dis=$DIS->[$j] rate=".($RAT->[$j] // "");
                     }
                     if ($i_end < $i) {
                         recalculate_SPD($j);
@@ -1332,24 +1211,44 @@ sub read_tracks
                 }
                 $tim_miss_start = 0;
             }
-            my $diff_ele = $i > 0 ? diff_nonempty($ele, $ELE[$i - 1]) : "";
-            my $diff_sec = $i > 0 ? diff_defined ($sec, $SEC[$i - 1]) : undef;
+            my $seg = $state < 3;
+            my $diff_ele = $i > 0 ? diff_nonempty($ele, $ELE->[$i - 1]) : "";
+            my $diff_sec = $i > 0 ? diff_defined ($sec, $SEC->[$i - 1]) : undef;
+            my $rate = rate($diff_ele, $diff_sec);
 
-            push @IGN, 0;
-            push @SEG, $state < 3;
-            push @FLG, $flags;
-            push @LAT, $lat;
-            push @LON, $lon;
-            push @ELE, $ele;
-            push @TIM, $tim;
-            push @SEC, $sec;
-            push @DIS, $dis;
-            push @RAT, rate($diff_ele, $diff_sec);
-            push @SPD, $spd; # initially as recorded, "" if not available
-            push @CMT, $cmt;
-            push @SRC, $src;
-            push @FIX, $fix;
-            push @EXT, $exts;
+            unless ($merge) {
+                push @IGN, 0;
+                push @SEG, $seg;
+                push @FLG, $flags;
+                push @LAT, $lat;
+                push @LON, $lon;
+                push @ELE, $ele;
+                push @TIM, $tim;
+                push @SEC, $sec;
+                push @DIS, $dis;
+                push @RAT, $rate;
+                push @SPD, $spd; # initially as recorded, "" if not available
+                push @CMT, $cmt;
+                push @SRC, $src;
+                push @FIX, $fix;
+                push @EXT, $exts;
+            } else {
+                push @IGN2, 0;
+                push @SEG2, $seg;
+                push @FLG2, $flags;
+                push @LAT2, $lat;
+                push @LON2, $lon;
+                push @ELE2, $ele;
+                push @TIM2, $tim;
+                push @SEC2, $sec;
+                push @DIS2, $dis;
+                push @RAT2, $rate;
+                push @SPD2, $spd; # initially as recorded, "" if not available
+                push @CMT2, $cmt;
+                push @SRC2, $src;
+                push @FIX2, $fix;
+                push @EXT2, $exts;
+            }
 
             # detect and report missing altitude
             my $ele_solution  = "cannot calculate ascent/descent";
@@ -1357,7 +1256,7 @@ sub read_tracks
             if ($ele eq "") {
                 $num_no_ele++;
                 $ele_gap_length += $dis; # using $dis == 0 for first point
-                warn_trkpt("no altitude     at", "; $ele_solution") if !$SEG[$i] && $num_no_ele == 1;
+                warn_trkpt("no altitude     at", "; $ele_solution") if !$SEG->[$i] && $num_no_ele == 1;
             } elsif ($num_no_ele) {
                 # unfortunately, this message may show after initial ones on next segment:
                 warn_trkpt_i($i - 1, "no altitude  up to", " for ".points($num_no_ele)." over a distance of ".dis_string($ele_gap_length));
@@ -1371,7 +1270,7 @@ sub read_tracks
             unless (defined $sec) {
                 $num_no_time++;
                 $time_gap_length += $dis; # using $dis == 0 for first point
-                warn_trkpt("no time         at", "; $time_solution") if !$SEG[$i] && $num_no_time == 1;
+                warn_trkpt("no time         at", "; $time_solution") if !$SEG->[$i] && $num_no_time == 1;
             } elsif ($num_no_time) {
                 # unfortunately, this message may show after initial ones on next segment:
                 warn_trkpt_i($i - 1, "no time      up to", " for ".points($num_no_time)." over a distance of ".dis_string($time_gap_length));
@@ -1385,51 +1284,198 @@ sub read_tracks
                 if $tim =~ s/(\.\d*?)0+Z/$1Z/r ne $sec_str =~ s/(\.\d*?)0+Z/$1Z/r &&
                 !($tim =~ m/\.999Z/ && defined $sec && $tim eq epoch_to_str($sec - 0.001));
 
-            # will go wrong if previous trkpt gets ignored: $ELE[$#ELE] = $ELE[$#ELE-1] if $ele eq "" && !$SEG[$#ELE]; # implies $#ELE > 0
+            # will go wrong if previous trkpt gets ignored: $ELE->[$#$ELE] = $ELE->[$#$ELE-1] if $ele eq "" && !$SEG->[$#$ELE]; # implies $#$ELE > 0
             ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec) =
             (     $lat,      $lon,      $ele,      $tim,      $sec);
-            ($prev_lat2, $prev_lon2, $prev_ele2) =
-            (     $lat2,      $lon2,      $ele2);
             $prev_avail_ele = $ele if $ele ne "";
 
             # enables checking negative time difference also across missing time entries:
             ($prev_avail_tim, $prev_avail_sec) = ($tim, $sec) if defined $sec;
 
-          after_point:
             $state = 3; # ready to process further trkpt(s) in trkseg (or new trkseg or new track)
         }
-        if (!$in_merge && m#</trkseg>.*<trkseg>#s) { # taking segments only from infile(s)
+        if (m#</trkseg>.*<trkseg>#s) { # taking segments only from infile(s)
             info_trkpt_i($i - 1, "end of  segment at", "") if $i > 0;
             $state = 2; # starting new trkseg
             # reset intra-segment values
         }
-        if ($i > 0 && !$in_merge && m#<trk>#) { # further track
+        if ($i > 0 && m#<trk>#) { # further track
             info("further track, again from file $ARGV") unless m#<gpx[ >]#s;
         }
-        if ($in_merge == -1) {
-            $in_merge = $merge = 0;
-            close M;
-        }
     }
-    warn_skiped_merged_ratio();
-    if ($in_merge == -1) {
-        info_trkpt("end   of    alternative input after                 ", "");
-        $in_merge = $merge = 0;
-        close M;
-    }
+    close M if $merge;
+
     my $Len = dis_string($ele_gap_length); # TODO restrict scope
-    warn_trkpt_i($#TIM, "no altitude  up to",
+    warn_trkpt_i($#$TIM, "no altitude  up to",
                  " for " . $num_no_ele . " points over a distance of $Len") if $num_no_ele > 1;
     $Len = dis_string($time_gap_length);
-    warn_trkpt_i($#TIM, "no time      up to",
+    warn_trkpt_i($#$TIM, "no time      up to",
                  " for " . $num_no_time . " points over a distance of $Len") if $num_no_time > 1;
-    info_trkpt("last   segment end", "") if $#TIM >= 0;
+    info_trkpt("last   segment end", "") if $#$TIM >= 0;
     warn_trkpt("                at",
                " was unable to interpolate missing altitude by end of last segment") if $ele_miss_start;
     warn_trkpt("                at",
                " was unable to interpolate missing time by end of last segment") if $tim_miss_start;
 }
-read_tracks();
+
+sub merge_tracks
+{
+    my $in_merge = 0; # 1 means using trkpt from $merge, -1 means EOF in $merge
+    my $infile_EOF = 0;
+    my $skip_point = 0;
+    my ($prev_lat , $prev_lon , $prev_ele );
+    my ($prev_avail_tim, $prev_avail_sec);
+    (my $curr_i, my $i = -1, my $j = 0);
+    abort("FATAL: no trkpt found in alternative input $merge") if $j > $#TIM2;
+
+    sub warn_skiped_merged_ratio
+    {
+        my $i = $_[0];
+        my $merged  = $num_merged_points - $num_merged_points_last;
+        my $skipped = $num_skip_points   - $num_skip_points_last;
+        warn_trkpt_i($i, "skipped $skipped regular points while merging $merged ones before", "")
+            if $skipped > $merged;
+    }
+
+    sub merge_point {
+        my ($i, $j) = @_;
+        splice @IGN, $i, 0, $IGN2[$j];
+        splice @SEG, $i, 0, $i == 0; # ignore segments of alternative input
+        splice @FLG, $i, 0, $FLG2[$j];
+        splice @LAT, $i, 0, $LAT2[$j];
+        splice @LON, $i, 0, $LON2[$j];
+        splice @ELE, $i, 0, $ELE2[$j];
+        splice @TIM, $i, 0, $TIM2[$j];
+        splice @SEC, $i, 0, $SEC2[$j];
+        splice @DIS, $i, 0, $DIS2[$j];
+        splice @RAT, $i, 0, $RAT2[$j];
+        splice @SPD, $i, 0, $SPD2[$j];
+        splice @CMT, $i, 0, $CMT2[$j];
+        splice @SRC, $i, 0, $SRC2[$j];
+        splice @FIX, $i, 0, $FIX2[$j];
+        splice @EXT, $i, 0, $EXT2[$j];
+        recalculate_all($i);
+    }
+
+    $SEG[0] = 0; # for the case that alternative points get merged before
+    while ($in_merge ? (++$j <= $#TIM2 ||
+                        ($in_merge = -1, !$infile_EOF)) # EOF in $merge
+                     : (($curr_i = ++$i) <= $#TIM ||
+                        ($merge && ($infile_EOF = $in_merge = 1))) # EOF in infile(s)
+           ) {
+        my ($tim , $sec ) = ($TIM [$i], $SEC [$i]);
+        my ($tim2, $sec2) = ($TIM2[$j], $SEC2[$j]);
+        my $start_merge = "start using alternative input";
+        unless ($in_merge) {
+            my $timediff_merge = diff_defined($sec2, $sec) // 0;
+
+            # skipping continues until point from infile(s) is past current alternative input
+            if ($skip_point && !($timediff_merge < 0)) {
+                warn_trkpt_i($i, "due to time diff ".timediff_string($timediff_merge).
+                             ", skipping further regular", "");
+                remove_trkpt($i--); $IGN[$i+1] = 0;
+                $num_skip_points++;
+                next;
+            }
+
+            my $gap_time = diff_defined($sec, $prev_avail_sec) // 0;
+            if ($skip_point ||
+                ($timediff_merge < 0 && # infile(s) went past current alternative input
+                 ($i == 0 ||
+                  $gap_time >= MERGE_FILL_GAP && distance_curr($LAT2[$j], $LON2[$j], $ELE2[$j]) <= MERGE_MAX_DIST))) {
+                # (re-)start merge
+                $in_merge = 1;
+                $num_merges++ unless $skip_point;
+                if ($i == 0) {
+                    info("$start_merge before infile(s)");
+                } elsif (!$skip_point) { # certainly $i > 0
+                    info_trkpt_i($i - 1, "$start_merge on ".timediff_string($gap_time)." gap after", "");
+                }
+                # debug "$tim2: ".($skip_point ? "continue" : "switched to")." merge";
+                merge_point($i++, $j);
+                $num_merged_points++;
+                $skip_point = 0;
+            } else {
+                while ($merge && defined $sec && defined $SEC2[$j] && ($sec2 = $SEC2[$j]) <= $sec) {
+                    # advance $merge as far as possible to get past infile(s)
+                    $merge = 0 unless ++$j <= $#TIM2;
+                    # debug "$tim2: skipped merge";
+                }
+            }
+        } else { # $in_merge, currently merging from alternative input $merge
+            if ($infile_EOF == 1) {
+                $num_merges++;
+                info_trkpt_i($i - 1, "$start_merge on end of infile(s) at", "") unless $skip_point;
+                $infile_EOF = 2;
+            }
+            if ($in_merge == -1 # EOF in merge, implies !$infile_EOF
+                || !$infile_EOF && (diff_defined($sec2, $sec) // -1) >= 0 # alternative input form $merge is no more at earlier time than infiles(s)
+               ) {
+                # consider returning to next point from infile(s)
+                if ($in_merge == 1) {
+                    $in_merge = 0;
+                    my ($prev_lat2, $prev_lon2, $prev_ele2) = ($LAT2[$j - 1], $LON2[$j - 1], $ELE2[$j - 1]);
+                    my (     $lat2,      $lon2,      $ele2) = ($LAT2[$j    ], $LON2[$j    ], $ELE2[$j    ]);
+                    my $dis_alternative  = distance     (     $lat2,      $lon2,      $ele2,
+                                                         $prev_lat2, $prev_lon2, $prev_ele2);
+                    my ($lat, $lon, $ele ) = ($LAT[$i], $LON[$i], $ELE[$i]);
+                    my $dis1_from_infile = distance($lat, $lon, $ele, $prev_lat2, $prev_lon2, $prev_ele2);
+                    my $dis2_from_infile = distance($lat, $lon, $ele,      $lat2,      $lon2,      $ele2);
+                    my $dis_from_infile = ($dis1_from_infile + $dis2_from_infile) / 2;
+                    if ($dis_alternative < $dis_from_infile) { # alternative input is away from infile(s)
+                        my $Dis      = dis_string($dis_from_infile);
+                        info_trkpt_i($i, "alternative input is $Dis away, skipping regular", "");
+                        # debug "$tim: skipping regular input";
+                        $skip_point = 1;
+                        remove_trkpt($i--); $IGN[$i+1] = 0;
+                        $num_skip_points++;
+                        next; # skip current point from infile(s)
+                    }
+                }
+                info_trkpt_i($i - 1, ($in_merge == 0 ? "pause using" : "end   of   ")
+                             ." alternative input after                 ", "");
+                recalculate_all($i);
+                # debug "$tim: returned to base input";
+                warn_skiped_merged_ratio();
+                ($num_merged_points_last, $num_skip_points_last) =
+                ($num_merged_points     , $num_skip_points     );
+            } else { # continue from $merge
+                merge_point($i++, $j);
+                # debug "$tim2: continued from merge";
+                $num_merged_points++;
+            }
+        }
+
+        my $diff_time = diff_defined($SEC[$i], $prev_avail_sec) // 0;
+        print_trkpt_i($i, "FATAL: before", " negative time difference (-".timediff_string(-$diff_time).")")
+            if $diff_time < 0; # this implies defined $sec && defined $prev_avail_sec
+        if (defined $SEC[$i] && defined $prev_avail_sec && $TIM[$i] eq $prev_avail_tim) { # really equal (before rounding seconds)
+            print_trkpt_i($i, "FATAL: point before      ",
+                          " has same time but different position: $prev_lat, $prev_lon")
+                if $LAT[$i] != $prev_lat || $LON[$i] != $prev_lon;
+            print_trkpt_i($i, "WARNING: point before      ",
+                          "has same time but different altitude: $prev_ele m")
+                if $ELE[$i] != $prev_ele;
+        }
+        ($prev_lat , $prev_lon , $prev_ele) = ($LAT[$i], $LON[$i], $ELE[$i]);
+        ($prev_avail_tim, $prev_avail_sec ) = ($TIM[$i], $SEC[$i]) if defined $SEC[$i];
+
+        $in_merge = 0 if $in_merge == -1;
+    }
+    $SEG[0] = 1; # for the case that no alternative points got merged before
+    warn_skiped_merged_ratio();
+    info_trkpt_i($i - 1, "end   of    alternative input after                 ", "") if $in_merge == -1;
+}
+
+sub read_all
+{
+    read_tracks(); # regular input file(s)
+    if ($merge) {
+        read_tracks($merge); # alternative input
+        merge_tracks();
+    }
+}
+read_all();
 
 sub ignore_trkpt {
     my ($Spd, $reason) = @_;
