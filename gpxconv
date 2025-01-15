@@ -28,7 +28,7 @@
 #
 
 use constant TOOL_NAME    => "GPXConv";
-use constant TOOL_VERSION => "2.8.2";
+use constant TOOL_VERSION => "2.8.3";
 my $TOOL_ID = TOOL_NAME." v".TOOL_VERSION;
 
 my $usage =
