@@ -3,6 +3,8 @@ INFO   : first   segment at <trkpt lat="0" lon="1" <ele>1 <time>2000-01-01T00:01
 INFO   : last   segment end <trkpt lat="0" lon="1" <ele>7 <time>2000-01-01T00:24:00Z
 INFO   : initial track from alternative input test_merge2.gpx
 INFO   : first   segment at <trkpt lat="0" lon="1" <ele>0 <time>2000-01-01T00:00:00Z
+INFO   : end of  segment at <trkpt lat="0"       lon="1" <ele>3   <time>2000-01-01T00:11:00Z
+INFO   : further segment at <trkpt lat="0.00010" lon="1" <ele>2.2 <time>2000-01-01T00:10:00Z after a time gap of 0:01:00 h and 0.000 km
 INFO   : last   segment end <trkpt lat="0"       lon="1" <ele>8   <time>2000-01-01T00:25:00Z
 INFO   : start using alternative input before infile(s)
 INFO   : pause using alternative input after                  <trkpt lat="0"       lon="1" <ele>0   <time>2000-01-01T00:00:00Z
