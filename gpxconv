@@ -929,12 +929,12 @@ my ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, $cmt2, $src2, $fix2, $exts2) if $m
 my $prev_sec2;
 sub next_trkpt2() {
     my $trkpt2;
+    $prev_sec2 = $sec2;
     my $ignore2 = 1;
     while ($ignore2 && defined($trkpt2 = <M>)) {
         $trkpt2 =~ m#(.*?</trkpt>)#s;
         $trkpt2 = $1;
         abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt2;
-        $prev_sec2 = $sec2;
         ($lat2, $lon2, $ele2, $tim2, $sec2, $spd2, my $rest_unused2, $cmt2, $src2, $fix2, $exts2, $ignore2) = parse_point("<trkpt $trkpt2") if $trkpt2;
         $ignore2 |= (diff_defined($sec2, $prev_sec2) // MIN_TIMEDIFF_PARSING) < MIN_TIMEDIFF_PARSING && ++$num_ignored_diff;
     }
@@ -1071,6 +1071,7 @@ for (my $state = 0, my $skip_point = 0,
                     warn_trkpt("due to time diff ".timediff_string($timediff_merge).
                                ", skipping further regular", "");
                     $num_skip_points++;
+                    $prev_sec = $sec;
                     goto after_point;
                 }
 
@@ -1129,6 +1130,7 @@ for (my $state = 0, my $skip_point = 0,
                         info_trkpt("alternative input is $Dis away, skipping regular", "");
                         $skip_point = 1;
                         $num_skip_points++;
+                        $prev_sec = $sec;
                         goto after_point; # skip current point from infile(s)
                     }
                 }
