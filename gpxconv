@@ -598,6 +598,10 @@ sub print_trkpt_i {
       $i < 0
       ? ($lat    , $lon    , $ele    , $tim    )
       : ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]);
+    if (!defined $lati || !defined $long || !defined $elev || !defined $t) {
+        debug "print_trkpt_i($i)";
+        stacktrace();
+    }
 
     # using original precision here for better traceability
     # $lati = lat_str($lati);
