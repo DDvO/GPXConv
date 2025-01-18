@@ -48,6 +48,7 @@ Command-line options:
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
+  -resolution <seconds>        - minimum time difference between trackpoints (on input)
   -min <name> <limit>          - filter out points with element value below limit
   -max <name> <limit>          - filter out points with element value above limit
   -min_ext <name> <limit>      - prune extension elements with value below limit
@@ -187,6 +188,7 @@ my $num_ignored_hdrs   = 0;
 my $begin_sec;
 my $num_ignored_before = 0;
 my $end_sec;
+my $min_timediff_parsing = MIN_TIMEDIFF_PARSING;
 my $num_ignored_after  = 0;
 my $max_elem;
 my $max_elem_limit;
@@ -825,6 +827,11 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
         $begin_sec = $sec if $opt eq "-begin";
         $end_sec   = $sec if $opt eq "-end";
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+    } elsif ($opt eq "-resolution") {
+        abort("missing number of seconds argument for $opt option") if $#ARGV - $i < 1;
+        abort("illegal natural number argument in '$opt $arg1'") unless $arg1 =~ m/^\d+$/;
+        $min_timediff_parsing = $arg1 + 0;
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     } elsif ($opt eq "-max" || $opt eq "-min") {
         abort("missing element name argument for $opt option") if $#ARGV - $i < 1;
         abort("missing limit argument for -$opt option") if $#ARGV - $i < 2;
@@ -1033,7 +1040,7 @@ sub read_tracks
             ($lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $src, $fix, $exts, my $ignore) = parse_point("<trkpt $trkpt");
             next if $ignore
                 || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/)
-                   && (diff_defined($sec, $prev_sec) // MIN_TIMEDIFF_PARSING) < MIN_TIMEDIFF_PARSING && ++$num_ignored_diff;
+                   && (diff_defined($sec, $prev_sec) // $min_timediff_parsing) < $min_timediff_parsing && ++$num_ignored_diff;
             ## debug_log "read non-ignored point $i from with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
 
             my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
@@ -2429,7 +2436,7 @@ $final_text .= plural($num_pruned_exts,        "extension")." pruned\n" if $num_
 $final_text .= plural($num_merges,                  "path")." merged from alternative input\n" if $num_merges;
 $final_text .= plural($num_merged_points,   "merged point")."\n" if $merge;
 $final_text .= plural($num_skip_points,    "regular point")." skipped during merge\n" if $num_skip_points;
-$final_text .= points($num_ignored_diff  )." less than ".MIN_TIMEDIFF_PARSING ." sec apart filtered out\n" if $num_ignored_diff;
+$final_text .= points($num_ignored_diff  )." less than $min_timediff_parsing sec apart filtered out\n" if $num_ignored_diff;
 $final_text .= points($num_ignored_before)." with time before ".epoch_to_str($begin_sec)." filtered out\n" if defined $begin_sec;
 $final_text .= points($num_ignored_after )." with time after  ".epoch_to_str($end_sec  )." filtered out\n" if defined $end_sec;
 $final_text .= points($num_elem_above    )." with $max_elem above $max_elem_limit"      ." filtered out\n" if $max_elem;

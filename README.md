@@ -44,6 +44,7 @@ Command-line options:
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
+  -resolution <seconds>        - minimum time difference between trackpoints (on input)
   -min <name> <limit>          - ignore points with element value below limit
   -max <name> <limit>          - ignore points with element value above limit
   -min_ext <name> <limit>      - prune extension elements with value below limit
