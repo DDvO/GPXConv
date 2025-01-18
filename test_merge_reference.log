@@ -1,18 +1,18 @@
 INFO   : initial track, from file test_merge1.gpx
-INFO   : first   segment at <trkpt lat="0" lon="1" <ele>1 <time>2000-01-01T00:01:00Z
-INFO   : last   segment end <trkpt lat="0" lon="1" <ele>7 <time>2000-01-01T00:24:00Z
+INFO   : first   segment at <trkpt lat="0" lon="1" <ele>1 2000-01-01T00:01:00Z
+INFO   : last   segment end <trkpt lat="0" lon="1" <ele>7 2000-01-01T00:24:00Z
 INFO   : initial track from alternative input test_merge2.gpx
-INFO   : first   segment at <trkpt lat="0" lon="1" <ele>0 <time>2000-01-01T00:00:00Z
-INFO   : end of  segment at <trkpt lat="0"       lon="1" <ele>3   <time>2000-01-01T00:11:00Z
-INFO   : further segment at <trkpt lat="0.00010" lon="1" <ele>2.2 <time>2000-01-01T00:10:00Z after a time gap of 0:01:00 h and 0.000 km
-INFO   : last   segment end <trkpt lat="0"       lon="1" <ele>8   <time>2000-01-01T00:25:00Z
+INFO   : first   segment at <trkpt lat="0" lon="1" <ele>0 2000-01-01T00:00:00Z
+INFO   : end of  segment at <trkpt lat="0"       lon="1" <ele>3   2000-01-01T00:11:00Z
+INFO   : further segment at <trkpt lat="0.00010" lon="1" <ele>2.2 2000-01-01T00:10:00Z after a time gap of 0:01:00 h and 0.000 km
+INFO   : last   segment end <trkpt lat="0"       lon="1" <ele>8   2000-01-01T00:25:00Z
 INFO   : start using alternative input before infile(s)
-INFO   : pause using alternative input after                  <trkpt lat="0"       lon="1" <ele>0   <time>2000-01-01T00:00:00Z
-INFO   : start using alternative input on 0:09:00 h gap after <trkpt lat="0"       lon="1" <ele>1   <time>2000-01-01T00:02:00Z
-INFO   : alternative input is 0.011 km away, skipping regular <trkpt lat="0"       lon="1" <ele>3   <time>2000-01-01T00:11:00Z
-INFO   : pause using alternative input after                  <trkpt lat="0.00010" lon="1" <ele>4   <time>2000-01-01T00:21:00Z
-INFO   : start using alternative input on end of infile(s) at <trkpt lat="0"       lon="1" <ele>7   <time>2000-01-01T00:24:00Z
-INFO   : end   of    alternative input after                  <trkpt lat="0"       lon="1" <ele>8   <time>2000-01-01T00:25:00Z
+INFO   : pause using alternative input after                  <trkpt lat="0"       lon="1" <ele>0   2000-01-01T00:00:00Z
+INFO   : start using alternative input on 0:09:00 h gap after <trkpt lat="0"       lon="1" <ele>1   2000-01-01T00:02:00Z
+INFO   : alternative input is 0.011 km away, skipping regular <trkpt lat="0"       lon="1" <ele>3   2000-01-01T00:11:00Z
+INFO   : pause using alternative input after                  <trkpt lat="0.00010" lon="1" <ele>4   2000-01-01T00:21:00Z
+INFO   : start using alternative input on end of infile(s) at <trkpt lat="0"       lon="1" <ele>7   2000-01-01T00:24:00Z
+INFO   : end   of    alternative input after                  <trkpt lat="0"       lon="1" <ele>8   2000-01-01T00:25:00Z
 
 INFO   : GPXConv statistics (not including periods between segments)
 At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T00:00:00Z: start

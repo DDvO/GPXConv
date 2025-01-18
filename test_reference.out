@@ -49,7 +49,7 @@ newlines are kept</extensions>
 <wpt lat="44.00001" lon="2.28002">                                                <name>[start]</name></wpt>
 <wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 end; length = 11.220 km]</name></wpt>
 <wpt lat="45.70000" lon="4.10000"><ele> -10</ele>                                 <name>[segment 104 min altitude = -10 m]</name></wpt>
-<wpt lat="0.00900" lon="0.00000">                                                <name>[end; total track length = 63.083 km; total track duration = 32:30:01 h; total moving time = 0:30:01 h, with speed being at least 1 km/h; average moving speed = 2.0 km/h; total biking energy = -10 kJ, leaving out 7 points where time or altitude information is missing]</name></wpt>
+<wpt lat="0.00900" lon="0.00000">                                                <name>[end; total track length = 63.083 km; total track duration = 32:30:01 h; total moving time = 0:30:01 h; average moving speed = 2.0 km/h; total biking energy = -10 kJ, leaving out 7 points where time or altitude information is missing]</name></wpt>
 <trk>
 <name><![CDATA[2001-01-01..02_test]]></name>
 <cmt>
@@ -93,7 +93,7 @@ At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max rate
 At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
 total track length   = 63.083 km
 total track duration = 32:30:01 h
-total moving time    = 0:30:01 h, with speed being at least 1 km/h
+total moving time    = 0:30:01 h
 average moving speed = 2.0 km/h
 total biking energy  = -10 kJ, leaving out 7 points where time or altitude information is missing
 1 automatic waypoint pruned

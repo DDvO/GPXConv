@@ -1,66 +1,66 @@
 INFO   : initial track, from file test.gpx
-INFO   : first   segment at <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE
-WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                 no altitude given and no previous value available
-WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE <time>NONE                 no time     given and no previous value available
-WARNING: no altitude  up to <trkpt lat="44.000015" lon="2.280015" <ele> NONE <time>NONE                 for 1 point over a distance of 0.000 km
-WARNING: no time      up to <trkpt lat="44.00002"  lon="2.0003"   <ele>74.49 <time>NONE                 for 2 points over a distance of 22.357 km
-INFO   : end of  segment at <trkpt lat="44.000"    lon="2.004"    <ele>50.00 <time>2001-01-01T10:00:00Z
-INFO   : further segment at <trkpt lat="44"        lon="2"        <ele> NONE <time>NONE                 after a time gap of 0:00:00 h and 0.320 km
-WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 <time>NONE                 no altitude was given; using previous available value
-WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 <time>2001-01-01T10:00:00Z no time     was given; using previous value
-WARNING: no altitude     at <trkpt lat="44"        lon="2.0"      <ele> NONE <time>NONE                ; trying to interpolate altitude
-WARNING: no time         at <trkpt lat="44"        lon="2.0"      <ele> NONE <time>NONE                ; trying to interpolate time
-WARNING: no time      up to <trkpt lat="44"        lon="2.0"      <ele> NONE <time>2001-01-01T10:30:00Z for 1 point over a distance of 0.000 km
-WARNING: no altitude  up to <trkpt lat="44"        lon="2.00"     <ele>30.000 <time>2001-01-01T11:00:00Z for 2 points over a distance of 0.000 km
-WARNING: no time         at <trkpt lat="44"        lon="2.0000"   <ele> 50.00 <time>NONE                ; trying to interpolate time
-WARNING: no altitude     at <trkpt lat="44"        lon="2.00000"  <ele>  NONE <time>NONE                ; trying to interpolate altitude
-INFO   : end of  segment at <trkpt lat="44"        lon="2.00000"  <ele>  NONE <time>NONE
+INFO   : first   segment at <trkpt lat="44.000015" lon="2.280015" <ele>NONE NO_TIME
+WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE NO_TIME              no altitude given and no previous value available
+WARNING: at segment start   <trkpt lat="44.000015" lon="2.280015" <ele>NONE NO_TIME              no time     given and no previous value available
+WARNING: no altitude  up to <trkpt lat="44.000015" lon="2.280015" <ele> NONE NO_TIME              for 1 point over a distance of 0.000 km
+WARNING: no time      up to <trkpt lat="44.00002"  lon="2.0003"   <ele>74.49 NO_TIME              for 2 points over a distance of 22.357 km
+INFO   : end of  segment at <trkpt lat="44.000"    lon="2.004"    <ele>50.00 2001-01-01T10:00:00Z
+INFO   : further segment at <trkpt lat="44"        lon="2"        <ele> NONE NO_TIME              after a time gap of 0:00:00 h and 0.320 km
+WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 NO_TIME              no altitude was given; using previous available value
+WARNING: at segment start   <trkpt lat="44"        lon="2"        <ele>50.00 2001-01-01T10:00:00Z no time     was given; using previous value
+WARNING: no altitude     at <trkpt lat="44"        lon="2.0"      <ele> NONE NO_TIME             ; trying to interpolate altitude
+WARNING: no time         at <trkpt lat="44"        lon="2.0"      <ele> NONE NO_TIME             ; trying to interpolate time
+WARNING: no time      up to <trkpt lat="44"        lon="2.0"      <ele> NONE 2001-01-01T10:30:00Z for 1 point over a distance of 0.000 km
+WARNING: no altitude  up to <trkpt lat="44"        lon="2.00"     <ele>30.000 2001-01-01T11:00:00Z for 2 points over a distance of 0.000 km
+WARNING: no time         at <trkpt lat="44"        lon="2.0000"   <ele> 50.00 NO_TIME             ; trying to interpolate time
+WARNING: no altitude     at <trkpt lat="44"        lon="2.00000"  <ele>  NONE NO_TIME             ; trying to interpolate altitude
+INFO   : end of  segment at <trkpt lat="44"        lon="2.00000"  <ele>  NONE NO_TIME
 INFO   : further track, again from file test.gpx
-WARNING: at segment end     <trkpt lat="44"        lon="2.00000"  <ele> -10   <time>NONE                 no altitude was given; using value from begin of next segment
-WARNING: at segment end     <trkpt lat="44"        lon="2.00000"  <ele> -10   <time>2001-01-01T12:00:00Z no time     was given; using value from begin of next segment
-INFO   : further segment at <trkpt lat="45.50"     lon="3.50"     <ele> -10   <time>2001-01-01T12:00:00Z after a time gap of 0:30:00 h and 204.421 km
-WARNING: no altitude  up to <trkpt lat="44"        lon="2.00000"  <ele> -10   <time>2001-01-01T12:00:00Z for 1 point over a distance of 0.000 km
-WARNING: no time      up to <trkpt lat="44"        lon="2.00000"  <ele> -10   <time>2001-01-01T12:00:00Z for 2 points over a distance of 0.030 km
-WARNING: no altitude     at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE <time>NONE                ; trying to interpolate altitude
-WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE <time>NONE                ; trying to interpolate time
-INFO   : end of  segment at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE <time>NONE
-WARNING: at segment end     <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 no altitude was given; using value from begin of next segment
-WARNING:              up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 was unable to interpolate missing time within segment
-INFO   : further segment at <trkpt lat="45.70"     lon="4.10"     <ele> -10   <time>NONE                 after a time gap of 0:00:00 h and 46.399 km
-WARNING: at segment start   <trkpt lat="45.70"     lon="4.10"     <ele> -10   <time>NONE                 no time     given and no previous value available
-WARNING: no altitude  up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 for 1 point over a distance of 11.220 km
-WARNING: no altitude     at <trkpt lat="45.799956" lon="4.20"     <ele>  NONE <time>NONE                ; trying to interpolate altitude
-WARNING: no altitude  up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 <time>NONE                 for 1 point over a distance of 13.545 km
-WARNING: no time      up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 <time>NONE                 for 3 points over a distance of 71.164 km
-INFO   : end of  segment at <trkpt lat="45.90"     lon="4.30"     <ele>  90   <time>2001-01-02T15:00:00Z
-INFO   : further segment at <trkpt lat="-0.081"    lon="0"        <ele> 500   <time>2001-01-02T16:00:00Z after a time gap of 1:00:00 h and 5127.920 km
-INFO   : end of  segment at <trkpt lat="-0.081"    lon="0"        <ele> 500   <time>2001-01-02T16:00:00Z
-INFO   : further segment at <trkpt lat="-0.009"    lon="0"        <ele> 500   <time>2001-01-02T18:00:00Z after a time gap of 2:00:00 h and 8.000 km
-WARNING: no altitude     at <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                ; trying to interpolate altitude
-WARNING: no time         at <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                ; trying to interpolate time
-INFO   : last   segment end <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE
-WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                 was unable to interpolate missing altitude by end of last segment
-WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                 was unable to interpolate missing time by end of last segment
-WARNING: before   <trkpt lat="44.00002"  lon="2.0003"   <ele> 74.49 <time>NONE                 distance between points = 22.357 km (more than 2)
-WARNING: before   <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                 distance between points = 11.220 km (more than 2)
-WARNING: before   <trkpt lat="45.799956" lon="4.20"     <ele>40.000 <time>NONE                 distance between points = 13.545 km (more than 2)
-WARNING: before   <trkpt lat="45.90"     lon="4.30"     <ele>  90   <time>2001-01-02T15:00:00Z distance between points = 13.545 km (more than 2)
+WARNING: at segment end     <trkpt lat="44"        lon="2.00000"  <ele> -10   NO_TIME              no altitude was given; using value from begin of next segment
+WARNING: at segment end     <trkpt lat="44"        lon="2.00000"  <ele> -10   2001-01-01T12:00:00Z no time     was given; using value from begin of next segment
+INFO   : further segment at <trkpt lat="45.50"     lon="3.50"     <ele> -10   2001-01-01T12:00:00Z after a time gap of 0:30:00 h and 204.421 km
+WARNING: no altitude  up to <trkpt lat="44"        lon="2.00000"  <ele> -10   2001-01-01T12:00:00Z for 1 point over a distance of 0.000 km
+WARNING: no time      up to <trkpt lat="44"        lon="2.00000"  <ele> -10   2001-01-01T12:00:00Z for 2 points over a distance of 0.030 km
+WARNING: no altitude     at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE NO_TIME             ; trying to interpolate altitude
+WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE NO_TIME             ; trying to interpolate time
+INFO   : end of  segment at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE NO_TIME
+WARNING: at segment end     <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME              no altitude was given; using value from begin of next segment
+WARNING:              up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME              was unable to interpolate missing time within segment
+INFO   : further segment at <trkpt lat="45.70"     lon="4.10"     <ele> -10   NO_TIME              after a time gap of 0:00:00 h and 46.399 km
+WARNING: at segment start   <trkpt lat="45.70"     lon="4.10"     <ele> -10   NO_TIME              no time     given and no previous value available
+WARNING: no altitude  up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME              for 1 point over a distance of 11.220 km
+WARNING: no altitude     at <trkpt lat="45.799956" lon="4.20"     <ele>  NONE NO_TIME             ; trying to interpolate altitude
+WARNING: no altitude  up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME              for 1 point over a distance of 13.545 km
+WARNING: no time      up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME              for 3 points over a distance of 71.164 km
+INFO   : end of  segment at <trkpt lat="45.90"     lon="4.30"     <ele>  90   2001-01-02T15:00:00Z
+INFO   : further segment at <trkpt lat="-0.081"    lon="0"        <ele> 500   2001-01-02T16:00:00Z after a time gap of 1:00:00 h and 5127.920 km
+INFO   : end of  segment at <trkpt lat="-0.081"    lon="0"        <ele> 500   2001-01-02T16:00:00Z
+INFO   : further segment at <trkpt lat="-0.009"    lon="0"        <ele> 500   2001-01-02T18:00:00Z after a time gap of 2:00:00 h and 8.000 km
+WARNING: no altitude     at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME             ; trying to interpolate altitude
+WARNING: no time         at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME             ; trying to interpolate time
+INFO   : last   segment end <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME
+WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME              was unable to interpolate missing altitude by end of last segment
+WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME              was unable to interpolate missing time by end of last segment
+WARNING: before   <trkpt lat="44.00002"  lon="2.0003"   <ele> 74.49 NO_TIME              distance between points = 22.357 km (more than 2)
+WARNING: before   <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME              distance between points = 11.220 km (more than 2)
+WARNING: before   <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME              distance between points = 13.545 km (more than 2)
+WARNING: before   <trkpt lat="45.90"     lon="4.30"     <ele>  90   2001-01-02T15:00:00Z distance between points = 13.545 km (more than 2)
 WARNING: according to its time information, waypoint '
   <wpt lat="45.90" lon="4.30"><ele>490</ele><time>2001-01-02T15Z</time>
   <name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type>
   <extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions>
   </wpt>
 ' appears not close to track (interpolated distance = 400 m > 100); it should be approximately at <trkpt lat="45.9"      lon="4.3"      <ele>  90  
-WARNING: no time         at <trkpt lat="44.00002"  lon="2.0003"   <ele> 74.49 <time>NONE                ; cannot calculate energy here
-WARNING: no time     before <trkpt lat="44.000"    lon="2.004"    <ele> 50.00 <time>2001-01-01T10:00:00Z; cannot calculate energy here
-WARNING: no speed info near <trkpt lat="44"        lon="2.0"      <ele>40.000 <time>2001-01-01T10:30:00Z; cannot calculate energy
-WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele> -10   <time>NONE                ; cannot calculate energy here
-WARNING: no time         at <trkpt lat="45.799956" lon="4.20"     <ele>40.000 <time>NONE                ; cannot calculate energy here
-WARNING: no time     before <trkpt lat="45.90"     lon="4.30"     <ele>  90   <time>2001-01-02T15:00:00Z; cannot calculate energy here
-WARNING: no time         at <trkpt lat="0.009"     lon="0"        <ele>  NONE <time>NONE                ; cannot calculate energy here
-WARNING: before <trkpt lat="-0.081"    lon="0"        <ele> 500   <time>2001-01-02T16:00:00Z  long time gap =  1:00:00 h over a distance of 5127.920 km; not inserting points because linear speed would be 5128 km/h, higher than 10
-WARNING: before <trkpt lat="-0.009"    lon="0"        <ele> 500   <time>2001-01-02T18:00:00Z  long time gap =  2:00:00 h over a distance of  8.000 km; inserting 3 points after each 1800 seconds
-WARNING: before <trkpt lat="0.000"     lon="0"        <ele> 525   <time>2001-01-02T18:30:01Z  long time gap =  0:30:01 h over a distance of  1.000 km; inserting 1 point after each 900 seconds
+WARNING: no time         at <trkpt lat="44.00002"  lon="2.0003"   <ele> 74.49 NO_TIME             ; cannot calculate energy here
+WARNING: no time     before <trkpt lat="44.000"    lon="2.004"    <ele> 50.00 2001-01-01T10:00:00Z; cannot calculate energy here
+WARNING: no speed info near <trkpt lat="44"        lon="2.0"      <ele>40.000 2001-01-01T10:30:00Z; cannot calculate energy
+WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME             ; cannot calculate energy here
+WARNING: no time         at <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME             ; cannot calculate energy here
+WARNING: no time     before <trkpt lat="45.90"     lon="4.30"     <ele>  90   2001-01-02T15:00:00Z; cannot calculate energy here
+WARNING: no time         at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME             ; cannot calculate energy here
+WARNING: before <trkpt lat="-0.081"    lon="0"        <ele> 500   2001-01-02T16:00:00Z gap =  1:00:00 h over 5127.920 km; not inserting points because linear speed would be 5128 km/h, higher than 10
+WARNING: before <trkpt lat="-0.009"    lon="0"        <ele> 500   2001-01-02T18:00:00Z gap =  2:00:00 h over  8.000 km; inserting 3 points each 1800 s
+WARNING: before <trkpt lat="0.000"     lon="0"        <ele> 525   2001-01-02T18:30:01Z gap =  0:30:01 h over  1.000 km; inserting 1 point each 900 s
 
 INFO   : GPXConv statistics (not including periods between segments)
 At lat,lon,ele = 44.00001,2.28002,NONE time = NONE                : start
@@ -102,7 +102,7 @@ At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max rate
 At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
 total track length   = 63.083 km
 total track duration = 32:30:01 h
-total moving time    = 0:30:01 h, with speed being at least 1 km/h
+total moving time    = 0:30:01 h
 average moving speed = 2.0 km/h
 total biking energy  = -10 kJ, leaving out 7 points where time or altitude information is missing
 1 automatic waypoint pruned

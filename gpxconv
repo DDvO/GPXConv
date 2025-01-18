@@ -616,13 +616,13 @@ sub print_trkpt_i {
         my $n_spaces = $ele_full_len - $ele_prec_len - $decimals - 1;
         $elev .= ' ' x $n_spaces if $n_spaces > 0;
     }
-    my $time = $t eq "NO" ? "" : " <time>".($t eq "" ? "NONE" : $t);
+    my $time = $t eq "NO" ? "" : " ".($t eq "" ? "NO_TIME" : $t);
     print_line("$head "
       . "<trkpt"
       . ' lat="' . ($lati . '"' . (' ' x max(0, $lat_full_len - length($lati))))
       . ' lon="' . ($long . '"' . (' ' x max(0, $lon_full_len - length($long))))
       . " <ele>" . ele_string(-$ele_full_len, $elev)
-      . $time . ($tail ? " " x max(0, $tim_len + length(" <time>") - length($time)) : "")
+      . $time . ($tail ? " " x max(0, $tim_len + length(" ") - length($time)) : "")
       . $tail);
     abort("") if $head =~ "^FATAL:";
 }
@@ -1492,7 +1492,7 @@ read_all();
 sub ignore_trkpt {
     my ($Spd, $reason) = @_;
     my $Spd_txt = $Spd eq "" ? "" : " at speed = $Spd km/h";
-    warn_trkpt_i(-1, "ignoring", "$Spd_txt because $reason");
+    warn_trkpt_i(-1, "ignoring", "$Spd_txt as $reason");
 }
 
 ## sanitize trackpoints with implausible data, silently ignoring previously inserted or duplicated points
@@ -1553,8 +1553,8 @@ sub sanitize
                 $sum_speed_deviation += $spd_diff;
                 $sum_speed += $comp_spd + $spd; # will later divide by 2 for average;
                 warn_trkpt("before  ",
-                           " recorded speed is ".spd_string($spd).", computed speed is $Comp_spd, ".
-                           "deviation is " . spd_string($spd_diff) . " km/h" .
+                           " speed recorded:".spd_string($spd)." computed: $Comp_spd ".
+                           "deviation: "    . spd_string($spd_diff) . " km/h" .
                            " (more than " . $MAX_SPEED_DEVIATION . ")") if $spd_diff > ($MAX_SPEED_DEVIATION + 0.5) / MPS2KMPH;
             }
             # from now on, use for $spd and $SPD[$i] the computed speed (average since previous point) if recorded speed is not available or previous point is not very recent
@@ -1576,7 +1576,7 @@ sub sanitize
                 $num_removals_dir++;
                 $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))); # used only for spd_string
                 my $Theta_diff = sprintf "%+.0f", $theta_diff;
-                ignore_trkpt(spd_string($spd2), "direction change = $Theta_diff degrees (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_PLAUSIBLE_ANGLE_DIFF.")");
+                ignore_trkpt(spd_string($spd2), "turned by $Theta_diff degrees (".($theta_diff >= 0 ? "more than  " : "less than -").MAX_PLAUSIBLE_ANGLE_DIFF.")");
             } elsif ($spd ne "" && $Spd > $MAX_PLAUSIBLE_SPEED) {
                 $num_removals_spd++;
                 ignore_trkpt($Spd, "speed is higher than ".$MAX_PLAUSIBLE_SPEED);
@@ -2284,7 +2284,7 @@ if (defined $SUM_DIS[$all]) {
     $end_text .= "total track duration = ".timediff_string(diff_defined($max_sec, $min_sec) // 0)."\n";
 }
 if ($sum_timediff_mov) {
-    $end_text .= "total moving time    = ".timediff_string($sum_timediff_mov).", with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
+    $end_text .= "total moving time    = ".timediff_string($sum_timediff_mov)."\n"; # ", with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
     $end_text .= "average moving speed = ".(sprintf AVG_PRECISION, MPS2KMPH * $sum_dis_mov / $sum_timediff_mov)." km/h\n";
 }
 if ($weight) {
@@ -2311,7 +2311,7 @@ sub insert_points_in_gap {
         if ($diff_time > INSERTION_MAX_GAP) {
             # note that this is done only between adjacent track points that both have time information
             my $lin_spd = $dis / $diff_time;
-            my $gap_text = "  long time gap = ".timediff_str("%2d", $diff_time)." over a distance of $dis_text";
+            my $gap_text = " gap = ".timediff_str("%2d", $diff_time)." over $dis_text";
             if (MPS2KMPH * $lin_spd > $INSERTION_MAX_SPEED) {
                 warn_trkpt("before", "$gap_text; not inserting points because linear speed would be ".spd_str($lin_spd)." km/h, higher than $INSERTION_MAX_SPEED");
                 next;
@@ -2333,7 +2333,7 @@ sub insert_points_in_gap {
             my $sec_delta = $diff_time / $n_spans; # 0 < $sec_delta <= INSERTION_MAX_GAP
             my $ele_delta = diff_nonempty($ele, $ele_curr);
             $ele_delta /= $n_spans if defined $ele_delta;
-            warn_trkpt("before", "$gap_text; inserting ".points($n_spans - 1)." after each ".(sprintf SEC_PRECISION, $sec_delta)." seconds");
+            warn_trkpt("before", "$gap_text; inserting ".points($n_spans - 1)." each ".(sprintf SEC_PRECISION, $sec_delta)." s");
 
             # point $i will become the point past the insertion (possibly with duplication before and after segment)
             # need to move info about previous ignored points from point past the insertion to first new point
