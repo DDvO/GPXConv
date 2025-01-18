@@ -400,13 +400,14 @@ sub epoch_to_str {
 #  return UnixDate($_[0], "%Y-%m-%dT%H:%M:%SZ");
     my $sec = shift;
     my $millisec = nearest(.001, $sec - int($sec)); # fractional seconds
+    my $millisecs = substr(substr($millisec, 1)."00", 0, 4);
     my $tm = gmtime($sec);
     return sprintf(
         "%04d-%02d-%02dT%02d:%02d:%02d%sZ",
         $tm->year + 1900,
         $tm->mon + 1,
         $tm->mday, $tm->hour, $tm->min, $tm->sec,
-        $millisec == 0 ? "" : substr(substr($millisec, 1)."00", 0, 4));
+        $millisecs eq "00" ? "" : $millisecs);
 }
 
 sub round_tim { # round to nearest second
