@@ -28,7 +28,7 @@
 #
 
 use constant TOOL_NAME    => "GPXConv";
-use constant TOOL_VERSION => "2.8.3";
+use constant TOOL_VERSION => "2.8.4";
 my $TOOL_ID = TOOL_NAME." v".TOOL_VERSION;
 
 my $usage =
@@ -61,7 +61,7 @@ Command-line options:
   -debug                       - enable internal consistency checks and debug output
 Other options can be set by changing values of the configuration variables.
 
-(c) 2012-2024 David von Oheimb - License: MIT - ".TOOL_NAME." version ".TOOL_VERSION;
+(c) 2012-2025 David von Oheimb - License: MIT - ".TOOL_NAME." version ".TOOL_VERSION;
 ################################################################################
 
 use strict;
