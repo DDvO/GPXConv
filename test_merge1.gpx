@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <trk>
 <trkpt lat="0" lon="1"><ele>1</ele><time>2000-01-01T00:01:00Z</time></trkpt>
+<trkpt lat="0" lon="1"><ele>1</ele><time>2000-01-01T00:02:00Z</time></trkpt>
 <trkpt lat="0" lon="1"><ele>3</ele><time>2000-01-01T00:11:00Z</time><cmt>skipped during merge</cmt></trkpt>
 <trkpt lat="0" lon="1"><ele>5</ele><time>2000-01-01T00:22:00Z</time></trkpt>
 <trkpt lat="0" lon="1"><ele>7</ele><time>2000-01-01T00:24:00Z</time></trkpt>

@@ -2,6 +2,7 @@
 <trk>
 <trkseg>
 <trkpt lat="0"       lon="1"><ele>0</ele><time>2000-01-01T00:00:00Z</time><cmt>before start of base input</cmt></trkpt>
+<trkpt lat="0.00001" lon="1"><ele>1.1</ele><time>2000-01-01T00:02:00Z</time></trkpt>
 <trkpt lat="0.00010" lon="1"><ele>2.1</ele><time>2000-01-01T00:09:00Z</time></trkpt>
 </trkseg>
 <trkseg>

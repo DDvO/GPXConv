@@ -8,7 +8,7 @@ INFO   : further segment at <trkpt lat="0.00010" lon="1" <ele>2.2 <time>2000-01-
 INFO   : last   segment end <trkpt lat="0"       lon="1" <ele>8   <time>2000-01-01T00:25:00Z
 INFO   : start using alternative input before infile(s)
 INFO   : pause using alternative input after                  <trkpt lat="0"       lon="1" <ele>0   <time>2000-01-01T00:00:00Z
-INFO   : start using alternative input on 0:10:00 h gap after <trkpt lat="0"       lon="1" <ele>1   <time>2000-01-01T00:01:00Z
+INFO   : start using alternative input on 0:09:00 h gap after <trkpt lat="0"       lon="1" <ele>1   <time>2000-01-01T00:02:00Z
 INFO   : alternative input is 0.011 km away, skipping regular <trkpt lat="0"       lon="1" <ele>3   <time>2000-01-01T00:11:00Z
 INFO   : pause using alternative input after                  <trkpt lat="0.00010" lon="1" <ele>4   <time>2000-01-01T00:21:00Z
 INFO   : start using alternative input on end of infile(s) at <trkpt lat="0"       lon="1" <ele>7   <time>2000-01-01T00:24:00Z
