@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<?xml version="1.0"?>
 <gpx creator="GPXConv v2.8.4" version="1.1">
 <metadata><time>2000-01-01T00:00:00Z</time><bounds minlat="0.00000" minlon="1.00000" maxlat="0.00010" maxlon="1.00000"/></metadata>
 <wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T00:00:00Z</time><name>[start]</name></wpt>
@@ -19,7 +19,7 @@ At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-01T00:25:00Z: end
 total track length   = 0.028 km
 total track duration = 0:25:00 h
 3 paths merged from alternative input
-5 merged points
+6 merged points
 1 regular point skipped during merge
 0 points inserted due to time gaps > 1800 seconds
 elevation not corrected
@@ -31,6 +31,7 @@ GPXConv statistics end
 <trkpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T00:02:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00010" lon="1.00000"><ele>2</ele><time>2000-01-01T00:09:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00010" lon="1.00000"><ele>2</ele><time>2000-01-01T00:10:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00010" lon="1.00000"><ele>4</ele><time>2000-01-01T00:20:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00010" lon="1.00000"><ele>4</ele><time>2000-01-01T00:21:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T00:22:00Z</time><src>computed speed</src><extensions><speed>1</speed></extensions></trkpt>
 <trkpt lat="0.00000" lon="1.00000"><ele>7</ele><time>2000-01-01T00:24:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>

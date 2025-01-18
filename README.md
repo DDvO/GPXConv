@@ -5,8 +5,8 @@ GPX track converter: post-process routes and tracks produced by GPS loggers etc.
 * Reads from file(s) given as argument or STDIN and writes to STDOUT or a file.
 * Concatenates segments of multiple given tracks or routes (sequential composition),
   using (header) metadata of the first track, preserving segments, and collecting waypoints.
-* Can fill gaps in main input by merging data from alternative input (from parallel tracks),
-* ignoring metadata and segment information of the alternative input.
+* Optionally augments main input by merging data from alternative input (from parallel tracks),
+  ignoring metadata and segment information of the alternative input.
 
 * Reports missing data and by default ignores points containing implausible data w.r.t.
   altitude, ascent/descent rate, speed, acceleration/deceleration, and direction change.
@@ -40,7 +40,7 @@ Command-line options:
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
   -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
-  -merge <file>                - complete gaps in infile(s) by data from given GPX file
+  -merge <file>                - augment tracks in infile(s) with data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time

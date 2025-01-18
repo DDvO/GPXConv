@@ -6,7 +6,7 @@
 # Reads from file(s) given as argument or STDIN and writes to STDOUT or a file.
 # Concatenates segments of multiple given tracks or routes (sequential composition),
 # using (header) metadata of the first track, preserving segments, and collecting waypoints.
-# Can fill gaps in main input by merging data from alternative input (from parallel tracks),
+# Optionally augments main input by merging data from alternative input (from parallel tracks),
 # ignoring metadata and segment information of the alternative input.
 #
 # Reports missing data and by default ignores points containing implausible data w.r.t.
@@ -44,7 +44,7 @@ Command-line options:
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
   -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
-  -merge <file>                - complete gaps in infile(s) by data from given GPX file
+  -merge <file>                - augment tracks in infile(s) with data from given alternative file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
@@ -102,8 +102,7 @@ use constant ELE_THRESHOLD    => 25; # threshold for detecting/accepting ascent 
 my $PHASES_REPORT_THRESHOLD = ELE_THRESHOLD; # default
 
 # merge control
-use constant MERGE_FILL_GAP  =>  60; # minimum gap duration in seconds to be filled by merging
-use constant MERGE_MAX_DIST  => 100; # maximum distance first point of merged path may be away
+use constant MERGE_MIN_GAP    =>  20; # minimum gap duration in seconds for starting to switch to alternative input
 
 # smoothing control
 use constant ENABLE_SMOOTHING  =>  0; # by default disable smoothing
@@ -218,7 +217,7 @@ my $num_pruned_exts  = 0;
 my $print_warnings   = PRINT_WARNINGS;
 my $print_info       = PRINT_INFO;
 
-# regular trackpoint data from infile(s)
+# regular trackpoint data input from infile(s)
 my @IGN; # number of points ignored immediately before this one
 my @SEG;
 my @FLG;
@@ -957,7 +956,7 @@ sub read_tracks
             @esg;
         }
 
-        #collect waypoints, possibly in later infile(s) headers
+        #collect waypoints, possibly in later regular input headers
         my $prev_wpt_time_stripped = "";
         while (s#(<wpt .+?)(</wpt>)\n?##s)
         {
@@ -1035,7 +1034,7 @@ sub read_tracks
             next if $ignore
                 || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/)
                    && (diff_defined($sec, $prev_sec) // MIN_TIMEDIFF_PARSING) < MIN_TIMEDIFF_PARSING && ++$num_ignored_diff;
-            ## debug_log "read non-ignored point $i from infile(s) with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
+            ## debug_log "read non-ignored point $i from with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
 
             my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
 
@@ -1386,13 +1385,34 @@ sub merge_tracks
                 ( $lat,      $lon,      $ele,      $tim,      $sec);
         }
 
+        # main strategy : use alternative input when it has more points during same period
+        sub num_points_more {
+           my ($i, $j) = @_;
+            # number of extra alternative points before next regular point if exists, else all remaining points
+            my $next_j = $#TIM2;
+            if ($i < $#TIM) { # not already at last regular input point
+                my $next_sec = $SEC[$i + 1];
+                $next_j = $j;
+                if (defined $next_sec) {
+                    while ($next_j < $#TIM2 && diff_defined($SEC2[$next_j], $next_sec) < 0) {
+                        $next_j++;
+                    }
+                }
+            }
+            return $next_j - $j - 1;
+        }
+        my $num_points_more;
+        my $next_sec = $i < $#TIM && defined $SEC[$i + 1] ? $SEC[$i + 1] : $sec;
+
+        my $old_compat = 0;
+        my $infiles = $old_compat ? "infile(s)" : "regular input";
         my $start_merge = "start using alternative input";
         if ($in_merge == 0 || $in_merge == -2) {
             # skipping regular input, or currently not merging from alternative input, which is not just reached its EOF
             my $timediff_merge = diff_defined($sec2, $sec) // 0;
             # debug "$tim vs. $tim2: timediff_merge $timediff_merge";
 
-            # skipping continues until point from infile(s) is past next alternative input
+            # skipping continues until point from regular input is past next alternative input
             if ($in_merge == 0 && $skip_point && !($timediff_merge < 0)) {
                 warn_trkpt_i($i, "due to time diff ".timediff_string($timediff_merge).
                              ", skipping further regular", "");
@@ -1401,19 +1421,23 @@ sub merge_tracks
                 next;
             }
 
-            my $gap_time = diff_defined($sec, $prev_input_sec) // 0; # difference from previous point from infile(s)
-            # debug "$tim vs. $tim2: dist=".distance($lat, $lon, $ele, $LAT2[$j], $LON2[$j], $ELE2[$j]) if !$skip_point && $timediff_merge < 0 && $i > 0 && $gap_time >= MERGE_FILL_GAP;
+            my $gap_time = diff_defined($sec, $prev_input_sec) // 0; # difference from previous point from infile(s);
             if ($skip_point ||
-                ($timediff_merge < 0 # infile(s) went past current alternative input
-                 && ($i == 0 ||
-                     $gap_time >= MERGE_FILL_GAP && distance($lat, $lon, $ele, $LAT2[$j], $LON2[$j], $ELE2[$j]) <= MERGE_MAX_DIST))) { # TODO replace this condition
+                ($timediff_merge < 0 # regular input went past current alternative input
+                 && ($i == 0 # alternative input started before regular one
+                     || ($gap_time >= MERGE_MIN_GAP &&
+                         ($num_points_more = num_points_more($i, $j)) > 1)))) {
                 # (re-)start merge
                 $in_merge = 1;
                 $num_merges++ unless $skip_point;
                 if ($i == 0) {
-                    info("$start_merge before infile(s)");
+                    info("$start_merge before $infiles");
                 } elsif (!$skip_point) { # certainly $i > 0
-                    info_trkpt_i($i - 1, "$start_merge on ".timediff_string($gap_time)." gap after", "");
+                    # difference of next point from previous point from regular input:
+                    my $gap_time2 = timediff_string(diff_defined($next_sec, $prev_input_sec) // 0);
+                    $old_compat
+                        ? info_trkpt_i($i - 1, "$start_merge on ".timediff_string($gap_time)." gap after", "")
+                        : info_trkpt_i($i, "$start_merge due to $num_points_more more points during $gap_time2 around", "");
                 }
                 # debug "$tim2: ".($skip_point ? "continue" : "switched to")." merge";
                 merge_point($i++, $j);
@@ -1422,7 +1446,7 @@ sub merge_tracks
             } else {
                 # debug "$tim: using regular input";
                 while ($in_merge >= 0 && defined $sec && (!defined $sec2 || $sec2 <= $sec)) {
-                    # advance $merge as far as possible to get past infile(s)
+                    # advance $merge as far as possible to get past regular input
                     # debug "$tim2: skipping merge";
                     $in_merge = -2 if ++$j > $#TIM2;
                     ($tim2, $sec2) = ($TIM2[$j], $SEC2[$j]);
@@ -1431,34 +1455,36 @@ sub merge_tracks
         } else { # currently merging from alternative input $merge or just reached its EOF
             if ($infile_EOF == 1) {
                 $num_merges++;
-                info_trkpt_i($i - 1, "$start_merge on end of infile(s) at", "") unless $skip_point;
+                info_trkpt_i($i - 1, "$start_merge on end of $infiles                   at", "") unless $skip_point;
                 $infile_EOF = 2;
             }
             if ($in_merge == -1 # EOF in merge, implies !$infile_EOF
-                || !$infile_EOF && (diff_defined($sec2, $sec) // -1) >= 0 # alternative input form $merge is no more at earlier time than infiles(s)
+                || !$infile_EOF && (diff_defined($sec2, $sec) // -1) >= 0 # alternative input from $merge is no more at earlier time than regular input
                ) {
-                # return to next point from infile(s) unless current regular point to be skipped
+                # return to next point from regular input unless current regular point to be skipped
                 if ($in_merge == 1) {
                     $in_merge = 0;
+
                     my ($prev_lat2, $prev_lon2, $prev_ele2) = ($LAT2[$j - 1], $LON2[$j - 1], $ELE2[$j - 1]);
                     my (     $lat2,      $lon2,      $ele2) = ($LAT2[$j    ], $LON2[$j    ], $ELE2[$j    ]);
-                    my $dis_alternative  = distance     (     $lat2,      $lon2,      $ele2,
-                                                         $prev_lat2, $prev_lon2, $prev_ele2);
                     my $dis1_from_infile = distance($lat, $lon, $ele, $prev_lat2, $prev_lon2, $prev_ele2);
                     my $dis2_from_infile = distance($lat, $lon, $ele,      $lat2,      $lon2,      $ele2);
                     my $dis_from_infile = ($dis1_from_infile + $dis2_from_infile) / 2;
-                    if ($dis_from_infile > $dis_alternative) { # alternative input is away from infile(s) # TODO replace this condition
-                        my $Dis      = dis_string($dis_from_infile);
-                        info_trkpt_i($i, "alternative input is $Dis away, skipping regular", "");
+                    my $Dis      = dis_string($dis_from_infile);
+                    $num_points_more = num_points_more($i, $j);
+                    if ($num_points_more > 0) { # alternative input still has more points
+                        my $extra = $old_compat ? "" : " and has $num_points_more more points";
+                        info_trkpt_i($i, "alternative input is $Dis away$extra, skipping regular", "");
                         # debug "$tim: skipping regular input";
                         $skip_point = 1;
                         remove_trkpt($i--); $IGN[$i + 1] = 0;
                         $num_skip_points++;
-                        next; # skip current point from infile(s)
+                        next; # skip current point from regular input
                     }
                 }
-                info_trkpt_i($i - 1, ($in_merge == 0 ? "pause using" : "end   of   ")
-                             ." alternative input after                 ", "");
+                info_trkpt_i($i - 1, ($in_merge == 0 ? "pause using" : "end   of   ").
+                             ($old_compat ? " alternative input after                 "
+                                          : " alternative input                                        after"), "");
                 $in_merge = -2 if $in_merge == -1;
                 recalculate_all($i);
                 # debug "$tim: returned to base input";
@@ -1476,7 +1502,8 @@ sub merge_tracks
     }
     $SEG[0] = 1; # for the case that no alternative points got merged before
     warn_skiped_merged_ratio($i);
-    info_trkpt_i($i - 1, "end   of    alternative input after                 ", "") if $in_merge == -1;
+    info_trkpt_i($i - 1, "end   of    alternative input                                        after", "")
+        if $in_merge == -1;
 }
 
 sub read_all
