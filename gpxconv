@@ -292,7 +292,6 @@ my (@SUM__ASCENT, @TIME__ASCENT, @MISSING__ASCENT_TIME,
 my (@SUM_DIS, @DURATION);
 
 my $sum_dis_mov = 0;
-my $avg_timediff;
 
  # for calculating relative deviation between recorded and computed speed
 my $sum_speed = 0;
@@ -877,6 +876,8 @@ if ($prune_exts) {
     warning("-min_ext option has little effect since -prune_exts is given") if $min_ext;
     warning("-max_ext option has little effect since -prune_exts is given") if $max_ext;
 }
+abort "cannot smoothen tracks without sanitizing" if $smoothing && !$sanitize; # TODO maybe fix this limitation
+
 
 if ($activity eq "-swim") {
     $MIN_TIMEDIFF           = 4;
@@ -1532,6 +1533,8 @@ sub ignore_trkpt {
 
 ## sanitize trackpoints with implausible data, silently ignoring previously inserted or duplicated points
 
+my $avg_timediff if $smoothing;
+
 my ($num_removals_ele, $num_removals_dir, $num_removals_spd, $num_removals_acc, $num_removals_dec,
     $num_removals_gain, $num_removals_loss, $num_removals_diff) = (0, 0, 0, 0, 0, 0, 0, 0);
 sub sanitize
@@ -1674,10 +1677,10 @@ sub sanitize
     warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
     # note that in the GPX output information on points sanitzed at the end of the track will get lost
 
-    $avg_timediff = $num_pts_mov ? $sum_timediff_mov0 / $num_pts_mov : 0; # used for smoothing
+    $avg_timediff = $num_pts_mov ? $sum_timediff_mov0 / $num_pts_mov : 0 if $smoothing;
     # $sum_timediff_mov will be recalculated thereafter, since points may have been ignored or smoothened
 }
-sanitize() if ($sanitize);
+sanitize() if $sanitize;
 
 abort("FATAL: no trackpoint (possibly after ignoring some)") if $#TIM < 0;
 
