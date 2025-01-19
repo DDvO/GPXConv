@@ -1904,6 +1904,7 @@ for (my $direction, my $prev_sec, my $timediff,
     $new_part = 1
         if ($days && ($i == 0 || (defined $date && defined $prev_date
                                   && $date ne $prev_date))); # assuming that dates, as far as available, are ascending
+    $prev_date = $date if $days;
     $new_part = 1 if $segs && $SEG[$i];
     $DURATION[$part] = diff_defined($part_end_sec, $part_start_sec)
         if defined $part && ($new_part || $i == $#TIM); # implies $i != 0
@@ -2223,7 +2224,8 @@ sub add_stat_point { # generate trackpoint-related statistics output and waypoin
 
 my $part_last = $part_end // $part // $all;
 for (my $i = $all; $i <= $part_last; $i++) {
-    my $Part = $i == $all ? "" : ($segs ? "segment" : "day")." ".(' ' x (length($part_last) - length($i))).($i + $part_offset)." ";
+    my $Part = $i == $all ? "" : ($segs ? "segment" : "day")." ".
+        (' ' x (length($part_last + $part_offset) - length($i + $part_offset))).($i + $part_offset)." ";
     my $Min_ele      = defined $MIN_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]) : "";
     my $Max_ele      = defined $MAX_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]) : "";
     my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? " ".spd_full($SPD[$MAX_SPD_INDEX [$i]]) : "";
