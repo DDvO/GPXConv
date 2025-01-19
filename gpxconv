@@ -661,7 +661,7 @@ sub remove_trkpt {
     my ($i, $undo_time_gap_fill) = @_;
     # indicate that previous point has been ignored, in addition to any previous ignores:
     $IGN[$i + 1] += $IGN[$i] + ($undo_time_gap_fill ? 0 : 1); # do this also if  $i == $#TIM
-    $SEG[$i + 1] = 1 if $i < $#TIM && $SEG[$i] && !$undo_time_gap_fill; # copy over any segment start
+    $SEG[$i + 1] = 1 if $i == 0 || ($i < $#TIM && $SEG[$i] && !$undo_time_gap_fill); # copy over any segment start
     my $dis_before = $DIS[$i];
     splice @IGN, $i, 1;
     splice @SEG, $i, 1;
@@ -678,10 +678,11 @@ sub remove_trkpt {
     splice @SRC, $i, 1;
     splice @FIX, $i, 1;
     splice @EXT, $i, 1;
+    return if $i > $#TIM;
     if ($undo_time_gap_fill) {
         $DIS[$i] += $dis_before if $i > 0;
         recalculate_RAT($i);
-    } elsif ($i <= $#TIM) { # note that $#TIM has been decremented
+    } else { # note that $#TIM has been decremented
         recalculate_DIS($i);
         recalculate_SPD($i);
         recalculate_RAT($i);
@@ -1541,8 +1542,9 @@ sub sanitize
     for (my $i = 0; $i <= $#TIM; $i++) {
 
     # silently ignore any point inserted or duplicated by a previous run of this tool
-        while ($SRC[$i] =~ m#(^|\W)bridging time gap($|\W)# && $FIX[$i] =~ m#(^|\W)none($|\W)#) {
-            remove_trkpt($i, 1);
+        if ($SRC[$i] =~ m#(^|\W)bridging time gap($|\W)# && $FIX[$i] =~ m#(^|\W)none($|\W)#) {
+            remove_trkpt($i--, 1);
+            next;
         }
         ($lat    , $lon    , $ele    , $tim    , $sec    , $spd    ) =
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i]);
