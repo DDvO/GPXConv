@@ -6,7 +6,7 @@
 <wpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T00:01:00Z</time><name>[max ascent rate = +60 m/h at 0 km/h]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T00:22:00Z</time><name>[max speed = 1 km/h]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-01T00:25:00Z</time><name>[max altitude = 8 m]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-01T00:25:00Z</time><name>[end; total track length = 0.028 km; total track duration = 0:25:00 h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-01T00:25:00Z</time><name>[end; total length = 0.028 km; gross duration = 0:25:00 h]</name></wpt>
 <trk>
 <cmt>
 GPXConv statistics (not including periods between segments)
@@ -16,8 +16,8 @@ At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T00:00:00Z: min altitude    
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-01T00:25:00Z: max altitude     =     8 m
 At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T00:01:00Z: max  ascent rate =   +60 m/h at 0 km/h
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-01T00:25:00Z: end
-total track length   = 0.028 km
-total track duration = 0:25:00 h
+total length               = 0.028 km
+gross duration             = 0:25:00 h
 3 paths merged from alternative input
 6 merged points
 1 regular point skipped during merge

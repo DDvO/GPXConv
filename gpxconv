@@ -283,21 +283,18 @@ my ($min_tim, $max_tim) = ("", ""); # $max_tim is not really used
 
 my ($segs, $days);
 my ($part_start, $part_end, $part_offset);
-# in the following arrays, index ($part_start - 1) will be used for the overall values
+# the following arrays hold statistic data per part, with index ($part_start - 1) holding the overall values
 my (@MAX_SPD      , @MIN_ELE      , @MAX_ELE      , @MAX_GAIN      , @MAX_LOSS      ); # TODO remove these redundant arrays (GAIN/LOSS via RAT)
 my (@MAX_SPD_INDEX, @MIN_ELE_INDEX, @MAX_ELE_INDEX, @MAX_GAIN_INDEX, @MAX_LOSS_INDEX);
 my (@LAST_GAIN_INDEX, @LAST_LOSS_INDEX, @PART_START_INDEX, @PART_END_INDEX);
 my (@SUM__ASCENT, @TIME__ASCENT, @MISSING__ASCENT_TIME,
     @SUM_DESCENT, @TIME_DESCENT, @MISSING_DESCENT_TIME);
-my (@SUM_DIS, @DURATION);
-
-my $sum_dis_mov = 0;
+my (@SUM_DIS, @SUM_DIS_MOV, @SUM_TIMEDIFF_MOV, @DURATION);
 
  # for calculating relative deviation between recorded and computed speed
 my $sum_speed = 0;
 my $sum_speed_deviation = 0;
 
-my $sum_timediff_mov = 0;
 my $sum_energy = 0;
 
 my $out = *STDOUT;  # https://stackoverflow.com/questions/10478884/are-there-rules-which-tell-me-what-form-of-stdout-stderr-sdtin-i-have-to-choose
@@ -1678,7 +1675,7 @@ sub sanitize
     # note that in the GPX output information on points sanitzed at the end of the track will get lost
 
     $avg_timediff = $num_pts_mov ? $sum_timediff_mov0 / $num_pts_mov : 0 if $smoothing;
-    # $sum_timediff_mov will be recalculated thereafter, since points may have been ignored or smoothened
+    # $SUM_TIMEDIFF_MOV[$all] will be calculated independently, as points may have been ignored or smoothened
 }
 sanitize() if $sanitize;
 
@@ -2021,7 +2018,7 @@ for (my $direction, my $prev_sec, my $timediff,
         }
     }
 
-    # perform general statistics, optionally also for parts (segements or days)
+    # perform general statistics, optionally also for parts (segments or days)
     $min_lat = $lat if $i == 0 || $min_lat > $lat;
     $max_lat = $lat if $i == 0 || $max_lat < $lat;
     $min_lon = $lon if $i == 0 || $min_lon > $lon;
@@ -2047,8 +2044,10 @@ for (my $direction, my $prev_sec, my $timediff,
         $SUM_DIS[$all ] += $dis;
         $SUM_DIS[$part] += $dis if defined $part;
         if ($spd ne "" && $timediff ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH) {
-            $sum_dis_mov      += $dis;
-            $sum_timediff_mov += $timediff;
+            $SUM_DIS_MOV[$all ] += $dis;
+            $SUM_DIS_MOV[$part] += $dis if defined $part;
+            $SUM_TIMEDIFF_MOV[$all ] += $timediff;
+            $SUM_TIMEDIFF_MOV[$part] += $timediff if defined $part;
         }
         my $rate = $RAT[$i];
         if ($rate ne "") {
@@ -2266,8 +2265,24 @@ for (my $i = $all; $i <= $part_last; $i++) {
     my $max_gain_text = $Part."max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # relevant only if defined $MAX_GAIN_INDEX[$i]
     my $max_loss_text = $Part."max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # relevant only if defined $MAX_LOSS_INDEX[$i]
     my $part_end_text = $Part."end";
-    $part_end_text .= "; length = ".dis_string($SUM_DIS[$i]) if defined $SUM_DIS[$i];
-    $part_end_text .= "; duration = ".timediff_string($DURATION[$i]) if $DURATION[$i];
+    my $sep = $i == $all ? "\ntotal" : ";";
+    $part_end_text .= "$sep length ".($i == $all ? "              ": "")."= ".dis_string($SUM_DIS[$i]) if defined $SUM_DIS[$i];
+    $part_end_text .= "$sep duration = ".timediff_string($DURATION[$i]) if $DURATION[$i];
+    if ($SUM_TIMEDIFF_MOV[$i]) {
+        $part_end_text .= "$sep moving time ".($i == $all ? "         ": "")."= ".
+            timediff_string($SUM_TIMEDIFF_MOV[$i]); # ", with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
+        $part_end_text .= "$sep average moving speed = ".
+            (sprintf AVG_PRECISION, MPS2KMPH * $SUM_DIS_MOV[$i] / $SUM_TIMEDIFF_MOV[$i])." km/h";
+    }
+    if ($i == $all) {
+        if (defined $SUM_DIS[$all]) {
+            $part_end_text .= "\ngross duration             = ".timediff_string(diff_defined($max_sec, $min_sec) // 0);
+        }
+        if ($weight) {
+            $part_end_text .= "\ntotal biking energy        = ".(sprintf "%.0f", $sum_energy / 1000)." kJ";
+            $part_end_text .= ", leaving out ".points($num_energy_missing)." where time or altitude information is missing" if $num_energy_missing;
+        }
+    }
     add_stat_point($MAX_SPD_INDEX  [$i], $max_spd_text );
     add_stat_point($MIN_ELE_INDEX  [$i], $min_ele_text );
     add_stat_point($MAX_ELE_INDEX  [$i], $max_ele_text );
@@ -2275,7 +2290,7 @@ for (my $i = $all; $i <= $part_last; $i++) {
     add_stat_point($LAST_LOSS_INDEX[$i], $descent_text );
     add_stat_point($MAX_GAIN_INDEX [$i], $max_gain_text);
     add_stat_point($MAX_LOSS_INDEX [$i], $max_loss_text);
-    add_stat_point($PART_END_INDEX [$i], $part_end_text) unless $i == $all;
+    add_stat_point($PART_END_INDEX [$i], $part_end_text);
 }
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
@@ -2318,22 +2333,6 @@ for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
     add_stat_point($PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
     add_stat_point($PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
 }
-
-my $end_text = "";
-if (defined $SUM_DIS[$all]) {
-    $end_text .= "total track length   = ".dis_string($SUM_DIS[$all])."\n";
-    $end_text .= "total track duration = ".timediff_string(diff_defined($max_sec, $min_sec) // 0)."\n";
-}
-if ($sum_timediff_mov) {
-    $end_text .= "total moving time    = ".timediff_string($sum_timediff_mov)."\n"; # ", with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
-    $end_text .= "average moving speed = ".(sprintf AVG_PRECISION, MPS2KMPH * $sum_dis_mov / $sum_timediff_mov)." km/h\n";
-}
-if ($weight) {
-    $end_text .= "total biking energy  = ".(sprintf "%.0f", $sum_energy / 1000)." kJ";
-    $end_text .= ", leaving out ".points($num_energy_missing)." where time or altitude information is missing" if $num_energy_missing;
-    $end_text .= "\n";
-}
-add_stat_point($#TIM, "end", "; $end_text");
 
 
 ## fill long time gaps as far as needed for exiftool etc. by inserting intermediate points with linear interpolation of data
@@ -2430,7 +2429,7 @@ my ($num_inserted_trkpts, $num_duplicated_trkpts) = $insert_points ? insert_poin
 
 ### generate final output
 
-my $final_text = $end_text;
+my $final_text = "";
 $final_text .= "average deviation between recorded and computed speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
     int(0.5 + 100 * $sum_speed_deviation / ($sum_speed / 2))." %\n" if $sum_speed;
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;

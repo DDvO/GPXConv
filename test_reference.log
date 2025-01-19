@@ -71,6 +71,12 @@ At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: total  ascen
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: total descent    =   -90 m; avg rate  =   -49 m/h
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: max  ascent rate =  +180 m/h at 0 km/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: max descent rate =  -180 m/h at 0 km/h
+At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
+total length               = 63.083 km
+total moving time          = 0:30:01 h
+total average moving speed = 2.0 km/h
+gross duration             = 32:30:01 h
+total biking energy        = -10 kJ, leaving out 7 points where time or altitude information is missing
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: segment 102 max speed        =     0 km/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 102 min altitude     =   -10 m
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T10:00:00Z: segment 102 max altitude     =    50 m
@@ -99,12 +105,6 @@ At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: 4th ascent  
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th ascent    =   +25  m;   distance   = 1.000 km; duration = 0:30:01 h
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max speed =     2 km/h; avg speed  =    2 km/h
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max rate  =   +50  m/h; avg rate   =  +50  m/h
-At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
-total track length   = 63.083 km
-total track duration = 32:30:01 h
-total moving time    = 0:30:01 h
-average moving speed = 2.0 km/h
-total biking energy  = -10 kJ, leaving out 7 points where time or altitude information is missing
 1 automatic waypoint pruned
 0 extension elements with name 'value' and value below 101 pruned
 2 extension elements with name 'value' and value above 101 pruned
