@@ -75,7 +75,7 @@ my $activity = "-drive"; # default
 
 # basic output control
 use constant PRUNE_WPTS           => 0; # by default do not ignore waypoints
-use constant PRUNE_AUTOMATIC_WPTS => 1; # ignore waypoints containing <name><!\[CDATA\[\d*\]\]></name>
+use constant PRUNE_AUTOMATIC_WPTS => 1; # ignore waypoints containing <name><!\[CDATA\[((day )?\d+)?\]\]></name> as produced by OruxMaps
 use constant PRUNE_CMTS           => 0; # by default do not remove comments
 use constant PRUNE_DESCS          => 0; # do not remove descriptions
 use constant PRUNE_LINKS          => 0; # do not remove links
@@ -981,7 +981,7 @@ sub read_tracks
             ++$num_pruned_wpts if $prune_wpts && !$ignore;
             if (!$ignore && !$prune_wpts
                 && !(PRUNE_AUTOMATIC_WPTS &&
-                     $rest =~ m#<name><!\[CDATA\[\d*\]\]></name># && ++$num_auto_wpts)
+                     $rest =~ m#<name><!\[CDATA\[((day )?\d+)?\]\]></name># && ++$num_auto_wpts)
                 # better not leave out waypoints added previously by this tool because this would disturb the ordering and duplicates are now taken care of by add_stat_point():
                 # && !($rest =~ m#\[(start|end.*?)\]#) # start/end waypoint added previously by this tool
                 # && # waypoint with statistics added previously by this tool:
