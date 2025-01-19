@@ -2194,6 +2194,7 @@ sub add_stat_point { # generate trackpoint-related statistics output and waypoin
     $txt =~ s/\n/; /g;
     $txt =~ s/; $//;
     $txt =~ s/\s+/ /g;
+    $txt = "$TIM[$i] $txt" if $TIM[$i] ne "";
     $txt = "<name>[$txt]</name>" if $txt ne "";
 
     # insert wpt in existing array, avoiding duplicates,
