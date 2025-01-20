@@ -104,6 +104,7 @@ my $PHASES_REPORT_THRESHOLD = ELE_THRESHOLD; # default
 
 # merge control
 use constant MERGE_MIN_GAP    =>  20; # minimum gap duration in seconds for starting to switch to alternative input
+use constant MERGE_WARN_DIST  => 100; # warn if first point of merged portion is more than given number of meters away from regular track
 
 # smoothing control
 use constant ENABLE_SMOOTHING  =>  0; # by default disable smoothing
@@ -1434,6 +1435,7 @@ sub merge_tracks
                 # (re-)start merge
                 $in_merge = 1;
                 $num_merges++ unless $skip_point;
+                my $dis_from_merge = 0;
                 if ($i == 0) {
                     info("$start_merge before $infiles");
                 } elsif (!$skip_point) { # certainly $i > 0
@@ -1442,9 +1444,16 @@ sub merge_tracks
                     $old_compat
                         ? info_trkpt_i($i - 1, "$start_merge on ".timediff_string($gap_time)." gap after", "")
                         : info_trkpt_i($i, "$start_merge due to $num_points_more more points during $gap_time2 around", "");
+                    my ($prev_lat , $prev_lon , $prev_ele ) = ($LAT [$i - 1], $LON [$i - 1], $ELE [$i - 1]);
+                    my (     $lat2,      $lon2,      $ele2) = ($LAT2[$j    ], $LON2[$j    ], $ELE2[$j    ]);
+                    my $dis1_from_merge = distance($lat2, $lon2, $ele2, $prev_lat, $prev_lon, $prev_ele);
+                    my $dis2_from_merge = distance($lat2, $lon2, $ele2,      $lat,      $lon,      $ele);
+                    $dis_from_merge = ($dis1_from_merge + $dis2_from_merge) / 2;
                 }
                 # debug "$tim2: ".($skip_point ? "continue" : "switched to")." merge";
                 merge_point($i++, $j);
+                warn_trkpt_i($i - 1, "points on regular track are ".dis_string($dis_from_merge)." away from first point being merged:  ", "")
+                    if !$old_compat && $dis_from_merge > MERGE_WARN_DIST;
                 $num_merged_points++;
                 $skip_point = 0;
             } else {
