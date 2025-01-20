@@ -9,10 +9,9 @@ INFO   : last   segment end <trkpt lat="0"       lon="1" <ele>8   2000-01-01T00:
 INFO   : start using alternative input before regular input
 INFO   : pause using alternative input                              0:01:00 h after <trkpt lat="0"       lon="1" <ele>0   2000-01-01T00:00:00Z
 INFO   : start using alternative input due to 3 more points during 0:20:00 h around <trkpt lat="0"       lon="1" <ele>3   2000-01-01T00:11:00Z
-INFO   : alternative input is 0.011 km away and has 1 more points, skipping regular <trkpt lat="0"       lon="1" <ele>3   2000-01-01T00:11:00Z
 INFO   : pause using alternative input                              0:01:00 h after <trkpt lat="0.00010" lon="1" <ele>4.2 2000-01-01T00:21:00Z
 INFO   : start using alternative input on end of regular input                   at <trkpt lat="0"       lon="1" <ele>7   2000-01-01T00:24:00Z
-INFO   : end   of    alternative input                                        after <trkpt lat="0"       lon="1" <ele>8   2000-01-01T00:25:00Z
+INFO   :      end of alternative input                                        after <trkpt lat="0"       lon="1" <ele>8   2000-01-01T00:25:00Z
 
 INFO   : GPXConv statistics (not including periods between segments)
 At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T00:00:00Z: start
