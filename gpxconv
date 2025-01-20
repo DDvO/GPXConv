@@ -1334,7 +1334,7 @@ sub merge_tracks
     my $in_merge = 0; # 1 means using trkpt from $merge, < 0: EOF in $merge, -1: should report its EOF
     my $infile_EOF = 0;
     my $skip_point = 0;
-    my ($prev_lat, $prev_lon , $prev_ele, $prev_tim, $prev_sec, $prev_input_sec);
+    my $prev_input_sec;
     (my $i = -1, my $j = 0);
     abort("FATAL: no trkpt found in alternative input $merge") if $j > $#TIM2;
 
@@ -1377,18 +1377,16 @@ sub merge_tracks
         my ($tim , $sec ) = ($TIM [$i], $SEC [$i]);
         my ($tim2, $sec2) = ($TIM2[$j], $SEC2[$j]);
 
-        if (!$skip_point && defined $prev_sec && defined $sec) {
-            my $diff_time = $sec - $prev_sec; # difference from previous, possibly merged point
+        if (!$skip_point && $i > 0 && defined $SEC[$i - 1] && defined $sec) {
+            my $diff_time = $sec - $SEC[$i - 1]; # difference from previous, possibly merged point
             print_trkpt_i($i, "FATAL: before", " negative time difference (-".timediff_string(-$diff_time).")")
                 if $diff_time < 0;
-            if ($tim eq $prev_tim) { # really equal (before rounding seconds)
-                print_trkpt_i($i, "FATAL: point before      ", " has same time but different position: $prev_lat, $prev_lon")
-                    if $lat != $prev_lat || $lon != $prev_lon;
-                print_trkpt_i($i, "WARNING: point before      ", "has same time but different altitude: $prev_ele m")
-                    if $ele != $prev_ele;
+            if ($tim eq $TIM[$i - 1]) { # really equal (before rounding seconds)
+                print_trkpt_i($i, "FATAL: point before      ", " has same time but different position: $LAT[$i - 1], $LON[$i - 1]")
+                    if $lat != $LAT[$i - 1] || $lon != $LON[$i - 1];
+                print_trkpt_i($i, "WARNING: point before      ", "has same time but different altitude: $ELE[$i - 1] m")
+                    if $ele != $ELE[$i - 1];
             }
-            ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec) =
-                ( $lat,      $lon,      $ele,      $tim,      $sec);
         }
 
         # main strategy : use alternative input when it has more points during same period
@@ -1475,8 +1473,7 @@ sub merge_tracks
                     my (     $lat2,      $lon2,      $ele2) = ($LAT2[$j    ], $LON2[$j    ], $ELE2[$j    ]);
                     my $dis1_from_infile = distance($lat, $lon, $ele, $prev_lat2, $prev_lon2, $prev_ele2);
                     my $dis2_from_infile = distance($lat, $lon, $ele,      $lat2,      $lon2,      $ele2);
-                    my $dis_from_infile = ($dis1_from_infile + $dis2_from_infile) / 2;
-                    my $Dis      = dis_string($dis_from_infile);
+                    my $Dis = dis_string(($dis1_from_infile + $dis2_from_infile) / 2);
                     $num_points_more = num_points_more($i, $j);
                     if ($num_points_more > 0) { # alternative input still has more points
                         my $extra = $old_compat ? "" : " and has $num_points_more more points";
