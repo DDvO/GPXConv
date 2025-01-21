@@ -1,25 +1,25 @@
 <?xml version="1.0"?>
 <gpx creator="GPXConv v2.8.4" version="1.1">
-<metadata><time>2000-01-01T00:00:00Z</time><bounds minlat="0.00000" minlon="1.00000" maxlat="0.00104" maxlon="1.00000"/></metadata>
-<wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T00:00:00Z</time><name>[2000-01-01T00:00:00Z start]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T00:00:00Z</time><name>[2000-01-01T00:00:00Z min altitude = 0 m]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T00:01:00Z</time><name>[2000-01-01T00:01:00Z max ascent rate = +60 m/h at 0 km/h]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T00:22:00Z</time><name>[2000-01-01T00:22:00Z max speed = 7 km/h]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-01T00:25:00Z</time><name>[2000-01-01T00:25:00Z max altitude = 8 m]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-01T00:25:00Z</time><name>[2000-01-01T00:25:00Z end; total length = 0.236 km; total moving time = 0:01:00 h; total average moving speed = 6.9 km/h; gross duration = 0:25:00 h]</name></wpt>
+<metadata><time>2000-01-01T23:00:00Z</time><bounds minlat="0.00000" minlon="1.00000" maxlat="0.00104" maxlon="1.00000"/></metadata>
+<wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><name>[2000-01-01T23:00:00Z start]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><name>[2000-01-01T23:00:00Z min altitude = 0 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T23:01:00Z</time><name>[2000-01-01T23:01:00Z max ascent rate = +60 m/h at 0 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:22:00Z</time><name>[2000-01-01T23:22:00Z max speed = 7 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[2000-01-02T00:25:00Z max altitude = 8 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[2000-01-02T00:25:00Z end; total length = 0.236 km; total moving time = 0:01:00 h; total average moving speed = 6.9 km/h; gross duration = 1:25:00 h]</name></wpt>
 <trk>
 <cmt>
 GPXConv statistics (not including periods between segments)
-At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T00:00:00Z: start
-At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T00:22:00Z: max speed        =     7 km/h
-At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T00:00:00Z: min altitude     =     0 m
-At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-01T00:25:00Z: max altitude     =     8 m
-At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T00:01:00Z: max  ascent rate =   +60 m/h at 0 km/h
-At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-01T00:25:00Z: end
+At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T23:00:00Z: start
+At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:22:00Z: max speed        =     7 km/h
+At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T23:00:00Z: min altitude     =     0 m
+At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: max altitude     =     8 m
+At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T23:01:00Z: max  ascent rate =   +60 m/h at 0 km/h
+At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: end
 total length               = 0.236 km
 total moving time          = 0:01:00 h
 total average moving speed = 6.9 km/h
-gross duration             = 0:25:00 h
+gross duration             = 1:25:00 h
 3 paths merged from alternative input
 6 merged points
 1 regular point skipped during merge
@@ -28,16 +28,18 @@ elevation not corrected
 GPXConv statistics end
 </cmt>
 <trkseg>
-<trkpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T00:00:00Z</time><cmt>before start of base input</cmt></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T00:01:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T00:02:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
-<trkpt lat="0.00101" lon="1.00000"><ele>2</ele><time>2000-01-01T00:09:00Z</time><src>computed speed</src><extensions><speed>1</speed></extensions></trkpt>
-<trkpt lat="0.00102" lon="1.00000"><ele>2</ele><time>2000-01-01T00:10:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
-<trkpt lat="0.00103" lon="1.00000"><ele>4</ele><time>2000-01-01T00:20:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
-<trkpt lat="0.00104" lon="1.00000"><ele>4</ele><time>2000-01-01T00:21:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T00:22:00Z</time><src>computed speed</src><extensions><speed>7</speed></extensions></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>7</ele><time>2000-01-01T00:24:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
-<trkpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-01T00:25:00Z</time><cmt>after end of base input</cmt><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><cmt>before start of base input</cmt></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T23:01:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T23:02:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00101" lon="1.00000"><ele>2</ele><time>2000-01-01T23:09:00Z</time><src>computed speed</src><extensions><speed>1</speed></extensions></trkpt>
+<trkpt lat="0.00102" lon="1.00000"><ele>2</ele><time>2000-01-01T23:10:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00103" lon="1.00000"><ele>4</ele><time>2000-01-01T23:20:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00104" lon="1.00000"><ele>4</ele><time>2000-01-01T23:21:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:22:00Z</time><src>computed speed</src><extensions><speed>7</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:52:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-02T00:22:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>7</ele><time>2000-01-02T00:24:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><cmt>after end of base input</cmt><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 </trkseg>
 </trk>
 </gpx>
