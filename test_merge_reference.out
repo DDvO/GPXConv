@@ -3,10 +3,20 @@
 <metadata><time>2000-01-01T23:00:00Z</time><bounds minlat="0.00000" minlon="1.00000" maxlat="0.00104" maxlon="1.00000"/></metadata>
 <wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><name>[2000-01-01T23:00:00Z start]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><name>[2000-01-01T23:00:00Z min altitude = 0 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><name>[2000-01-01T23:00:00Z day 1 min altitude = 0 m]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T23:01:00Z</time><name>[2000-01-01T23:01:00Z max ascent rate = +60 m/h at 0 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T23:01:00Z</time><name>[2000-01-01T23:01:00Z day 1 max ascent rate = +60 m/h at 0 km/h]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:22:00Z</time><name>[2000-01-01T23:22:00Z max speed = 7 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:22:00Z</time><name>[2000-01-01T23:22:00Z day 1 max speed = 7 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:52:00Z</time><name>[2000-01-01T23:52:00Z day 1 max altitude = 5 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:52:00Z</time><name>[2000-01-01T23:52:00Z day 1 end; length = 0.233 km; duration = 0:52:00 h; moving time = 0:01:00 h; average moving speed = 6.9 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-02T00:22:00Z</time><name>[2000-01-02T00:22:00Z day 2 min altitude = 5 m]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[2000-01-02T00:25:00Z max altitude = 8 m]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[2000-01-02T00:25:00Z end; total length = 0.236 km; total moving time = 0:01:00 h; total average moving speed = 6.9 km/h; gross duration = 1:25:00 h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[2000-01-02T00:25:00Z day 2 max speed = 0 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[2000-01-02T00:25:00Z day 2 max altitude = 8 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[2000-01-02T00:25:00Z day 2 max ascent rate = +60 m/h at 0 km/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[2000-01-02T00:25:00Z day 2 end; length = 0.003 km; duration = 0:02:00 h]</name></wpt>
 <trk>
 <cmt>
 GPXConv statistics (not including periods between segments)
@@ -20,6 +30,16 @@ total length               = 0.236 km
 total moving time          = 0:01:00 h
 total average moving speed = 6.9 km/h
 gross duration             = 1:25:00 h
+At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:22:00Z: day 1 max speed        =     7 km/h
+At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T23:00:00Z: day 1 min altitude     =     0 m
+At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:52:00Z: day 1 max altitude     =     5 m
+At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T23:01:00Z: day 1 max  ascent rate =   +60 m/h at 0 km/h
+At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:52:00Z: day 1 end; length = 0.233 km; duration = 0:52:00 h; moving time = 0:01:00 h; average moving speed = 6.9 km/h
+At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max speed        =     0 km/h
+At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-02T00:22:00Z: day 2 min altitude     =     5 m
+At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max altitude     =     8 m
+At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max  ascent rate =   +60 m/h at 0 km/h
+At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; length = 0.003 km; duration = 0:02:00 h
 3 paths merged from alternative input
 6 merged points
 1 regular point skipped during merge
