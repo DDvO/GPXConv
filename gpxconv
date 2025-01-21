@@ -1476,10 +1476,10 @@ sub merge_tracks
                     my $dis1_from_merge = distance($lat2, $lon2, $ele2, $prev_lat, $prev_lon, $prev_ele);
                     my $dis2_from_merge = distance($lat2, $lon2, $ele2,      $lat,      $lon,      $ele);
                     my $dis_from_merge = ($dis1_from_merge + $dis2_from_merge) / 2;
-                    warn_trkpt_i($i - 1, "points on regular track are ".dis_string($dis_from_merge)." away from first point being merged:  ", "")
-                        if !$old_compat && $dis_from_merge > MERGE_WARN_DIST;
                     # debug "$tim: skipping regular point while switching to merging $tim2";
                     replace_point($i++, $j);
+                    warn_trkpt_i($i - 1, "points on regular track are ".dis_string($dis_from_merge)." away from first point being merged:  ", "")
+                        if !$old_compat && $dis_from_merge > MERGE_WARN_DIST;
                     $num_skip_points++;
                     next;
                 }
