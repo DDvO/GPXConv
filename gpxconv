@@ -1520,6 +1520,8 @@ sub merge_tracks
                         $num_skip_points++;
                         next; # skip current point from regular input
                     }
+                    warn_trkpt_i($i - 1, "next point on regular track is ".dis_string($dis1_from_infile)." away from the most recently merged", "")
+                        if !$old_compat && $dis1_from_infile > MERGE_WARN_DIST;
                 }
                 my $end_diff = timediff_string(diff_defined($sec, $SEC[$i - 1 ]) // 0);
                 info_trkpt_i($i - 1, ($in_merge == 0 ? "pause using" : "     end of").
