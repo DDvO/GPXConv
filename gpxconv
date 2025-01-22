@@ -1609,8 +1609,11 @@ sub sanitize
             if (!$SEG[$i - 1]) {
                 my $prev_timediff = diff_defined($SEC[$i - 1], $SEC[$i - 2]);
                 my $rate = $RAT[$i];
-                if ($rate ne "" && ($rate > $MAX_PLAUSIBLE_ELE_GAIN || $rate < -$MAX_PLAUSIBLE_ELE_LOSS)
-                    && defined $prev_timediff && $prev_timediff >= MIN_TUNNEL_GAP) {
+                if (defined $prev_timediff && $prev_timediff >= MIN_TUNNEL_GAP &&
+                    $rate ne "" && ($rate > $MAX_PLAUSIBLE_ELE_GAIN / 4 || $rate < -$MAX_PLAUSIBLE_ELE_LOSS / 4)) {
+                    warn_trkpt_i($i - 1, "      at",
+                                 " correcting elevation from ".ele_string(0, $ELE[$i - 1])." to ".ele_string(0, $ELE[$i])
+                                 ." m after gap of ".timediff_string($prev_timediff)." and ".dis_string($DIS[$i - 1]));
                     $ELE[$i - 1] = $ELE[$i];
                     $FLG[$i - 1] |= CORRECTED_ELE;
                     recalculate_all($i - 1);

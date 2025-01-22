@@ -26,6 +26,8 @@ WARNING: ignored 2 points in a row
 WARNING: ignoring <trkpt lat="0.0001"  lon="1"       <ele>  30    1970-01-01T00:45:02Z   at speed =  34 km/h as descent rate = -27000 m/h (less than -20000)
 WARNING: ignoring <trkpt lat="0.0003"  lon="1"       <ele>  20    1970-01-01T00:45:04Z   at speed =  38 km/h as descent rate = -22500 m/h (less than -20000)
 WARNING: ignored 2 points in a row
+WARNING:       at <trkpt lat="0"       lon="1"       <ele>  30    1970-01-01T00:48:20Z   correcting elevation from 30 to 10 m after gap of 0:00:20 h and 0.060 km
+WARNING:       at <trkpt lat="0"       lon="1"       <ele>  50    1970-01-01T00:49:20Z   correcting elevation from 50 to 70 m after gap of 0:00:20 h and 0.050 km
 WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  00    1970-01-01T01:00:02Z   at speed =  22 km/h as descent rate = -21600 m/h (less than -20000)
 WARNING: ignoring <trkpt lat="0.0"     lon="1.0"     <ele>  36    1970-01-01T01:00:04Z   at speed =  22 km/h as  ascent rate = +21600 m/h (more than  20000)
 WARNING: ignored 2 points in a row
