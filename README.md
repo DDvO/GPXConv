@@ -40,6 +40,7 @@ Command-line options:
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
   -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
+  -lean_stat_wpts              - only one stat. wpt per segment/day with data except ascent/descent
   -merge <file>                - augment tracks in infile(s) with data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time

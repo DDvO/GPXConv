@@ -23,9 +23,9 @@ At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: max altitude    
 At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T23:01:00Z: max  ascent rate =   +60 m/h at 0 km/h
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: end
 total length               = 0.236 km
+gross duration             = 1:25:00 h
 total moving time          = 0:01:00 h
 total average moving speed = 6.9 km/h
-gross duration             = 1:25:00 h
 At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:22:00Z: day 1 max speed        =     7 km/h
 At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T23:00:00Z: day 1 min altitude     =     0 m
 At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:52:00Z: day 1 max altitude     =     5 m

@@ -44,6 +44,7 @@ Command-line options:
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
   -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
+  -lean_stat_wpts              - only one stat. wpt per segment/day with data except ascent/descent
   -merge <file>                - augment tracks in infile(s) with data from given alternative file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
@@ -284,6 +285,7 @@ my ($min_tim, $max_tim) = ("", ""); # $max_tim is not really used
 
 my ($segs, $days);
 my ($part_start, $part_end, $part_offset);
+my $lean_stat_wpts = 0;
 # the following arrays hold statistic data per part, with index ($part_start - 1) holding the overall values
 my (@MAX_SPD      , @MIN_ELE      , @MAX_ELE      , @MAX_GAIN      , @MAX_LOSS      ); # TODO remove these redundant arrays (GAIN/LOSS via RAT)
 my (@MAX_SPD_INDEX, @MIN_ELE_INDEX, @MAX_ELE_INDEX, @MAX_GAIN_INDEX, @MAX_LOSS_INDEX);
@@ -813,6 +815,8 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
             ($part_start, $part_end, $part_offset) = ($1, $2, $3); # $part_end < $part_start will lead to empty selection, just like without $opt
             splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
         }
+    } elsif ($opt eq "-lean_stat_wpts") {
+        $lean_stat_wpts = 1;
     } elsif ($opt eq "-weight") {
         abort("missing value argument for -$opt option") if $#ARGV - $i < 1;
         abort("cannot parse value argument in '$opt $arg1'") unless looks_like_number($arg1);
@@ -2200,7 +2204,7 @@ $HEAD =~ s/ *$//;
 # statistics must be generated before interpolating, which may shift indexes
 
 my $stat_points = "";
-add_stat_point(0, "start");
+add_stat_point(0, "start", "");
 
 sub wpt {
     my $j = $_[0]; # index of waypoint
@@ -2224,17 +2228,18 @@ sub add_stat_point { # generate trackpoint-related statistics output and waypoin
     return unless defined $i;
 
     $stat_points .= point($i, $txt);
+    return if $lean_stat_wpts && !defined $extra;
 
     # adapt text to be used as name in statistics wpt
     $txt .= $extra if defined $extra;
     $txt =~ s/\n/; /g;
     $txt =~ s/; $//;
     $txt =~ s/\s+/ /g;
-    $txt = "$TIM[$i] $txt" if $TIM[$i] ne "";
+    $txt = "$TIM[$i] $txt" if !$lean_stat_wpts && $TIM[$i] ne "";
     $txt = "<name>[$txt]</name>" if $txt ne "";
 
     # insert wpt in existing array, avoiding duplicates,
-    # in ascending time order, where missing time is considered infinit,
+    # in ascending time order after any entries with same time, where missing time is considered infinite,
     # assuming that the array is already ordered
     my $sec_or_inf = $SEC[$i] // $MAX_UNDEF_TIME;
 
@@ -2294,40 +2299,42 @@ for (my $i = $all; $i <= $part_last; $i++) {
     my $text_descent = sum_avg_rate($SUM_DESCENT[$i], $TIME_DESCENT[$i], $MISSING_DESCENT_TIME[$i]);
     $text_descent =~ s/\+0/-0/g;
 
-    my $max_spd_text  = $Part."max speed        = $Max_spd km/h";    # may use "" if not defined
-    my $min_ele_text  = $Part."min altitude     = $Min_ele m";       # may use "" if not defined
-    my $max_ele_text  = $Part."max altitude     = $Max_ele m";       # may use "" if not defined
-    my $ascent_text   = $Part."total  ascent    = $text__ascent";
-    my $descent_text  = $Part."total descent    = $text_descent";
-    my $max_gain_text = $Part."max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # relevant only if defined $MAX_GAIN_INDEX[$i]
-    my $max_loss_text = $Part."max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # relevant only if defined $MAX_LOSS_INDEX[$i]
+    my $max_spd_text  = "max speed        = $Max_spd km/h";    # may use "" if not defined
+    my $min_ele_text  = "min altitude     = $Min_ele m";       # may use "" if not defined
+    my $max_ele_text  = "max altitude     = $Max_ele m";       # may use "" if not defined
+    my $ascent_text   = "total  ascent    = $text__ascent";
+    my $descent_text  = "total descent    = $text_descent";
+    my $max_gain_text = "max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # relevant only if defined $MAX_GAIN_INDEX[$i]
+    my $max_loss_text = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # relevant only if defined $MAX_LOSS_INDEX[$i]
     my $part_end_text = $Part."end";
     my $sep = $i == $all ? "\ntotal" : ";";
     $part_end_text .= "$sep length ".($i == $all ? "              ": "")."= ".dis_string($SUM_DIS[$i]) if defined $SUM_DIS[$i];
-    $part_end_text .= "$sep duration = ".timediff_string($DURATION[$i]) if $DURATION[$i];
+    if ($i == $all) {
+        $part_end_text .= "\ngross duration             = ".timediff_string(diff_defined($max_sec, $min_sec) // 0) if defined $SUM_DIS[$all];
+    } else {
+        $part_end_text .= "$sep duration = ".timediff_string($DURATION[$i]) if $DURATION[$i];
+    }
     if ($SUM_TIMEDIFF_MOV[$i]) {
         $part_end_text .= "$sep moving time ".($i == $all ? "         ": "")."= ".
             timediff_string($SUM_TIMEDIFF_MOV[$i]); # ", with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
         $part_end_text .= "$sep average moving speed = ".
             (sprintf AVG_PRECISION, MPS2KMPH * $SUM_DIS_MOV[$i] / $SUM_TIMEDIFF_MOV[$i])." km/h";
     }
-    if ($i == $all) {
-        if (defined $SUM_DIS[$all]) {
-            $part_end_text .= "\ngross duration             = ".timediff_string(diff_defined($max_sec, $min_sec) // 0);
-        }
-        if ($weight) {
-            $part_end_text .= "\ntotal biking energy        = ".(sprintf "%.0f", $sum_energy / 1000)." kJ";
-            $part_end_text .= ", leaving out ".points($num_energy_missing)." where time or altitude information is missing" if $num_energy_missing;
-        }
+    if ($i == $all && $weight) {
+        $part_end_text .= "\ntotal biking energy        = ".(sprintf "%.0f", $sum_energy / 1000)." kJ";
+        $part_end_text .= ", leaving out ".points($num_energy_missing)." where time or altitude information is missing" if $num_energy_missing;
     }
-    add_stat_point($MAX_SPD_INDEX  [$i], $max_spd_text );
-    add_stat_point($MIN_ELE_INDEX  [$i], $min_ele_text );
-    add_stat_point($MAX_ELE_INDEX  [$i], $max_ele_text );
-    add_stat_point($LAST_GAIN_INDEX[$i], $ascent_text  );
-    add_stat_point($LAST_LOSS_INDEX[$i], $descent_text );
-    add_stat_point($MAX_GAIN_INDEX [$i], $max_gain_text);
-    add_stat_point($MAX_LOSS_INDEX [$i], $max_loss_text);
-    add_stat_point($PART_END_INDEX [$i], $part_end_text);
+    add_stat_point($MAX_SPD_INDEX  [$i], $Part.$max_spd_text );
+    add_stat_point($MIN_ELE_INDEX  [$i], $Part.$min_ele_text );
+    add_stat_point($MAX_ELE_INDEX  [$i], $Part.$max_ele_text );
+    add_stat_point($LAST_GAIN_INDEX[$i], $Part.$ascent_text  );
+    add_stat_point($LAST_LOSS_INDEX[$i], $Part.$descent_text );
+    add_stat_point($MAX_GAIN_INDEX [$i], $Part.$max_gain_text);
+    add_stat_point($MAX_LOSS_INDEX [$i], $Part.$max_loss_text);
+    $SEC[$#TIM] += 0.0001 if $i == $all && defined $SEC[$#TIM]; # make sure that "end" wpt is placed last
+    add_stat_point($PART_END_INDEX [$i], $part_end_text,
+                   $lean_stat_wpts ? ("; $max_spd_text; $min_ele_text; $max_ele_text") =~ s/\s+/ /gr : "");
+    $SEC[$#TIM] -= 0.0001 if $i == $all && defined $SEC[$#TIM]; # make sure that "end" wpt is placed last
 }
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
