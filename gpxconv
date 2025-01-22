@@ -590,6 +590,10 @@ sub warn_trkpt_i {
     print_trkpt_i($_[0], "WARNING: $_[1]", $_[2]) if $print_warnings;
 }
 
+sub abort_trkpt {
+    print_trkpt_i($_[0], "FATAL: $_[1]", $_[2]);
+}
+
 sub print_trkpt_i {
     my $i    = $_[0];
     my $head = $_[1];    # may be empty
@@ -729,7 +733,7 @@ sub comp_diffs {
     my $timediff = diff_defined($sec, $prev_sec);
     my $rate = $RAT[$i];
     my $rate_new = rate($diff_ele, $timediff);
-    abort("FATAL: internal inconsistency on ascent/descent rate at $TIM[$i]: $rate vs. $rate_new") if $rate ne $rate_new;
+    abort_trkpt($i, "internal inconsistency on ascent/descent rate $rate vs. $rate_new at") if $rate ne $rate_new;
     my $comp_spd = defined $timediff ? ($timediff > 0 ? $dis / $timediff : $prev_comp_spd) : "";
     $spd_prec_len = max($spd_prec_len, length(spd_str($comp_spd))) if $comp_spd ne ""; # used only for spd_string
     my $acc = $comp_spd ne "" && $prev_comp_spd ne "" && $timediff ? ($comp_spd - $prev_comp_spd) / $timediff : "";
@@ -1299,7 +1303,7 @@ sub read_tracks
 
             $i++;
             my $sec_str = defined $sec ? epoch_to_str($sec) : "";
-            abort("FATAL: internally inconsistent time data for trkpt $i: tim=$tim != $sec_str (=$sec)")
+            abort_trkpt($i, "internally inconsistent time data: tim=$tim != $sec_str (=$sec) at")
                 if $tim =~ s/(\.\d*?)0+Z/$1Z/r ne $sec_str =~ s/(\.\d*?)0+Z/$1Z/r &&
                 !($tim =~ m/\.999Z/ && defined $sec && $tim eq epoch_to_str($sec - 0.001));
 
@@ -1411,8 +1415,8 @@ sub merge_tracks
             abort_trkpt($i, "before", "negative time difference (-".timediff_string(-$diff_time).")")
                 if $diff_time < 0;
             if ($tim eq $TIM[$i - 1]) { # really equal (before rounding seconds)
-                abort_trkpt_i($i, "point before",
-                              "has same time but different position: $LAT[$i - 1], $LON[$i - 1] at")
+                abort_trkpt($i, "point before",
+                            "has same time but different position: $LAT[$i - 1], $LON[$i - 1] at")
                     if $lat != $LAT[$i - 1] || $lon != $LON[$i - 1];
                 warn_trkpt_i($i, "point before      ",
                              "has same time but different altitude: $ELE[$i - 1] m")
@@ -1705,19 +1709,19 @@ sub sanitize
         my $curr_not_ignored = ($IGN[$i + 1] // 0) == 0;
         # warning("ignored $num_removals_in_row2 points in a row") if $num_removals_in_row2 > 1 && $curr_not_ignored;
         if (!$ignore) {
-            abort("FATAL: at $tim internal inconsistency on number of most recent removals in a row: ".
-                  "$num_removals_in_row vs. $num_removals_in_row2, condition 1 vs. $curr_not_ignored")
+            abort_trkpt($i, "$tim internal inconsistency on number of most recent removals in a row: ".
+                        "$num_removals_in_row vs. $num_removals_in_row2, condition 1 vs. $curr_not_ignored at")
                 if $num_removals_in_row != $num_removals_in_row2 || !$curr_not_ignored;
             warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
             $num_removals_in_row = 0;
         } elsif ($curr_not_ignored) {
-            abort("FATAL: internal inconsistency on condition for reporting number of most recent removals in a row");
+            abort_trkpt($i, "internal inconsistency on condition for reporting number of most recent removals in a row at");
         }
     }
     my $num_removals_in_row_final = $IGN[$#TIM + 1] // 0;
     # warning("ignored $num_removals_in_row_final points in a row") if $num_removals_in_row_final > 1;
-    abort("FATAL: internal inconsistency on reporting number of final removals in a row: ".
-          "$num_removals_in_row vs. $num_removals_in_row_final")
+    abort_trkpt($#TIM, "internal inconsistency on reporting number of final removals in a row: ".
+                "$num_removals_in_row vs. $num_removals_in_row_final at")
         if $num_removals_in_row != $num_removals_in_row_final;
     warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
     # note that in the GPX output information on points sanitzed at the end of the track will get lost
@@ -2048,10 +2052,10 @@ for (my $direction, my $prev_sec, my $timediff,
             (my $diff_ele_unused, my $td, my $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs($i);
             my $rate_str = $rate eq "" ? "" : sprintf "%.3f", $rate;
             debug_log "phase analysis ".point_str($i)." dis=".(sprintf "%.3f", $dis)." rate=$rate_str spd=".spd_or_none($spd);
-            my $msg = "FATAL: internal inconsistency on ";
-            abort("$msg time difference: '$timediff' vs. '$td'") if $timediff ne $td;
-            abort("$msg distance value:". " $DIS[$i] vs. $dis" ) if abs($DIS[$i] -  $dis) > 0.001;
-            abort("$msg rate" ." value: '$RAT[$i]' vs. '$rate'") if $RAT[$i] ne $rate;
+            my $msg = "internal inconsistency on ";
+            abort_trkpt($i, "$msg time difference: $timediff vs. $td at") if $timediff ne $td;
+            abort_trkpi($i, "$msg distance value: $DIS[$i] vs. $dis at" ) if abs($DIS[$i] -  $dis) > 0.001;
+            abort_trkpi($i, "$msg rate" ." value: $RAT[$i] vs. $rate at") if $RAT[$i] ne $rate;
         }
 
         if ($weight) {
