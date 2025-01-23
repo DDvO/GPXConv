@@ -23,7 +23,7 @@ GPX track converter: post-process routes and tracks produced by GPS loggers etc.
 * Produces statistics including ascent/descent rates, optionally also for climbing phases.
 * Optionally produces additional statistics on a per-segment or per-day basis.
 * Optionally calculates approximate total energy spent by biking along the resulting track.
-* Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
+* Prints information and warnings (unless disabled), as well as any errors, to STDERR.
 
 Usage:
 ```
@@ -41,6 +41,8 @@ Command-line options:
   -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
   -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
   -lean_stat_wpts              - only one stat. wpt per segment/day with data except ascent/descent
+  -info_wpts                   - provide info points also in the form of waypoints
+  -warn_wpts                   - provide warning points also in the form of waypoints
   -merge <file>                - augment tracks in infile(s) with data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
@@ -53,8 +55,8 @@ Command-line options:
   -prune_wpts                  - remove waypoints
   -prune_cmts                  - remove comments
   -prune_exts                  - remove track, waypoint, and trackpoint extensions
-  -nw                          - do not print warnings
-  -ni                          - do not print information
+  -ni                          - do not output information
+  -nw                          - do not output warnings
   -o <outfile>                 - output the resulting track to <outfile>
   -debug                       - enable internal consistency checks and debug output
 ```

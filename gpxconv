@@ -24,7 +24,7 @@
 # Produces statistics including ascent/descent rates, optionally also for climbing phases.
 # Optionally produces additional statistics on a per-segment or per-day basis.
 # Optionally calculates approximate total energy spent by biking along the resulting track.
-# Prints information (if enabled), any warnings (if enabled), and errors to STDERR.
+# Prints information and warnings (unless disabled), as well as any errors, to STDERR.
 #
 
 use constant TOOL_NAME    => "GPXConv";
@@ -45,6 +45,8 @@ Command-line options:
   -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
   -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
   -lean_stat_wpts              - only one stat. wpt per segment/day with data except ascent/descent
+  -info_wpts                   - provide info points also in the form of waypoints
+  -warn_wpts                   - provide warning points also in the form of waypoints
   -merge <file>                - augment tracks in infile(s) with data from given alternative file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
@@ -57,8 +59,8 @@ Command-line options:
   -prune_wpts                  - remove waypoints
   -prune_cmts                  - remove comments
   -prune_exts                  - remove extensions
-  -nw                          - do not print warnings
-  -ni                          - do not print information
+  -ni                          - do not output information
+  -nw                          - do not output warnings
   -o <outfile>                 - output the resulting track to <outfile>
   -debug                       - enable internal consistency checks and debug output
 Other options can be set by changing values of the configuration variables.
@@ -118,9 +120,11 @@ use constant INSERT_SEGMENT      =>    0; # enable inserting segment for long ti
 use constant INSERTION_MAX_GAP   => 1800; # length of gap in seconds between consecutive trackpoints before
 # insertion should be used (1800 for exiftool default GeoMaxIntSecs; for TrailGuru 3600 would be sufficient)
 
-# warning output control
-use constant PRINT_WARNINGS      =>    1; # whether printing warnings is enabled by default
-use constant PRINT_INFO          =>    1; # whether printing information is enabled by default
+# info warning output control
+my $output_info                  =     1; # whether outputting information is enabled
+my $output_warnings              =     1; # whether outputting warnings is enabled
+my $info_wpts                    =     0; # whether to output information points in addition as waypoints
+my $warn_wpts                    =     0; # whether to output warning     points in addition as waypoints
 use constant WARNING_TPT_DIST    => 2000; # threshold for trackpoint distance warning (in meters)
 use constant WARNING_WPT_DIST    =>  100; # threshold for waypoint distance warning (in meters)
 use constant MAX_SPEED_DEVIATION => 0.25; # threshold for speed measuring deviation warning (fraction of MAX_PLAUSIBLE_SPEED)
@@ -218,8 +222,6 @@ my $num_pruned_descs = 0;
 my $num_pruned_links = 0;
 my $prune_exts       = PRUNE_EXTENSIONS;
 my $num_pruned_exts  = 0;
-my $print_warnings   = PRINT_WARNINGS;
-my $print_info       = PRINT_INFO;
 
 # regular trackpoint data input from infile(s)
 my @IGN; # number of points ignored immediately before this one
@@ -325,11 +327,11 @@ use Scalar::Util qw(looks_like_number);
 sub print_line { print STDERR "$_[0]\n"; }
 
 sub warning {
-    print_line("WARNING: $_[0]") if $print_warnings;
+    print_line("WARNING: $_[0]") if $output_warnings;
 }
 
 sub info {
-    print_line("INFO   : $_[0]") if $print_info;
+    print_line("INFO   : $_[0]") if $output_info;
 }
 
 sub abort {
@@ -510,7 +512,8 @@ sub parse_point {
         $tim =~ s/\.0+Z/Z/;
         $tim_len = max($tim_len, length($tim));
         $sec = str_to_epoch($tim); # may be 0
-        abort("FATAL: error parsing time value '$orig_tim' in point: $_[0]") unless defined $sec;
+        abort("FATAL: error parsing time value '$orig_tim' in point: $_[0]")
+            unless $orig_tim eq "NO" || defined $sec;
         $sec += 0.001 if $tim =~ m/\.999Z/; # for some reason, at least OruxMaps on Android often reports 0.001 seconds less than a full second
         if (TIME_CORRECTION) {
             $sec += TIME_CORRECTION;
@@ -583,11 +586,11 @@ sub warn_trkpt  { warn_trkpt_i (-1, @_); }
 sub print_trkpt { print_trkpt_i(-1, @_); }
 
 sub info_trkpt_i {
-    print_trkpt_i($_[0], "INFO   : $_[1]", $_[2]) if $print_info;
+    print_trkpt_i($_[0], "INFO   : $_[1]", $_[2]) if $output_info;
 }
 
 sub warn_trkpt_i {
-    print_trkpt_i($_[0], "WARNING: $_[1]", $_[2]) if $print_warnings;
+    print_trkpt_i($_[0], "WARNING: $_[1]", $_[2]) if $output_warnings;
 }
 
 sub abort_trkpt {
@@ -630,6 +633,17 @@ sub print_trkpt_i {
                . $time
                .($tail ? (" " x max(0, $tim_len + length(" ") - length($time))).$tail : ""));
     abort("") if $head =~ "^FATAL:";
+
+    $head =~ s|^(INFO)\s*:|$1:|;
+    $head =~ s/(.*):\s*$/$1/ ||
+    $head =~ s/the( most recently merged)$/this$1 point/ ||
+    $head =~ s/(skipping) (regular)$/$1 this $2 point/ ||
+    $head =~ m/(start|end)\s*$/ ||
+    $head =~ s/ at$// ||
+    $head =~ s/$/ this point/;
+    $tail = "" unless $tail; # enforce output also in case $lean_stat_wpts
+    add_stat_wpt($i, $head, $tail) if $head =~ m|^INFO:|    && $info_wpts;
+    add_stat_wpt($i, $head, $tail) if $head =~ m|^WARNING:| && $warn_wpts;
 }
 
 sub diff_defined  { return defined $_[0] && defined $_[1] ? $_[0] - $_[1] : undef; }
@@ -822,6 +836,10 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
         }
     } elsif ($opt eq "-lean_stat_wpts") {
         $lean_stat_wpts = 1;
+    } elsif ($opt eq "-info_wpts") {
+        $info_wpts = 1;
+    } elsif ($opt eq "-warn_wpts") {
+        $warn_wpts = 1;
     } elsif ($opt eq "-weight") {
         abort("missing value argument for -$opt option") if $#ARGV - $i < 1;
         abort("cannot parse value argument in '$opt $arg1'") unless looks_like_number($arg1);
@@ -859,10 +877,10 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
         $prune_cmts = 1;
     } elsif ($opt eq "-prune_exts") {
         $prune_exts = 1;
-    } elsif ($opt eq "-nw") {
-        $print_warnings = 0;
     } elsif ($opt eq "-ni") {
-        $print_info = 0;
+        $output_info = 0;
+    } elsif ($opt eq "-nw") {
+        $output_warnings = 0;
     } elsif ($opt eq "-o") {
 
      # not checking for operlap with shell-level redirection of STDOUT using '>'
@@ -1736,13 +1754,16 @@ abort("FATAL: no trackpoint (possibly after ignoring some)") if $#TIM < 0;
 
 sub check_waypoints {
     for (my $j = 0; $j <= $#WSEC; $j++) {
+        my $id = $WSTR[$j];
+        next unless defined $id; # just info/warning wpt
         $sec = $WSEC[$j];
         unless (defined $sec) {
-            warning("waypoint $WSTR[$j] does not have time information; skipping proximity check");
+            warning("waypoint $id does not have time information; skipping proximity check")
+                unless $id =~ m/\[(INFO|WARNING): /;
             next;
         }
         if ($j > 0 && (diff_defined($sec, $WSEC[$j - 1]) // 0) < 0) {
-            warning("waypoint $WSTR[$j] has earlier time than the waypoint found before: $WSTR[$j - 1]");
+            warning("waypoint $id has earlier time than the waypoint found before: $WSTR[$j - 1]");
         }
         if ($#TIM < 0) { # can not happen due to above check
             warning("no trackpoint found for checking waypoints");
@@ -1765,7 +1786,7 @@ sub check_waypoints {
         # due to time possibly carried over across segement end and start of next segment, wpt may match next trkpt:
         next if $i2 < $#TIM && $SEC[$i2] == $sec && defined $SEC[$i2 + 1] && $SEC[$i2 + 1] == $sec
             && $LAT[$i2 + 1] == $wlat && $LON[$i2 + 1] == $wlon && $ELE[$i2 + 1] eq $wele;
-        warning("no trackpoint found at same time or later than waypoint $WSTR[$j]; will ".
+        warning("no trackpoint found at same time or later than waypoint $id; will ".
                 ($i1 < $i2 ? "extrapolate distance from the one before" : "take the difference from the last one"))
             if $i2 == $#TIM;
 
@@ -1780,7 +1801,7 @@ sub check_waypoints {
             : $ele1 + ($ele2 - $ele1) * $linear_factor;
         my $dis = distance_curr($wlat, $wlon, $wele);
         $tim = "NO"; # do not print time for interpolated positon, since done already for wpt
-        warn_trkpt("according to its time information, waypoint $WSTR[$j] appears not close to track "
+        warn_trkpt("according to its time information, waypoint $id appears not close to track "
                    . "(interpolated distance = ".(sprintf "%.0f", $dis)." m > " . WARNING_WPT_DIST . "); "
                    . "it should be approximately at")
           if $dis > WARNING_WPT_DIST;
@@ -2240,38 +2261,43 @@ sub add_stat_point { # generate trackpoint-related statistics output and waypoin
     return unless defined $i;
 
     $stat_points .= point($i, $txt);
-    return if $lean_stat_wpts && !defined $extra;
+    add_stat_wpt(@_) if !$lean_stat_wpts || defined $extra;
+}
+
+sub add_stat_wpt {
+    my ($i, $txt, $extra) = @_; # $i is index of trackpoint containing the location and time
+    my  ($lat_   , $lon_   , $ele_   , $tim_   , $sec_   ) = $i < 0 ?
+        ($lat    , $lon    , $ele    , $tim    , $sec    ) :
+        ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i]);
 
     # adapt text to be used as name in statistics wpt
     $txt .= $extra if defined $extra;
     $txt =~ s/\n/; /g;
     $txt =~ s/; $//;
     $txt =~ s/\s+/ /g;
-    $txt = "$TIM[$i] $txt" if !$lean_stat_wpts && $TIM[$i] ne "";
+    $txt = "$tim_ $txt" if !$lean_stat_wpts && $tim_ ne "";
     $txt = "<name>[$txt]</name>" if $txt ne "";
 
     # insert wpt in existing array, avoiding duplicates,
     # in ascending time order after any entries with same time, where missing time is considered infinite,
     # assuming that the array is already ordered
-    my $sec_or_inf = $SEC[$i] // $MAX_UNDEF_TIME;
 
-    my  ($lat    , $lon    , $ele    , $tim    , $sec    ) =
-        ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i]);
+    my $sec_or_inf = $sec_ // $MAX_UNDEF_TIME;
     my $j = 0;
     while ($j <= $#WSEC && ($WSEC[$j] // $MAX_UNDEF_TIME) < $sec_or_inf) {
         $j++
     }
     while ($j <= $#WSEC && ($WSEC[$j] // $MAX_UNDEF_TIME) == $sec_or_inf) {
         return if # do not add duplicates
-            $WLAT[$j] eq $lat && $WLON[$j] eq $lon && $WELE[$j] eq $ele &&
-            $WTIM[$j] eq $tim && $WTXT[$j] eq $txt;
+            $WLAT[$j] eq $lat_ && $WLON[$j] eq $lon_ && $WELE[$j] eq $ele_ &&
+            $WTIM[$j] eq $tim_ && $WTXT[$j] eq $txt;
         $j++
     }
-    splice @WLAT, $j, 0, $lat;
-    splice @WLON, $j, 0, $lon;
-    splice @WELE, $j, 0, $ele;
-    splice @WTIM, $j, 0, $tim;
-    splice @WSEC, $j, 0, $sec;
+    splice @WLAT, $j, 0, $lat_;
+    splice @WLON, $j, 0, $lon_;
+    splice @WELE, $j, 0, $ele_;
+    splice @WTIM, $j, 0, $tim_;
+    splice @WSEC, $j, 0, $sec_;
     splice @WTXT, $j, 0, $txt;
     splice @WSTR, $j, 0, undef;
 }
