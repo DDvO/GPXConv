@@ -1368,7 +1368,7 @@ sub merge_tracks
     (my $i = -1, my $j = 0);
     abort("FATAL: no trkpt found in alternative input $merge") if $j > $#TIM2;
 
-    sub warn_skiped_merged_ratio
+    sub warn_skipped_merged_ratio
     {
         my $i = $_[0];
         my $merged  = $num_merged_points - $num_merged_points_last;
@@ -1561,7 +1561,7 @@ sub merge_tracks
                 $in_merge = -2 if $in_merge == -1;
                 recalculate_all($i);
                 # debug "$tim: returned to base input";
-                warn_skiped_merged_ratio($i);
+                warn_skipped_merged_ratio($i);
                 ($num_merged_points_last, $num_skip_points_last) =
                 ($num_merged_points     , $num_skip_points     );
             } else { # continue from $merge
@@ -1574,7 +1574,7 @@ sub merge_tracks
         $prev_input_sec = $SEC[$i] if defined $SEC[$i];
     }
     $SEG[0] = 1; # for the case that no alternative points got merged before
-    warn_skiped_merged_ratio($i);
+    warn_skipped_merged_ratio($i);
     info_trkpt_i($i - 1, "     end of alternative input                                        after")
         if $in_merge == -1;
 }
