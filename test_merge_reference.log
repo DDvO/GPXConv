@@ -10,33 +10,33 @@ INFO   : start using alternative input before regular input
 INFO   : pause using alternative input                              0:01:00 h after <trkpt lat="0"       lon="1" <ele>0   2000-01-01T23:00:00Z
 INFO   : start using alternative input due to 3 more points during 0:20:00 h around <trkpt lat="0"       lon="1" <ele>3   2000-01-01T23:11:00Z
 WARNING: points on regular track are 0.112 km away from first point being merged:   <trkpt lat="0.00101" lon="1" <ele>2.1 2000-01-01T23:09:00Z
-WARNING: next point on regular track is 0.116 km away from the most recently merged <trkpt lat="0.00104" lon="1" <ele>4.2 2000-01-01T23:21:00Z
-INFO   : pause using alternative input                              0:01:00 h after <trkpt lat="0.00104" lon="1" <ele>4.2 2000-01-01T23:21:00Z
-INFO   : start using alternative input on end of regular input                   at <trkpt lat="0"       lon="1" <ele>7   2000-01-02T00:24:00Z
+WARNING: next point on regular track is 0.116 km away from the most recently merged <trkpt lat="0.00104" lon="1" <ele>4.2 2000-01-01T23:20:02Z
+INFO   : pause using alternative input                              0:01:58 h after <trkpt lat="0.00104" lon="1" <ele>4.2 2000-01-01T23:20:02Z
+INFO   : start using alternative input after end of regular input;   first point at <trkpt lat="0"       lon="1" <ele>8   2000-01-02T00:25:00Z
 INFO   :      end of alternative input                                        after <trkpt lat="0"       lon="1" <ele>8   2000-01-02T00:25:00Z
 
 INFO   : GPXConv statistics (not including periods between segments)
 At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T23:00:00Z: start
-At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:22:00Z: max speed        =     7 km/h
+At lat,lon,ele = 0.00104,1.00000,4 time = 2000-01-01T23:20:02Z: max speed        =     2 km/h
 At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T23:00:00Z: min altitude     =     0 m
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: max altitude     =     8 m
-At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T23:01:00Z: max  ascent rate =   +60 m/h at 0 km/h
+At lat,lon,ele = 0.00104,1.00000,4 time = 2000-01-01T23:20:02Z: max  ascent rate =  +180 m/h at 2 km/h
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: end
 total length               = 0.236 km
 gross duration             = 1:25:00 h
-total moving time          = 0:01:00 h
-total average moving speed = 6.9 km/h
-At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:22:00Z: day 1 max speed        =     7 km/h
+total moving time          = 0:00:02 h
+total average moving speed = 2.0 km/h
+At lat,lon,ele = 0.00104,1.00000,4 time = 2000-01-01T23:20:02Z: day 1 max speed        =     2 km/h
 At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T23:00:00Z: day 1 min altitude     =     0 m
 At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:52:00Z: day 1 max altitude     =     5 m
-At lat,lon,ele = 0.00000,1.00000,1 time = 2000-01-01T23:01:00Z: day 1 max  ascent rate =   +60 m/h at 0 km/h
-At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:52:00Z: day 1 end; length = 0.233 km; duration = 0:52:00 h; moving time = 0:01:00 h; average moving speed = 6.9 km/h
-At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max speed        =     0 km/h
+At lat,lon,ele = 0.00104,1.00000,4 time = 2000-01-01T23:20:02Z: day 1 max  ascent rate =  +180 m/h at 2 km/h
+At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:52:00Z: day 1 end; length = 0.233 km; duration = 0:52:00 h; moving time = 0:00:02 h; average moving speed = 2.0 km/h
+At lat,lon,ele = 0.00000,1.00000,7 time = 2000-01-02T00:24:00Z: day 2 max speed        =     0 km/h
 At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-02T00:22:00Z: day 2 min altitude     =     5 m
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max altitude     =     8 m
-At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max  ascent rate =   +60 m/h at 0 km/h
+At lat,lon,ele = 0.00000,1.00000,7 time = 2000-01-02T00:24:00Z: day 2 max  ascent rate =   +51 m/h at 0 km/h
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; length = 0.003 km; duration = 0:02:00 h
-3 paths merged from alternative input
+3 sections merged from alternative input
 6 merged points
 1 regular point skipped during merge
 0 points inserted due to time gaps > 1800 seconds

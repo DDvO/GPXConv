@@ -12,6 +12,7 @@ GPX track converter: post-process routes and tracks produced by GPS loggers etc.
   min and max altitude, total ascent and descent, as well as max ascent and descent rate.
 * Reports missing data and by default ignores points containing implausible data w.r.t.
   altitude, ascent/descent rate, speed, acceleration/deceleration, and direction change.
+* Between segments and on start/end of merged sections, speed and ascent/descent rate are ignored.
 * Corrects implausible elevation gain/loss after gaps, typically on exit of tunnel or building
 * Optionally filters out points before or after given time limits.
 * Optionally filters out points with an element value below or above given limits.

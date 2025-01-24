@@ -53,7 +53,7 @@ WARNING: according to its time information, waypoint '
 ' appears not close to track (interpolated distance = 400 m > 100); it should be approximately at <trkpt lat="45.9"      lon="4.3"      <ele>  90  
 WARNING: no time         at <trkpt lat="44.00002"  lon="2.0003"   <ele> 74.49 NO_TIME             ; cannot calculate energy here
 WARNING: no time     before <trkpt lat="44.000"    lon="2.004"    <ele> 50.00 2001-01-01T10:00:00Z; cannot calculate energy here
-WARNING: no speed info near <trkpt lat="44"        lon="2.0"      <ele>40.000 2001-01-01T10:30:00Z; cannot calculate energy
+WARNING: no speed info near <trkpt lat="44"        lon="2.0"      <ele>40.000 2001-01-01T10:30:00Z; cannot calculate energy here
 WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME             ; cannot calculate energy here
 WARNING: no time         at <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME             ; cannot calculate energy here
 WARNING: no time     before <trkpt lat="45.90"     lon="4.30"     <ele>  90   2001-01-02T15:00:00Z; cannot calculate energy here
@@ -76,7 +76,7 @@ total length               = 63.083 km
 gross duration             = 32:30:01 h
 total moving time          = 0:30:01 h
 total average moving speed = 2.0 km/h
-total biking energy        = -10 kJ, leaving out 7 points where time or altitude information is missing
+total biking energy        = -10 kJ, leaving out 7 points where time or altitude information is missing or at start or end of merge sections
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: segment 102 max speed        =     0 km/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 102 min altitude     =   -10 m
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T10:00:00Z: segment 102 max altitude     =    50 m
