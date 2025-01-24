@@ -2484,7 +2484,7 @@ sub insert_points_in_gap {
             my $sec_delta = $diff_time / $n_spans; # 0 < $sec_delta <= INSERTION_MAX_GAP
             my $ele_delta = diff_nonempty($ele, $ele_curr);
             $ele_delta /= $n_spans if defined $ele_delta;
-            warn_trkpt("before", "$gap_text; inserting ".points($n_spans - 1)." each ".(sprintf SEC_PRECISION, $sec_delta)." s");
+            info_trkpt("before", "$gap_text; inserting ".points($n_spans - 1)." each ".timediff_string($sec_delta));
 
             # point $i will become the point past the insertion (possibly with duplication before and after segment)
             # need to move info about previous ignored points from point past the insertion to first new point
