@@ -1458,7 +1458,8 @@ sub merge_tracks
                 my $next_sec = $SEC[$i + 1];
                 $next_j = $j;
                 if (defined $next_sec) {
-                    while ($next_j < $#TIM2 && diff_defined($SEC2[$next_j], $next_sec) < 0) {
+                    $next_sec -= $MIN_TIMEDIFF; # do not count points too close to next regular point
+                    while ($next_j < $#TIM2 && defined $SEC2[$next_j] && $SEC2[$next_j] < $next_sec) {
                         $next_j++;
                     }
                 }
@@ -1487,7 +1488,7 @@ sub merge_tracks
 
             my $gap_time = diff_defined($sec, $prev_input_sec) // 0; # difference from previous point from infile(s);
             if ($skip_point ||
-                ($timediff_merge < 0 # regular input went past current alternative input
+                ($timediff_merge <= -$MIN_TIMEDIFF # regular input went sufficiently past current alternative input
                  && ($i == 0 # alternative input started before regular one
                      || ($gap_time >= MERGE_MIN_GAP &&
                          ($num_points_more = num_points_more($i, $j)) > 1)))) {
@@ -1525,16 +1526,20 @@ sub merge_tracks
                 }
             } else {
                 # debug "$tim: using regular input";
-                while ($in_merge >= 0 && defined $sec && (!defined $sec2 || $sec2 <= $sec)) {
-                    # advance $merge as far as possible to get past regular input
-                    # debug "$tim2: skipping merge";
-                    $in_merge = -2 if ++$j > $#TIM2;
-                    ($tim2, $sec2) = ($TIM2[$j], $SEC2[$j]);
+                if (defined $sec) {
+                    my $past_sec = $sec + $MIN_TIMEDIFF; # advance until next point no more too close to regular point
+                    while ($in_merge >= 0 && (!defined $sec2 || $sec2 < $past_sec)) {
+                        # advance $merge as far as possible to get past regular input
+                        # debug "$tim2: skipping merge";
+                        $in_merge = -2 if ++$j > $#TIM2;
+                        ($tim2, $sec2) = ($TIM2[$j], $SEC2[$j]);
+                    }
                 }
             }
         } else { # currently merging from alternative input $merge or just reached its EOF
             if ($in_merge == -1 # EOF in merge, implies !$infile_EOF
-                || !$infile_EOF && (diff_defined($sec2, $sec) // -1) >= 0 # alternative input from $merge is no more at earlier time than regular input
+                || (!$infile_EOF && defined $sec && defined $sec2 &&
+                    $sec2 + $MIN_TIMEDIFF > $sec) # alternative input from $merge is no more at sufficiently earlier time than regular input
                ) {
                 # return to next point from regular input unless current regular point to be skipped
                 if ($in_merge == 1) {
