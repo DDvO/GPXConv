@@ -8,6 +8,8 @@ GPX track converter: post-process routes and tracks produced by GPS loggers etc.
 * Optionally augments main input by merging data from alternative input (from parallel tracks),
   ignoring metadata and segment information of the alternative input.
 
+* Reports statistics including total length and time, moving time, average moving speed and max speed,
+  min and max altitude, total ascent and descent, as well as max ascent and descent rate.
 * Reports missing data and by default ignores points containing implausible data w.r.t.
   altitude, ascent/descent rate, speed, acceleration/deceleration, and direction change.
 * Corrects implausible elevation gain/loss after gaps, typically on exit of tunnel or building
@@ -20,8 +22,8 @@ GPX track converter: post-process routes and tracks produced by GPS loggers etc.
 * Optionally corrects elevation and and smoothens tracks.
   (Orthometric height = GPS ellipsoidal height - geoid height,
   see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
-* Produces statistics including ascent/descent rates, optionally also for climbing phases.
 * Optionally produces additional statistics on a per-segment or per-day basis.
+* Optionally analyzes climbing phases with extra ascent/descent and speed statistics.
 * Optionally calculates approximate total energy spent by biking along the resulting track.
 * Prints information and warnings (unless disabled), as well as any errors, to STDERR.
 
@@ -64,6 +66,6 @@ Other options can be set by changing values of the configuration variables.
 
 <!--
 Local IspellDict: american
-LocalWords: GPXConv STDOUT STDERR exiftool gpxconv infile outfile nw ni segs ext wpts cmts exts
-LocalWords: trackpoint trackpoints waypoint
+LocalWords: GPXConv STDOUT STDERR exiftool gpxconv trackpoint trackpoints waypoint
+LocalWords: infile outfile nw ni segs ext wpts cmts exts stat wpt
 -->
