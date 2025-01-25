@@ -2399,10 +2399,12 @@ for (my $i = $all; $i <= $part_last; $i++) {
     add_stat_point($LAST_LOSS_INDEX[$i], $Part.$descent_text );
     add_stat_point($MAX_GAIN_INDEX [$i], $Part.$max_gain_text);
     add_stat_point($MAX_LOSS_INDEX [$i], $Part.$max_loss_text);
-    $SEC[$#TIM] += 0.0001 if $i == $all && defined $SEC[$#TIM]; # make sure that "end" wpt is placed last
+    $SEC[$#TIM] += 0.0001  if $i == $all && defined $SEC[$#TIM]; # make sure that "end" wpt is placed last
+    $LAT[$#TIM] += 0.00001 if $i != $all && $i == $part_last;    # make sure that last "part end" wpt is placed separately
     add_stat_point($PART_END_INDEX [$i], $part_end_text,
                    $lean_stat_wpts ? ("; $max_spd_text; $min_ele_text; $max_ele_text") =~ s/\s+/ /gr : "");
-    $SEC[$#TIM] -= 0.0001 if $i == $all && defined $SEC[$#TIM]; # make sure that "end" wpt is placed last
+    $LAT[$#TIM] -= 0.00001 if $i != $all && $i == $part_last;    # make sure that last "part end" wpt is placed separately
+    $SEC[$#TIM] -= 0.0001  if $i == $all && defined $SEC[$#TIM]; # make sure that "end" wpt is placed last
 }
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h

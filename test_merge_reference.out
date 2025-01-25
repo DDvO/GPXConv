@@ -3,7 +3,7 @@
 <metadata><time>2000-01-01T23:00:00Z</time><bounds minlat="0.00000" minlon="1.00000" maxlat="0.00104" maxlon="1.00000"/></metadata>
 <wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><name>[start]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:52:00Z</time><name>[day 1 end; length = 0.233 km; duration = 0:52:00 h; moving time = 0:00:02 h; average moving speed = 2.0 km/h; max speed = 2 km/h; min altitude = 0 m; max altitude = 5 m]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[day 2 end; length = 0.003 km; duration = 0:02:00 h; max speed = 0 km/h; min altitude = 5 m; max altitude = 8 m]</name></wpt>
+<wpt lat="0.00001" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[day 2 end; length = 0.003 km; duration = 0:02:00 h; max speed = 0 km/h; min altitude = 5 m; max altitude = 8 m]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[end; total length = 0.236 km; gross duration = 1:25:00 h; total moving time = 0:00:02 h; total average moving speed = 2.0 km/h; max speed = 2 km/h; min altitude = 0 m; max altitude = 8 m]</name></wpt>
 <trk>
 <cmt>
@@ -27,7 +27,7 @@ At lat,lon,ele = 0.00000,1.00000,7 time = 2000-01-02T00:24:00Z: day 2 max speed 
 At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-02T00:22:00Z: day 2 min altitude     =     5 m
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max altitude     =     8 m
 At lat,lon,ele = 0.00000,1.00000,7 time = 2000-01-02T00:24:00Z: day 2 max  ascent rate =   +51 m/h at 0 km/h
-At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; length = 0.003 km; duration = 0:02:00 h
+At lat,lon,ele = 0.00001,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; length = 0.003 km; duration = 0:02:00 h
 3 sections merged from alternative input
 9 merged points
 1 regular point skipped during merge
