@@ -47,6 +47,7 @@ Command-line options:
   -info_wpts                   - provide info points also in the form of waypoints
   -warn_wpts                   - provide warning points also in the form of waypoints
   -cmt_wpts <pattern>          - add info waypoints for trackpoints with matching 'cmt' element
+  -src_wpts <pattern>          - add warning waypoints for trackpoints with matching 'src' element
   -merge <file>                - augment tracks in infile(s) with data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time

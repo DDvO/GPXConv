@@ -51,6 +51,7 @@ Command-line options:
   -info_wpts                   - provide info points also in the form of waypoints
   -warn_wpts                   - provide warning points also in the form of waypoints
   -cmt_wpts <pattern>          - add info waypoints for trackpoints with matching 'cmt' element
+  -src_wpts <pattern>          - add warning waypoints for trackpoints with matching 'src' element
   -merge <file>                - augment tracks in infile(s) with data from given alternative file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
@@ -131,6 +132,7 @@ my $output_warnings              =     1; # whether outputting warnings is enabl
 my $info_wpts                    =     0; # whether to output information points in addition as waypoints
 my $warn_wpts                    =     0; # whether to output warning     points in addition as waypoints
 my $cmt_wpts = ""; # pattern to match for adding info waypoints for trackpoints with matching 'cmt' element
+my $src_wpts = ""; # pattern to match for adding wanrning waypoints for trackpoints with matching 'src' element
 use constant WARNING_TPT_DIST    => 2000; # threshold for trackpoint distance warning (in meters)
 use constant WARNING_WPT_DIST    =>  100; # threshold for waypoint distance warning (in meters)
 use constant MAX_SPEED_DEVIATION => 0.25; # threshold for speed measuring deviation warning (fraction of MAX_PLAUSIBLE_SPEED)
@@ -852,6 +854,9 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
         $warn_wpts = 1;
     } elsif ($opt eq "-cmt_wpts") {
         $cmt_wpts = $arg1;
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+    } elsif ($opt eq "-src_wpts") {
+        $src_wpts = $arg1;
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     } elsif ($opt eq "-weight") {
         abort("missing value argument for -$opt option") if $#ARGV - $i < 1;
@@ -2627,6 +2632,7 @@ for (my $i = 0; $i <= $#TIM; $i++) {
         $src .= append_unless_present($src, "computed speed"       ) if $FLG[$i] & COMPUTED_SPEED && INCLUDE_SPEED;
         $src .= append_unless_present($src, "corrected altitude"   ) if $FLG[$i] & CORRECTED_ELE;
         $SRC[$i] = $src;
+        add_stat_wpt($i, "WARNING: ".$src) if $src_wpts && $src && $src =~ m|$src_wpts|;
     }
 
     if (!DISABLE_TRKPT_FIX) {

@@ -13,7 +13,9 @@
 <wpt lat="0.00040" lon="1.00000"><ele>  15</ele><time>1970-01-01T00:45:06Z</time><name>[1970-01-01T00:45:06Z max descent rate = -18000 m/h at 32 km/h]</name></wpt>
 <wpt lat="0.00070" lon="1.00000"><ele>  15</ele><time>1970-01-01T00:45:08Z</time><name>[1970-01-01T00:45:08Z max speed = 60 km/h]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>  90</ele><time>1970-01-01T00:48:00Z</time><name>[1970-01-01T00:48:00Z max altitude = 90 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>  10</ele><time>1970-01-01T00:48:20Z</time><name>[1970-01-01T00:48:20Z WARNING: computed speed; corrected altitude]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>   0</ele><time>1970-01-01T00:48:24Z</time><name>[1970-01-01T00:48:24Z total descent = -120 m; avg rate = -14400 m/h]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>  70</ele><time>1970-01-01T00:49:20Z</time><name>[1970-01-01T00:49:20Z WARNING: computed speed; corrected altitude]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>  81</ele><time>1970-01-01T00:49:24Z</time><name>[1970-01-01T00:49:24Z total ascent = +81 m; avg rate = +12150 m/h]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>  81</ele><time>1970-01-01T00:49:24Z</time><name>[1970-01-01T00:49:24Z max ascent rate = +19800 m/h at 20 km/h]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>  12</ele><time>1970-01-01T01:00:00Z</time><name>[1970-01-01T01:00:00Z end; total length = 1.128 km; gross duration = 1:00:00 h; total moving time = 0:01:52 h; total average moving speed = 36.3 km/h]</name></wpt>

@@ -23,7 +23,7 @@ gpxconv $GPXCONV_TEST_ARGS test.out2 >test.out3 2>test.log3;
     diff test.log{2,3}
 
 echo -e "\n### test_sanitization ##############################################"
-gpxconv test_sanitization.gpx >test_sanitization.out 2>test_sanitization.log;
+gpxconv -src_wpts corrected test_sanitization.gpx >test_sanitization.out 2>test_sanitization.log;
     diff test_sanitization{_reference,}.out;
     diff test_sanitization{_reference,}.log
 
