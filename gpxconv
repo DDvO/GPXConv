@@ -110,6 +110,7 @@ my $PHASES_REPORT_THRESHOLD = ELE_THRESHOLD; # default
 
 # merge control
 use constant MERGE_MIN_GAP    =>  20; # minimum gap duration in seconds for starting to switch to alternative input
+use constant MERGE_MIN_MORE   =>   6; # minimum number of more points on alternative input to allow switching to it
 use constant MERGE_WARN_DIST  => 100; # warn if first point of merged portion is more than given number of meters away from regular track
 
 # smoothing control
@@ -1491,7 +1492,7 @@ sub merge_tracks
                 ($timediff_merge <= -$MIN_TIMEDIFF # regular input went sufficiently past current alternative input
                  && ($i == 0 # alternative input started before regular one
                      || ($gap_time >= MERGE_MIN_GAP &&
-                         ($num_points_more = num_points_more($i, $j)) > 1)))) {
+                         ($num_points_more = num_points_more($i, $j)) >= MERGE_MIN_MORE)))) {
                 # (re-)start merge
                 $in_merge = 1;
                 $num_merges++ unless $skip_point;

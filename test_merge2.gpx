@@ -7,6 +7,9 @@
 </trkseg>
 <trkseg>
 <trkpt lat="0.00102" lon="1"><ele>2.2</ele><time>2000-01-01T23:10:00Z</time></trkpt>
+<trkpt lat="0.00102" lon="1"><ele>2.2</ele><time>2000-01-01T23:10:15Z</time></trkpt>
+<trkpt lat="0.00102" lon="1"><ele>2.2</ele><time>2000-01-01T23:10:30Z</time></trkpt>
+<trkpt lat="0.00102" lon="1"><ele>2.2</ele><time>2000-01-01T23:10:45Z</time></trkpt>
 <trkpt lat="0.00103" lon="1"><ele>4.1</ele><time>2000-01-01T23:20:00Z</time></trkpt>
 <trkpt lat="0.00104" lon="1"><ele>4.2</ele><time>2000-01-01T23:20:02Z</time></trkpt>
 <trkpt lat="0.00100" lon="1"><ele>6</ele><time>2000-01-02T00:23:00Z</time><cmt>not used for merge</cmt></trkpt>

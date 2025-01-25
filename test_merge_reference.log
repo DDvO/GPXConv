@@ -8,7 +8,7 @@ INFO   : further segment at <trkpt lat="0.00102" lon="1" <ele>2.2 2000-01-01T23:
 INFO   : last   segment end <trkpt lat="0"       lon="1" <ele>8   2000-01-02T00:25:00Z
 INFO   : start using alternative input before regular input
 INFO   : pause using alternative input                              0:01:00 h after <trkpt lat="0"       lon="1" <ele>0   2000-01-01T23:00:00Z
-INFO   : start using alternative input due to 3 more points during 0:20:00 h around <trkpt lat="0"       lon="1" <ele>3   2000-01-01T23:11:00Z
+INFO   : start using alternative input due to 6 more points during 0:20:00 h around <trkpt lat="0"       lon="1" <ele>3   2000-01-01T23:11:00Z
 WARNING: points on regular track are 0.112 km away from first point being merged:   <trkpt lat="0.00101" lon="1" <ele>2.1 2000-01-01T23:09:00Z
 WARNING: next point on regular track is 0.116 km away from the most recently merged <trkpt lat="0.00104" lon="1" <ele>4.2 2000-01-01T23:20:02Z
 INFO   : pause using alternative input                              0:01:58 h after <trkpt lat="0.00104" lon="1" <ele>4.2 2000-01-01T23:20:02Z
@@ -37,7 +37,7 @@ At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max altitu
 At lat,lon,ele = 0.00000,1.00000,7 time = 2000-01-02T00:24:00Z: day 2 max  ascent rate =   +51 m/h at 0 km/h
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; length = 0.003 km; duration = 0:02:00 h
 3 sections merged from alternative input
-6 merged points
+9 merged points
 1 regular point skipped during merge
 0 points inserted due to time gaps > 1800 seconds
 elevation not corrected

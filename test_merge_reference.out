@@ -29,7 +29,7 @@ At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max altitu
 At lat,lon,ele = 0.00000,1.00000,7 time = 2000-01-02T00:24:00Z: day 2 max  ascent rate =   +51 m/h at 0 km/h
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; length = 0.003 km; duration = 0:02:00 h
 3 sections merged from alternative input
-6 merged points
+9 merged points
 1 regular point skipped during merge
 0 points inserted due to time gaps > 1800 seconds
 elevation not corrected
@@ -41,6 +41,9 @@ GPXConv statistics end
 <trkpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T23:02:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00101" lon="1.00000"><ele>2</ele><time>2000-01-01T23:09:00Z</time><src>start alternative</src></trkpt>
 <trkpt lat="0.00102" lon="1.00000"><ele>2</ele><time>2000-01-01T23:10:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00102" lon="1.00000"><ele>2</ele><time>2000-01-01T23:10:15Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00102" lon="1.00000"><ele>2</ele><time>2000-01-01T23:10:30Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
+<trkpt lat="0.00102" lon="1.00000"><ele>2</ele><time>2000-01-01T23:10:45Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00103" lon="1.00000"><ele>4</ele><time>2000-01-01T23:20:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00104" lon="1.00000"><ele>4</ele><time>2000-01-01T23:20:02Z</time><src>computed speed</src><extensions><speed>2</speed></extensions></trkpt>
 <trkpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:22:00Z</time><src>pause alternative</src></trkpt>
