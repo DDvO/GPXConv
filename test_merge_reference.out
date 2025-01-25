@@ -39,7 +39,7 @@ GPXConv statistics end
 <trkpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><cmt>before start of base input</cmt><src>start alternative</src></trkpt>
 <trkpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T23:01:00Z</time><src>pause alternative</src></trkpt>
 <trkpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T23:02:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
-<trkpt lat="0.00101" lon="1.00000"><ele>2</ele><time>2000-01-01T23:09:00Z</time><src>start alternative</src></trkpt>
+<trkpt lat="0.00101" lon="1.00000"><ele>2</ele><time>2000-01-01T23:09:00Z</time><cmt>trkseg is ignored</cmt><src>start alternative</src></trkpt>
 <trkpt lat="0.00102" lon="1.00000"><ele>2</ele><time>2000-01-01T23:10:00Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00102" lon="1.00000"><ele>2</ele><time>2000-01-01T23:10:15Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
 <trkpt lat="0.00102" lon="1.00000"><ele>2</ele><time>2000-01-01T23:10:30Z</time><src>computed speed</src><extensions><speed>0</speed></extensions></trkpt>
