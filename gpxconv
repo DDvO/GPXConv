@@ -994,6 +994,8 @@ sub read_tracks
     my $prev_avail_ele = "";
     (my $ele_miss_length = 0, my $tim_miss_length = 0);
     my $i = 0;
+
+    { local $SIG{"__WARN__"} = sub { abort $_[0] }; # https://www.perlmonks.org/?node_id=11149744 Diamond errors
     while ($_ = ($merge ? <M> : <>)) {
         # anywhere (in headers, tracks, waypoints, trackpoints, ...):
         $num_pruned_cmts  += s#[ \t]*<cmts>.*?</cmt>\n?##sg              if $prune_cmts;
@@ -1362,6 +1364,7 @@ sub read_tracks
             info("further track, again from file $ARGV") unless m#<gpx[ >]#s;
         }
     }
+    } # end of local
     close M if $merge;
 
     my $Len = dis_string($ele_gap_length); # TODO restrict scope
