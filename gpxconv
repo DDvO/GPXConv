@@ -550,7 +550,7 @@ sub parse_point {
     }
 
     my $ext = "";
-    while ($str =~ s#[ \t]*(<extensions>.*?</extensions>)\n?#($ext .= $1, "")#es) {
+    while ($str =~ s#[ \t]*<extensions>(.*?)</extensions>\n?#($ext .= $1, "")#es) {
         $ext =~ s#\n##sg;
     }
 
@@ -1030,7 +1030,7 @@ sub read_tracks
                 push @WELE, $ele;
                 push @WTIM, $tim;
                 push @WSEC, $sec;
-                push @WTXT, $rest . $exts;
+                push @WTXT, $rest . ($exts ? "<extensions>$exts</extensions>" : "");
                 $wpt =~ s/(^|\n)/\n  /sg; # indent waypoint lines, just for better readability of diagnostics
                 push @WSTR, "'$wpt\n'";
             }
@@ -2591,6 +2591,53 @@ my $stats = "GPXConv statistics (not including $sanitized_text"."periods between
 print_line(""); # empty line
 info($stats);
 
+## expand metadata in trackpoints
+for (my $i = 0; $i <= $#TIM; $i++) {
+    sub append_unless_present { my ($str, $msg) = @_; return $str =~ m/$msg/ ? "" : ($str eq "" ? "" : "; ") . $msg; }
+
+    if (!DISABLE_TRKPT_CMT) {
+        my $cmt = $CMT[$i];
+        if ($IGN[$i]) {
+            my $old_count = ($cmt =~ s#(\d+) previous points? ignored(; )?##s ? $1 : 0); # remove and previous instance of our comment
+            my $ign_str = plural(($ARGV =~ m/^(test.*?\.out)\d$/ ? 0 : $old_count) + $IGN[$i], "previous point")." ignored";
+            $cmt = $cmt eq "" ? $ign_str : "$ign_str; $cmt";
+        }
+        $cmt .= append_unless_present($cmt, "start alternative"    ) if $FLG[$i] & START_MERGE;
+        $cmt .= append_unless_present($cmt, "pause alternative"    ) if $FLG[$i] & PAUSE_MERGE;
+        $CMT[$i] = $cmt;
+    }
+
+    if (!DISABLE_TRKPT_SRC) {
+        my $src = $SRC[$i];
+        my $gap = $FLG[$i] & INSERTED_POINT ? "bridging time gap: inserted point"
+            : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
+            . ($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before") : "";
+        # cannot place info on interpolation etc. in <trkseg> element because it cannot hold a comment
+        $src .= append_unless_present($src, $gap) if $gap ne "";
+        $src .= append_unless_present($src, "interpolated altitude") if $FLG[$i] & INTERPOLATED_ELE;
+        $src .= append_unless_present($src, "interpolated time"    ) if $FLG[$i] & INTERPOLATED_TIM;
+        $src .= append_unless_present($src, "substituted altitude" ) if $FLG[$i] & SUBSTITUTED_ELE;
+        $src .= append_unless_present($src, "substituted time"     ) if $FLG[$i] & SUBSTITUTED_TIM;
+        $src .= append_unless_present($src, "computed speed"       ) if $FLG[$i] & COMPUTED_SPEED && INCLUDE_SPEED;
+        $src .= append_unless_present($src, "corrected altitude"   ) if $FLG[$i] & CORRECTED_ELE;
+        $SRC[$i] = $src;
+    }
+
+    if (!DISABLE_TRKPT_FIX) {
+        $FIX[$i] = "none" if $FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT);
+        # TODO check; was before: $fix = $flags == 0 ? "" : ($FLG[$i] & (INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM) == 0 ? "2d" : "none");
+    }
+
+    my $exts = $EXT[$i];
+    $exts =~ s#<gpxtpx:TrackPointExtension>\s*<gpxtpx:speed>.*?</gpxtpx:speed>\s*</gpxtpx:TrackPointExtension>##sg if PRUNE_RECORDED_SPEED;
+    if (INCLUDE_SPEED && $SPD[$i] ne "") { # may be recorded or computed, depending on $FLG[$i] & COMPUTED_SPEED
+        my $spdstr = "<speed>".spd_string($SPD[$i])."</speed>";
+        $exts .= $spdstr # add new speed extension at the end of existing extensions
+            unless $exts =~ s|<speed>.*?</speed>|$spdstr|sg; # substitute previous speed extension at same place
+    }
+    $EXT[$i] = $exts;
+}
+
 my $all_wpts = "";
 for (my $j = 0; $j <= $#WTIM; $j++) {
     $all_wpts .= wpt($j);
@@ -2607,57 +2654,13 @@ $HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
 
 print $out $HEAD;                     # includes <gpx> <trk> <trkseg>
 for (my $i = 0; $i <= $#TIM ;$i++) {
-    ($tim, $spd) = ($TIM[$i], $SPD[$i]);
     print $out '<trkpt lat="' . lat_str($LAT[$i]) . '" lon="' . lon_str($LON[$i]) . '">';
     print $out "<ele>" . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
-    print $out "<time>".round_tim($tim)."</time>" if $tim;
-
-    sub append_unless_present { my ($str, $msg) = @_; return $str =~ m/$msg/ ? "" : ($str eq "" ? "" : "; ") . $msg; }
-    my $cmt = $CMT[$i];
-    if (!DISABLE_TRKPT_CMT && $IGN[$i]) {
-        my $old_count = ($cmt =~ s#(\d+) previous points? ignored(; )?##s ? $1 : 0); # remove and previous instance of our comment
-        my $ign_str = plural(($ARGV =~ m/^(test.*?\.out)\d$/ ? 0 : $old_count) + $IGN[$i], "previous point")." ignored";
-        $cmt = $cmt eq "" ? $ign_str : "$ign_str; $cmt";
-    }
-    $cmt .= append_unless_present($cmt, "start alternative"    ) if $FLG[$i] & START_MERGE;
-    $cmt .= append_unless_present($cmt, "pause alternative"    ) if $FLG[$i] & PAUSE_MERGE;
-    print $out "<cmt>$cmt</cmt>" if $cmt ne "";
-
-    if (!DISABLE_TRKPT_SRC) {
-        my $src = $SRC[$i];
-        my $gap = $FLG[$i] & INSERTED_POINT ? "bridging time gap: inserted point"
-            : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
-            . ($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before") : "";
-        # cannot place info on interpolation etc. in <trkseg> element because it cannot hold a comment
-        $src .= append_unless_present($src, $gap) if $gap ne "";
-        $src .= append_unless_present($src, "interpolated altitude") if $FLG[$i] & INTERPOLATED_ELE;
-        $src .= append_unless_present($src, "interpolated time"    ) if $FLG[$i] & INTERPOLATED_TIM;
-        $src .= append_unless_present($src, "substituted altitude" ) if $FLG[$i] & SUBSTITUTED_ELE;
-        $src .= append_unless_present($src, "substituted time"     ) if $FLG[$i] & SUBSTITUTED_TIM;
-        $src .= append_unless_present($src, "computed speed"       ) if $FLG[$i] & COMPUTED_SPEED && INCLUDE_SPEED;
-        $src .= append_unless_present($src, "corrected altitude"   ) if $FLG[$i] & CORRECTED_ELE;
-        print $out "<src>$src</src>" if $src;
-    }
-    if (!DISABLE_TRKPT_FIX) {
-        my $fix = $FIX[$i];
-        $fix = "none" if $FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT);
-        # TODO check; was before: $fix = $flags == 0 ? "" : ($FLG[$i] & (INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM) == 0 ? "2d" : "none");
-        print $out "<fix>$fix</fix>" if $fix;
-    }
-
-    my $exts = $EXT[$i];
-    $exts =~ s#<gpxtpx:TrackPointExtension>\s*<gpxtpx:speed>.*?</gpxtpx:speed>\s*</gpxtpx:TrackPointExtension>##sg if PRUNE_RECORDED_SPEED;
-    if (INCLUDE_SPEED && $spd ne "") { # may be recorded or computed, depending on $FLG[$i] & COMPUTED_SPEED
-        my $spdstr = "<speed>".spd_string($spd)."</speed>";
-        if ($exts eq "") {
-            $exts = "<extensions>$spdstr</extensions>";
-        } else {
-            $exts =~ s#(</extensions>)#$spdstr$1#s # add new speed extension at the end of existing extensions
-                unless $exts =~ s#<speed>.*?</speed>#$spdstr#sg; # substitute previous speed extension at same place
-        }
-    }
-    print $out $exts unless $exts eq "" || $exts =~ m#<extensions>\s*</extensions>#;
-
+    print $out "<time>".round_tim($TIM[$i])."</time>" if $TIM[$i];
+    print $out "<cmt>$CMT[$i]</cmt>" if !DISABLE_TRKPT_CMT && $CMT[$i];
+    print $out "<src>$SRC[$i]</src>" if !DISABLE_TRKPT_SRC && $SRC[$i];
+    print $out "<fix>$FIX[$i]</fix>" if !DISABLE_TRKPT_FIX && $FIX[$i];
+    print $out "<extensions>$EXT[$i]</extensions>" if         $EXT[$i];
     print $out "</trkpt>\n";
     print $out "</trkseg>\n<trkseg>\n" if $SEG[$i + 1] && $i < $#TIM;
 }
