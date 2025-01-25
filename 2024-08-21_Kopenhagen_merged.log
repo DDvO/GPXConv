@@ -1,0 +1,30 @@
+INFO   : initial track, from file 2024-08-21_Kopenhagen1.gpx
+INFO   : first   segment at <trkpt lat="55.6800208" lon="12.5892018" <ele>5.67 2024-08-21T18:00:13Z
+INFO   : end of  segment at <trkpt lat="55.6750577" lon="12.5851488" <ele> 4.72 2024-08-21T20:34:35.999Z
+INFO   : further segment at <trkpt lat="55.6749840" lon="12.5850519" <ele> 0.74 2024-08-21T20:49:30Z     after a time gap of 0:14:54 h and 0.011 km
+INFO   : last   segment end <trkpt lat="55.6749840" lon="12.5850519" <ele> 0.74 2024-08-21T20:49:30Z
+INFO   : initial track from alternative input 2024-08-21_Kopenhagen2.gpx
+INFO   : first   segment at <trkpt lat="55.6748613" lon="12.5856195" <ele>-10.85 2024-08-21T17:17:18Z
+INFO   : last   segment end <trkpt lat="55.6811973" lon="12.5900902" <ele> -7.96 2024-08-21T19:46:19Z
+INFO   : start using alternative input before regular input
+INFO   : pause using alternative input                              0:00:07 h after <trkpt lat="55.6800846" lon="12.5890196" <ele>  0.03 2024-08-21T18:00:06Z
+
+INFO   : GPXConv statistics (not including periods between segments)
+At lat,lon,ele = 55.67486,12.58562,-11 time = 2024-08-21T17:17:18Z: start
+At lat,lon,ele = 55.69405,12.58895,  7 time = 2024-08-21T19:12:09Z: max speed        =    15 km/h
+At lat,lon,ele = 55.67486,12.58562,-11 time = 2024-08-21T17:17:18Z: min altitude     =   -11 m
+At lat,lon,ele = 55.67800,12.59078, 26 time = 2024-08-21T20:11:22Z: max altitude     =    26 m
+At lat,lon,ele = 55.67800,12.59078, 26 time = 2024-08-21T20:11:22Z: total  ascent    =   +64 m; avg rate  =   +26 m/h
+At lat,lon,ele = 55.67506,12.58508, -5 time = 2024-08-21T20:23:08Z: total descent    =   -57 m; avg rate  =   -89 m/h
+At lat,lon,ele = 55.67819,12.59064, 21 time = 2024-08-21T20:11:06Z: max  ascent rate = +3015 m/h at 10 km/h
+At lat,lon,ele = 55.67744,12.59096, 14 time = 2024-08-21T20:12:08Z: max descent rate = -2254 m/h at 5 km/h
+At lat,lon,ele = 55.67498,12.58505,  1 time = 2024-08-21T20:49:30Z: end
+total length               = 8.109 km
+gross duration             = 3:32:12 h
+total moving time          = 1:59:30 h
+total average moving speed = 3.8 km/h
+1 section merged from alternative input
+81 merged points
+0 points inserted due to time gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end

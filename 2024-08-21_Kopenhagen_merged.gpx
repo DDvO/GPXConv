@@ -1,0 +1,403 @@
+<gpx creator="GPXConv v2.9.0" version="1.1">
+<metadata><time>2024-08-21T17:17:18Z</time><bounds minlat="55.67486" minlon="12.58002" maxlat="55.69543" maxlon="12.59927"/></metadata>
+<wpt lat="55.67486" lon="12.58562"><ele>-11</ele><time>2024-08-21T17:17:18Z</time><name>[start]</name></wpt>
+<wpt lat="55.67498" lon="12.58505"><ele>  1</ele><time>2024-08-21T20:49:30Z</time><name>[end; total length = 8.109 km; gross duration = 3:32:12 h; total moving time = 1:59:30 h; total average moving speed = 3.8 km/h; max speed = 15 km/h; min altitude = -11 m; max altitude = 26 m]</name></wpt>
+<trk>
+<cmt>
+GPXConv statistics (not including periods between segments)
+At lat,lon,ele = 55.67486,12.58562,-11 time = 2024-08-21T17:17:18Z: start
+At lat,lon,ele = 55.69405,12.58895,  7 time = 2024-08-21T19:12:09Z: max speed        =    15 km/h
+At lat,lon,ele = 55.67486,12.58562,-11 time = 2024-08-21T17:17:18Z: min altitude     =   -11 m
+At lat,lon,ele = 55.67800,12.59078, 26 time = 2024-08-21T20:11:22Z: max altitude     =    26 m
+At lat,lon,ele = 55.67800,12.59078, 26 time = 2024-08-21T20:11:22Z: total  ascent    =   +64 m; avg rate  =   +26 m/h
+At lat,lon,ele = 55.67506,12.58508, -5 time = 2024-08-21T20:23:08Z: total descent    =   -57 m; avg rate  =   -89 m/h
+At lat,lon,ele = 55.67819,12.59064, 21 time = 2024-08-21T20:11:06Z: max  ascent rate = +3015 m/h at 10 km/h
+At lat,lon,ele = 55.67744,12.59096, 14 time = 2024-08-21T20:12:08Z: max descent rate = -2254 m/h at 5 km/h
+At lat,lon,ele = 55.67498,12.58505,  1 time = 2024-08-21T20:49:30Z: end
+total length               = 8.109 km
+gross duration             = 3:32:12 h
+total moving time          = 1:59:30 h
+total average moving speed = 3.8 km/h
+1 section merged from alternative input
+81 merged points
+0 points inserted due to time gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end
+</cmt>
+<trkseg>
+<trkpt lat="55.67486" lon="12.58562"><ele>-11</ele><time>2024-08-21T17:17:18Z</time><cmt>start alternative</cmt><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67496" lon="12.58534"><ele>  8</ele><time>2024-08-21T17:19:03Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67508" lon="12.58507"><ele>  9</ele><time>2024-08-21T17:19:30Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67505" lon="12.58475"><ele> 10</ele><time>2024-08-21T17:19:54Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67512" lon="12.58445"><ele>  7</ele><time>2024-08-21T17:20:10Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67521" lon="12.58416"><ele>  8</ele><time>2024-08-21T17:20:25Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67528" lon="12.58381"><ele>  7</ele><time>2024-08-21T17:20:42Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67510" lon="12.58386"><ele> -4</ele><time>2024-08-21T17:23:13Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67521" lon="12.58360"><ele> -3</ele><time>2024-08-21T17:24:41Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67528" lon="12.58330"><ele> -1</ele><time>2024-08-21T17:24:55Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67534" lon="12.58299"><ele>  1</ele><time>2024-08-21T17:25:09Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67544" lon="12.58271"><ele>  1</ele><time>2024-08-21T17:25:24Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67557" lon="12.58249"><ele>  0</ele><time>2024-08-21T17:25:36Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67569" lon="12.58222"><ele> -2</ele><time>2024-08-21T17:25:50Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67580" lon="12.58198"><ele> -2</ele><time>2024-08-21T17:26:08Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67577" lon="12.58164"><ele> -3</ele><time>2024-08-21T17:26:35Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67575" lon="12.58130"><ele> -2</ele><time>2024-08-21T17:26:49Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67591" lon="12.58141"><ele>  0</ele><time>2024-08-21T17:30:34Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="55.67610" lon="12.58143"><ele>  3</ele><time>2024-08-21T17:31:30Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67622" lon="12.58169"><ele>  3</ele><time>2024-08-21T17:32:49Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67638" lon="12.58182"><ele>  2</ele><time>2024-08-21T17:33:07Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67656" lon="12.58196"><ele>  2</ele><time>2024-08-21T17:33:28Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67674" lon="12.58190"><ele>  1</ele><time>2024-08-21T17:34:33Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67685" lon="12.58164"><ele>  0</ele><time>2024-08-21T17:35:31Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67696" lon="12.58137"><ele>  2</ele><time>2024-08-21T17:36:12Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.67706" lon="12.58111"><ele>  1</ele><time>2024-08-21T17:36:26Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67716" lon="12.58084"><ele>  5</ele><time>2024-08-21T17:38:05Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67727" lon="12.58055"><ele>  2</ele><time>2024-08-21T17:38:25Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67737" lon="12.58027"><ele> -1</ele><time>2024-08-21T17:38:41Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67748" lon="12.58002"><ele>  0</ele><time>2024-08-21T17:38:56Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67766" lon="12.58006"><ele>  6</ele><time>2024-08-21T17:40:01Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67783" lon="12.58019"><ele>  4</ele><time>2024-08-21T17:40:16Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67773" lon="12.58047"><ele>  2</ele><time>2024-08-21T17:41:07Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67757" lon="12.58067"><ele>  2</ele><time>2024-08-21T17:41:22Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67753" lon="12.58100"><ele>  2</ele><time>2024-08-21T17:42:00Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.67742" lon="12.58125"><ele>  2</ele><time>2024-08-21T17:42:16Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67727" lon="12.58146"><ele>  3</ele><time>2024-08-21T17:42:31Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67717" lon="12.58173"><ele>  2</ele><time>2024-08-21T17:42:46Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67710" lon="12.58203"><ele>  1</ele><time>2024-08-21T17:43:03Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67694" lon="12.58219"><ele>  1</ele><time>2024-08-21T17:43:23Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67686" lon="12.58249"><ele>  1</ele><time>2024-08-21T17:43:38Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67696" lon="12.58279"><ele>  1</ele><time>2024-08-21T17:43:57Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67705" lon="12.58306"><ele> -1</ele><time>2024-08-21T17:44:21Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67710" lon="12.58338"><ele> -3</ele><time>2024-08-21T17:44:36Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67727" lon="12.58349"><ele>  1</ele><time>2024-08-21T17:44:59Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67745" lon="12.58338"><ele>  4</ele><time>2024-08-21T17:45:14Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67762" lon="12.58324"><ele>  4</ele><time>2024-08-21T17:45:30Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67777" lon="12.58303"><ele>  4</ele><time>2024-08-21T17:45:47Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67789" lon="12.58275"><ele>  4</ele><time>2024-08-21T17:45:59Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67806" lon="12.58264"><ele>  2</ele><time>2024-08-21T17:46:20Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67825" lon="12.58263"><ele>  1</ele><time>2024-08-21T17:46:33Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67838" lon="12.58239"><ele> -1</ele><time>2024-08-21T17:46:48Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67855" lon="12.58252"><ele> -3</ele><time>2024-08-21T17:47:16Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67856" lon="12.58286"><ele> -2</ele><time>2024-08-21T17:47:30Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67856" lon="12.58318"><ele>  3</ele><time>2024-08-21T17:47:50Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67860" lon="12.58350"><ele> -2</ele><time>2024-08-21T17:48:02Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67861" lon="12.58384"><ele> -1</ele><time>2024-08-21T17:48:16Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67871" lon="12.58417"><ele> -1</ele><time>2024-08-21T17:48:40Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67868" lon="12.58449"><ele> -1</ele><time>2024-08-21T17:48:45Z</time><src>computed speed</src><extensions><speed>15</speed></extensions></trkpt>
+<trkpt lat="55.67882" lon="12.58472"><ele>  0</ele><time>2024-08-21T17:48:56Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.67888" lon="12.58503"><ele>  1</ele><time>2024-08-21T17:49:17Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67906" lon="12.58514"><ele>  1</ele><time>2024-08-21T17:49:38Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67923" lon="12.58505"><ele>  0</ele><time>2024-08-21T17:50:07Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67941" lon="12.58503"><ele>  1</ele><time>2024-08-21T17:50:25Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67960" lon="12.58506"><ele>  2</ele><time>2024-08-21T17:50:40Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67969" lon="12.58537"><ele>  3</ele><time>2024-08-21T17:51:00Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67972" lon="12.58570"><ele>  0</ele><time>2024-08-21T17:51:13Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67972" lon="12.58602"><ele>  0</ele><time>2024-08-21T17:52:01Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.67985" lon="12.58627"><ele> -2</ele><time>2024-08-21T17:52:51Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.67995" lon="12.58655"><ele>  0</ele><time>2024-08-21T17:53:27Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68011" lon="12.58674"><ele> -3</ele><time>2024-08-21T17:53:58Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68026" lon="12.58695"><ele> -3</ele><time>2024-08-21T17:54:14Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68038" lon="12.58718"><ele> -4</ele><time>2024-08-21T17:54:31Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68056" lon="12.58722"><ele>  0</ele><time>2024-08-21T17:55:08Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68070" lon="12.58744"><ele>  1</ele><time>2024-08-21T17:55:54Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68054" lon="12.58761"><ele>  0</ele><time>2024-08-21T17:57:00Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68041" lon="12.58784"><ele> -5</ele><time>2024-08-21T17:57:34Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68031" lon="12.58811"><ele> -3</ele><time>2024-08-21T17:58:05Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68024" lon="12.58841"><ele> -2</ele><time>2024-08-21T17:58:39Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68015" lon="12.58872"><ele> -1</ele><time>2024-08-21T17:59:08Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68008" lon="12.58902"><ele>  0</ele><time>2024-08-21T18:00:06Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68002" lon="12.58920"><ele>  6</ele><time>2024-08-21T18:00:13Z</time><cmt>pause alternative</cmt><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.67995" lon="12.58953"><ele>  6</ele><time>2024-08-21T18:01:31Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67983" lon="12.58981"><ele>  4</ele><time>2024-08-21T18:01:43Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.67975" lon="12.59014"><ele>  1</ele><time>2024-08-21T18:01:59Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67965" lon="12.59044"><ele>  4</ele><time>2024-08-21T18:02:19Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67959" lon="12.59074"><ele> 10</ele><time>2024-08-21T18:02:35Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67950" lon="12.59104"><ele>  8</ele><time>2024-08-21T18:02:53Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67964" lon="12.59124"><ele>  5</ele><time>2024-08-21T18:03:43Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67974" lon="12.59150"><ele>  4</ele><time>2024-08-21T18:05:01Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68010" lon="12.59160"><ele> -1</ele><time>2024-08-21T18:05:43Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68028" lon="12.59170"><ele> -1</ele><time>2024-08-21T18:05:57Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68044" lon="12.59182"><ele> -3</ele><time>2024-08-21T18:06:13Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68062" lon="12.59191"><ele> -4</ele><time>2024-08-21T18:06:23Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.68079" lon="12.59203"><ele> -9</ele><time>2024-08-21T18:06:39Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68095" lon="12.59220"><ele> -7</ele><time>2024-08-21T18:06:53Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68116" lon="12.59259"><ele> -8</ele><time>2024-08-21T18:07:17Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68128" lon="12.59291"><ele>  2</ele><time>2024-08-21T18:07:33Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68126" lon="12.59323"><ele>  3</ele><time>2024-08-21T18:07:51Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68116" lon="12.59357"><ele>  4</ele><time>2024-08-21T18:08:15Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68110" lon="12.59393"><ele>  3</ele><time>2024-08-21T18:08:51Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68099" lon="12.59421"><ele>  2</ele><time>2024-08-21T18:08:59Z</time><src>computed speed</src><extensions><speed>10</speed></extensions></trkpt>
+<trkpt lat="55.68084" lon="12.59439"><ele>  1</ele><time>2024-08-21T18:09:09Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.68097" lon="12.59469"><ele>  5</ele><time>2024-08-21T18:09:43Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68107" lon="12.59440"><ele>  1</ele><time>2024-08-21T18:10:15Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68120" lon="12.59418"><ele>  0</ele><time>2024-08-21T18:10:35Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68128" lon="12.59387"><ele>  0</ele><time>2024-08-21T18:11:05Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68146" lon="12.59393"><ele>  3</ele><time>2024-08-21T18:12:15Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68165" lon="12.59407"><ele>  3</ele><time>2024-08-21T18:12:46Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68182" lon="12.59422"><ele>  2</ele><time>2024-08-21T18:13:00Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68200" lon="12.59439"><ele>  2</ele><time>2024-08-21T18:13:16Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68231" lon="12.59457"><ele>  0</ele><time>2024-08-21T18:13:46Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68247" lon="12.59433"><ele>  1</ele><time>2024-08-21T18:14:02Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68257" lon="12.59404"><ele>  2</ele><time>2024-08-21T18:14:18Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68266" lon="12.59433"><ele>  3</ele><time>2024-08-21T18:15:55Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68286" lon="12.59429"><ele>  2</ele><time>2024-08-21T18:16:30Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68304" lon="12.59443"><ele>  2</ele><time>2024-08-21T18:16:44Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68322" lon="12.59459"><ele>  3</ele><time>2024-08-21T18:17:00Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68339" lon="12.59473"><ele>  3</ele><time>2024-08-21T18:17:14Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68356" lon="12.59484"><ele>  3</ele><time>2024-08-21T18:17:46Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68367" lon="12.59456"><ele>  1</ele><time>2024-08-21T18:18:20Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68375" lon="12.59427"><ele>  3</ele><time>2024-08-21T18:18:32Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68386" lon="12.59399"><ele>  1</ele><time>2024-08-21T18:19:06Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68378" lon="12.59428"><ele>  3</ele><time>2024-08-21T18:21:10Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68366" lon="12.59462"><ele>  4</ele><time>2024-08-21T18:21:34Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68359" lon="12.59494"><ele>  2</ele><time>2024-08-21T18:21:56Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68367" lon="12.59526"><ele>  1</ele><time>2024-08-21T18:24:02Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68383" lon="12.59543"><ele>  2</ele><time>2024-08-21T18:24:18Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68401" lon="12.59559"><ele>  1</ele><time>2024-08-21T18:24:32Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68418" lon="12.59572"><ele>  1</ele><time>2024-08-21T18:24:44Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68425" lon="12.59603"><ele>  1</ele><time>2024-08-21T18:25:16Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68446" lon="12.59599"><ele> -1</ele><time>2024-08-21T18:25:32Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68456" lon="12.59571"><ele>  2</ele><time>2024-08-21T18:25:52Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68476" lon="12.59569"><ele>  6</ele><time>2024-08-21T18:26:06Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68493" lon="12.59582"><ele>  7</ele><time>2024-08-21T18:26:26Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68487" lon="12.59616"><ele>  8</ele><time>2024-08-21T18:26:44Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68483" lon="12.59650"><ele>  5</ele><time>2024-08-21T18:27:00Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68494" lon="12.59676"><ele>  3</ele><time>2024-08-21T18:28:08Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68509" lon="12.59697"><ele>  3</ele><time>2024-08-21T18:28:40Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68527" lon="12.59710"><ele>  1</ele><time>2024-08-21T18:28:58Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68543" lon="12.59726"><ele>  2</ele><time>2024-08-21T18:29:12Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68565" lon="12.59736"><ele>  2</ele><time>2024-08-21T18:29:46Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68581" lon="12.59749"><ele>  1</ele><time>2024-08-21T18:30:00Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68601" lon="12.59753"><ele>  2</ele><time>2024-08-21T18:33:50Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="55.68616" lon="12.59776"><ele>  0</ele><time>2024-08-21T18:34:10Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68633" lon="12.59793"><ele>  2</ele><time>2024-08-21T18:34:34Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68650" lon="12.59809"><ele>  2</ele><time>2024-08-21T18:34:48Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68669" lon="12.59824"><ele>  1</ele><time>2024-08-21T18:35:06Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68684" lon="12.59842"><ele>  2</ele><time>2024-08-21T18:35:18Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68702" lon="12.59850"><ele>  0</ele><time>2024-08-21T18:35:38Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68720" lon="12.59863"><ele> -1</ele><time>2024-08-21T18:35:48Z</time><src>computed speed</src><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.68739" lon="12.59873"><ele>  1</ele><time>2024-08-21T18:36:08Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68757" lon="12.59885"><ele>  0</ele><time>2024-08-21T18:36:18Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.68776" lon="12.59898"><ele> -1</ele><time>2024-08-21T18:36:42Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68821" lon="12.59911"><ele>  2</ele><time>2024-08-21T18:37:23Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68843" lon="12.59916"><ele>  1</ele><time>2024-08-21T18:37:51Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68861" lon="12.59912"><ele>  0</ele><time>2024-08-21T18:38:15Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68880" lon="12.59900"><ele>  1</ele><time>2024-08-21T18:38:29Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68899" lon="12.59888"><ele>  2</ele><time>2024-08-21T18:38:51Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68941" lon="12.59826"><ele>  2</ele><time>2024-08-21T18:40:02Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68959" lon="12.59816"><ele>  3</ele><time>2024-08-21T18:40:18Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68977" lon="12.59824"><ele>  2</ele><time>2024-08-21T18:40:42Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68995" lon="12.59836"><ele>  1</ele><time>2024-08-21T18:40:56Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69017" lon="12.59849"><ele>  1</ele><time>2024-08-21T18:41:08Z</time><src>computed speed</src><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.69037" lon="12.59861"><ele>  1</ele><time>2024-08-21T18:41:18Z</time><src>computed speed</src><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.69056" lon="12.59858"><ele>  2</ele><time>2024-08-21T18:41:34Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69075" lon="12.59859"><ele>  3</ele><time>2024-08-21T18:42:02Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.69094" lon="12.59871"><ele>  2</ele><time>2024-08-21T18:42:18Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69107" lon="12.59893"><ele>  0</ele><time>2024-08-21T18:42:34Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69110" lon="12.59926"><ele>  0</ele><time>2024-08-21T18:42:46Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69127" lon="12.59909"><ele>  1</ele><time>2024-08-21T18:43:24Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.69143" lon="12.59888"><ele>  1</ele><time>2024-08-21T18:44:00Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.69163" lon="12.59878"><ele>  1</ele><time>2024-08-21T18:44:10Z</time><src>computed speed</src><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.69183" lon="12.59870"><ele>  2</ele><time>2024-08-21T18:44:22Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.69201" lon="12.59874"><ele>  2</ele><time>2024-08-21T18:44:34Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69219" lon="12.59879"><ele>  3</ele><time>2024-08-21T18:44:50Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69239" lon="12.59886"><ele>  3</ele><time>2024-08-21T18:45:04Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69261" lon="12.59891"><ele>  4</ele><time>2024-08-21T18:45:48Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.69278" lon="12.59902"><ele>  3</ele><time>2024-08-21T18:46:02Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69290" lon="12.59927"><ele>  0</ele><time>2024-08-21T18:52:14Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="55.69300" lon="12.59901"><ele>  3</ele><time>2024-08-21T19:00:43Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="55.69317" lon="12.59891"><ele>  4</ele><time>2024-08-21T19:00:59Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69333" lon="12.59871"><ele>  4</ele><time>2024-08-21T19:01:25Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.69349" lon="12.59852"><ele>  4</ele><time>2024-08-21T19:01:39Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69361" lon="12.59826"><ele>  4</ele><time>2024-08-21T19:02:13Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.69364" lon="12.59792"><ele>  5</ele><time>2024-08-21T19:02:27Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69363" lon="12.59757"><ele>  6</ele><time>2024-08-21T19:02:43Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69363" lon="12.59723"><ele>  7</ele><time>2024-08-21T19:02:59Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69359" lon="12.59691"><ele>  9</ele><time>2024-08-21T19:03:13Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69356" lon="12.59655"><ele> 11</ele><time>2024-08-21T19:03:29Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69352" lon="12.59621"><ele> 10</ele><time>2024-08-21T19:03:45Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69354" lon="12.59588"><ele>  9</ele><time>2024-08-21T19:04:07Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.69353" lon="12.59554"><ele> 10</ele><time>2024-08-21T19:04:23Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69371" lon="12.59549"><ele>  6</ele><time>2024-08-21T19:04:41Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.69390" lon="12.59537"><ele>  5</ele><time>2024-08-21T19:04:55Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69406" lon="12.59523"><ele>  6</ele><time>2024-08-21T19:05:53Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.69422" lon="12.59504"><ele>  8</ele><time>2024-08-21T19:06:07Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69439" lon="12.59489"><ele>  9</ele><time>2024-08-21T19:06:21Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69439" lon="12.59456"><ele>  6</ele><time>2024-08-21T19:06:39Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.69438" lon="12.59420"><ele>  8</ele><time>2024-08-21T19:06:53Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69451" lon="12.59395"><ele>  9</ele><time>2024-08-21T19:07:07Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69461" lon="12.59368"><ele>  9</ele><time>2024-08-21T19:07:23Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69472" lon="12.59340"><ele> 10</ele><time>2024-08-21T19:07:37Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69484" lon="12.59312"><ele> 10</ele><time>2024-08-21T19:08:03Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.69493" lon="12.59282"><ele> 10</ele><time>2024-08-21T19:08:17Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69502" lon="12.59253"><ele>  8</ele><time>2024-08-21T19:08:31Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69511" lon="12.59225"><ele>  9</ele><time>2024-08-21T19:08:43Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69523" lon="12.59194"><ele> 10</ele><time>2024-08-21T19:09:03Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.69530" lon="12.59161"><ele>  9</ele><time>2024-08-21T19:09:19Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69538" lon="12.59132"><ele> 10</ele><time>2024-08-21T19:09:31Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69543" lon="12.59099"><ele>  9</ele><time>2024-08-21T19:09:47Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69532" lon="12.59069"><ele>  9</ele><time>2024-08-21T19:10:03Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69514" lon="12.59056"><ele> 11</ele><time>2024-08-21T19:10:15Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69497" lon="12.59039"><ele> 12</ele><time>2024-08-21T19:10:29Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69484" lon="12.59017"><ele>  8</ele><time>2024-08-21T19:10:47Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.69469" lon="12.58992"><ele>  8</ele><time>2024-08-21T19:11:01Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69456" lon="12.58967"><ele>  9</ele><time>2024-08-21T19:11:15Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69443" lon="12.58944"><ele>  4</ele><time>2024-08-21T19:11:53Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.69422" lon="12.58921"><ele>  5</ele><time>2024-08-21T19:12:03Z</time><src>computed speed</src><extensions><speed>10</speed></extensions></trkpt>
+<trkpt lat="55.69405" lon="12.58895"><ele>  7</ele><time>2024-08-21T19:12:09Z</time><src>computed speed</src><extensions><speed>15</speed></extensions></trkpt>
+<trkpt lat="55.69392" lon="12.58872"><ele>  8</ele><time>2024-08-21T19:12:19Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.69376" lon="12.58851"><ele>  7</ele><time>2024-08-21T19:12:47Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.69361" lon="12.58824"><ele>  6</ele><time>2024-08-21T19:12:57Z</time><src>computed speed</src><extensions><speed> 9</speed></extensions></trkpt>
+<trkpt lat="55.69348" lon="12.58801"><ele>  7</ele><time>2024-08-21T19:13:09Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69333" lon="12.58776"><ele>  6</ele><time>2024-08-21T19:13:27Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69316" lon="12.58753"><ele> 10</ele><time>2024-08-21T19:13:37Z</time><src>computed speed</src><extensions><speed> 9</speed></extensions></trkpt>
+<trkpt lat="55.69303" lon="12.58730"><ele>  9</ele><time>2024-08-21T19:13:57Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.69291" lon="12.58706"><ele>  7</ele><time>2024-08-21T19:14:19Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.69277" lon="12.58682"><ele>  9</ele><time>2024-08-21T19:14:33Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69273" lon="12.58713"><ele>  3</ele><time>2024-08-21T19:18:07Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="55.69251" lon="12.58723"><ele>  3</ele><time>2024-08-21T19:18:15Z</time><src>computed speed</src><extensions><speed>11</speed></extensions></trkpt>
+<trkpt lat="55.69233" lon="12.58722"><ele>  5</ele><time>2024-08-21T19:18:39Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.69197" lon="12.58667"><ele>  3</ele><time>2024-08-21T19:19:15Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69188" lon="12.58695"><ele>  3</ele><time>2024-08-21T19:19:37Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.69177" lon="12.58722"><ele>  5</ele><time>2024-08-21T19:19:51Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69168" lon="12.58753"><ele>  4</ele><time>2024-08-21T19:20:05Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69154" lon="12.58774"><ele>  4</ele><time>2024-08-21T19:20:19Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69134" lon="12.58771"><ele>  6</ele><time>2024-08-21T19:20:33Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69118" lon="12.58749"><ele>  6</ele><time>2024-08-21T19:20:49Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69105" lon="12.58725"><ele>  7</ele><time>2024-08-21T19:21:03Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69089" lon="12.58700"><ele>  7</ele><time>2024-08-21T19:21:17Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69077" lon="12.58676"><ele>  7</ele><time>2024-08-21T19:21:33Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.69063" lon="12.58652"><ele>  6</ele><time>2024-08-21T19:21:45Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69046" lon="12.58670"><ele>  4</ele><time>2024-08-21T19:22:11Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.69028" lon="12.58683"><ele>  3</ele><time>2024-08-21T19:22:25Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.69008" lon="12.58681"><ele>  2</ele><time>2024-08-21T19:22:39Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68988" lon="12.58671"><ele>  4</ele><time>2024-08-21T19:22:55Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68971" lon="12.58684"><ele>  5</ele><time>2024-08-21T19:23:07Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68964" lon="12.58718"><ele>  5</ele><time>2024-08-21T19:23:31Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68955" lon="12.58746"><ele>  4</ele><time>2024-08-21T19:23:55Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68945" lon="12.58775"><ele>  1</ele><time>2024-08-21T19:24:07Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.68937" lon="12.58804"><ele> -1</ele><time>2024-08-21T19:24:23Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68931" lon="12.58835"><ele> -3</ele><time>2024-08-21T19:24:37Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68924" lon="12.58868"><ele>  0</ele><time>2024-08-21T19:24:49Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.68911" lon="12.58893"><ele> -3</ele><time>2024-08-21T19:25:03Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68901" lon="12.58922"><ele> -4</ele><time>2024-08-21T19:25:19Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68886" lon="12.58942"><ele> -2</ele><time>2024-08-21T19:25:39Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68867" lon="12.58951"><ele> -1</ele><time>2024-08-21T19:25:59Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68849" lon="12.58964"><ele>  1</ele><time>2024-08-21T19:26:19Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68831" lon="12.58973"><ele>  3</ele><time>2024-08-21T19:26:29Z</time><src>computed speed</src><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.68820" lon="12.59005"><ele>  3</ele><time>2024-08-21T19:26:51Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68832" lon="12.59036"><ele>  0</ele><time>2024-08-21T19:27:05Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68813" lon="12.59057"><ele>  9</ele><time>2024-08-21T19:27:31Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68800" lon="12.59079"><ele>  8</ele><time>2024-08-21T19:27:43Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68791" lon="12.59112"><ele> 12</ele><time>2024-08-21T19:27:57Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68776" lon="12.59129"><ele> 14</ele><time>2024-08-21T19:28:33Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68757" lon="12.59132"><ele> 15</ele><time>2024-08-21T19:28:45Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68739" lon="12.59118"><ele> 18</ele><time>2024-08-21T19:28:55Z</time><src>computed speed</src><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.68747" lon="12.59148"><ele> 11</ele><time>2024-08-21T19:29:31Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68751" lon="12.59185"><ele>  7</ele><time>2024-08-21T19:29:47Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68753" lon="12.59217"><ele>  5</ele><time>2024-08-21T19:30:01Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68758" lon="12.59247"><ele>  7</ele><time>2024-08-21T19:30:19Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68748" lon="12.59273"><ele>  5</ele><time>2024-08-21T19:30:39Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68730" lon="12.59258"><ele>  1</ele><time>2024-08-21T19:30:55Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68713" lon="12.59242"><ele>  3</ele><time>2024-08-21T19:31:25Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68693" lon="12.59231"><ele> -3</ele><time>2024-08-21T19:32:03Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68677" lon="12.59212"><ele>  0</ele><time>2024-08-21T19:32:31Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68661" lon="12.59196"><ele>  0</ele><time>2024-08-21T19:32:51Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68643" lon="12.59185"><ele> -1</ele><time>2024-08-21T19:33:15Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68626" lon="12.59174"><ele> -3</ele><time>2024-08-21T19:34:03Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68608" lon="12.59162"><ele> -2</ele><time>2024-08-21T19:34:25Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68586" lon="12.59143"><ele> -3</ele><time>2024-08-21T19:34:33Z</time><src>computed speed</src><extensions><speed>12</speed></extensions></trkpt>
+<trkpt lat="55.68571" lon="12.59125"><ele> -4</ele><time>2024-08-21T19:34:45Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68550" lon="12.59118"><ele>  3</ele><time>2024-08-21T19:35:09Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68531" lon="12.59112"><ele>  8</ele><time>2024-08-21T19:35:23Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68524" lon="12.59143"><ele>  7</ele><time>2024-08-21T19:36:07Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68519" lon="12.59110"><ele>  3</ele><time>2024-08-21T19:38:06Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68502" lon="12.59090"><ele>  1</ele><time>2024-08-21T19:38:20Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68485" lon="12.59072"><ele> -3</ele><time>2024-08-21T19:38:36Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68466" lon="12.59060"><ele>  8</ele><time>2024-08-21T19:38:54Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68454" lon="12.59086"><ele> 14</ele><time>2024-08-21T19:39:06Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.68453" lon="12.59121"><ele> 10</ele><time>2024-08-21T19:39:20Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68446" lon="12.59154"><ele>  8</ele><time>2024-08-21T19:39:36Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68440" lon="12.59186"><ele>  5</ele><time>2024-08-21T19:39:54Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68427" lon="12.59218"><ele>  6</ele><time>2024-08-21T19:40:16Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68411" lon="12.59234"><ele>  5</ele><time>2024-08-21T19:40:30Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68394" lon="12.59250"><ele>  5</ele><time>2024-08-21T19:40:46Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68378" lon="12.59266"><ele>  1</ele><time>2024-08-21T19:41:22Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.68358" lon="12.59272"><ele>  1</ele><time>2024-08-21T19:41:36Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68341" lon="12.59262"><ele>  2</ele><time>2024-08-21T19:41:56Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68322" lon="12.59253"><ele>  3</ele><time>2024-08-21T19:42:12Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68302" lon="12.59243"><ele>  2</ele><time>2024-08-21T19:42:28Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68284" lon="12.59234"><ele>  3</ele><time>2024-08-21T19:42:42Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68264" lon="12.59222"><ele>  1</ele><time>2024-08-21T19:43:04Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68248" lon="12.59201"><ele>  2</ele><time>2024-08-21T19:43:16Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.68230" lon="12.59191"><ele>  3</ele><time>2024-08-21T19:43:32Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68217" lon="12.59160"><ele>  2</ele><time>2024-08-21T19:43:46Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.68201" lon="12.59134"><ele>  2</ele><time>2024-08-21T19:44:06Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68183" lon="12.59124"><ele>  6</ele><time>2024-08-21T19:44:16Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.68166" lon="12.59106"><ele> 10</ele><time>2024-08-21T19:44:46Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68159" lon="12.59073"><ele>  6</ele><time>2024-08-21T19:45:08Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68155" lon="12.59041"><ele>  0</ele><time>2024-08-21T19:45:32Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68140" lon="12.59023"><ele>  1</ele><time>2024-08-21T19:45:52Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68122" lon="12.59019"><ele> -1</ele><time>2024-08-21T19:46:08Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68108" lon="12.58993"><ele>  1</ele><time>2024-08-21T19:46:26Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68090" lon="12.58972"><ele>  4</ele><time>2024-08-21T19:46:46Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68072" lon="12.58965"><ele>  3</ele><time>2024-08-21T19:47:00Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.68056" lon="12.58948"><ele> -1</ele><time>2024-08-21T19:47:18Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68043" lon="12.58925"><ele> -1</ele><time>2024-08-21T19:47:36Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68058" lon="12.58948"><ele> -8</ele><time>2024-08-21T19:53:02Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="55.68076" lon="12.58952"><ele> -8</ele><time>2024-08-21T19:53:28Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68056" lon="12.58943"><ele> -8</ele><time>2024-08-21T19:55:42Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.68039" lon="12.58931"><ele> -7</ele><time>2024-08-21T19:59:12Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="55.68028" lon="12.58957"><ele>  3</ele><time>2024-08-21T20:06:26Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="55.68021" lon="12.58990"><ele>  3</ele><time>2024-08-21T20:06:50Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.68012" lon="12.59019"><ele>  2</ele><time>2024-08-21T20:07:10Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.68003" lon="12.59050"><ele>  2</ele><time>2024-08-21T20:07:32Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67995" lon="12.59082"><ele>  2</ele><time>2024-08-21T20:07:46Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67988" lon="12.59112"><ele>  2</ele><time>2024-08-21T20:08:06Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67976" lon="12.59137"><ele>  2</ele><time>2024-08-21T20:08:28Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67958" lon="12.59130"><ele>  3</ele><time>2024-08-21T20:09:20Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67939" lon="12.59127"><ele>  1</ele><time>2024-08-21T20:09:38Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67921" lon="12.59107"><ele>  0</ele><time>2024-08-21T20:09:50Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.67909" lon="12.59081"><ele>  2</ele><time>2024-08-21T20:10:00Z</time><src>computed speed</src><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.67891" lon="12.59072"><ele>  6</ele><time>2024-08-21T20:10:16Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67871" lon="12.59067"><ele> 11</ele><time>2024-08-21T20:10:28Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.67854" lon="12.59047"><ele> 12</ele><time>2024-08-21T20:10:46Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67833" lon="12.59041"><ele> 14</ele><time>2024-08-21T20:10:58Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.67819" lon="12.59064"><ele> 21</ele><time>2024-08-21T20:11:06Z</time><src>computed speed</src><extensions><speed>10</speed></extensions></trkpt>
+<trkpt lat="55.67800" lon="12.59078"><ele> 26</ele><time>2024-08-21T20:11:22Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67780" lon="12.59086"><ele> 25</ele><time>2024-08-21T20:11:38Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67763" lon="12.59098"><ele> 25</ele><time>2024-08-21T20:11:50Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67744" lon="12.59096"><ele> 14</ele><time>2024-08-21T20:12:08Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67736" lon="12.59068"><ele>  8</ele><time>2024-08-21T20:12:20Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67724" lon="12.59041"><ele>  4</ele><time>2024-08-21T20:12:34Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67712" lon="12.59016"><ele>  3</ele><time>2024-08-21T20:12:50Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67694" lon="12.59008"><ele>  5</ele><time>2024-08-21T20:13:18Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67682" lon="12.58982"><ele>  4</ele><time>2024-08-21T20:13:32Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67676" lon="12.58952"><ele>  4</ele><time>2024-08-21T20:13:46Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67672" lon="12.58915"><ele>  6</ele><time>2024-08-21T20:14:04Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67664" lon="12.58882"><ele>  4</ele><time>2024-08-21T20:14:18Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67656" lon="12.58850"><ele>  3</ele><time>2024-08-21T20:14:32Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67644" lon="12.58817"><ele>  4</ele><time>2024-08-21T20:14:48Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67636" lon="12.58788"><ele>  5</ele><time>2024-08-21T20:15:00Z</time><src>computed speed</src><extensions><speed> 6</speed></extensions></trkpt>
+<trkpt lat="55.67627" lon="12.58756"><ele>  4</ele><time>2024-08-21T20:15:10Z</time><src>computed speed</src><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.67618" lon="12.58721"><ele>  4</ele><time>2024-08-21T20:15:26Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67616" lon="12.58681"><ele>  4</ele><time>2024-08-21T20:15:40Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.67595" lon="12.58692"><ele>  3</ele><time>2024-08-21T20:16:24Z</time><src>computed speed</src><extensions><speed> 2</speed></extensions></trkpt>
+<trkpt lat="55.67577" lon="12.58702"><ele>  4</ele><time>2024-08-21T20:16:38Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67560" lon="12.58707"><ele>  4</ele><time>2024-08-21T20:16:52Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67542" lon="12.58703"><ele>  4</ele><time>2024-08-21T20:17:12Z</time><src>computed speed</src><extensions><speed> 4</speed></extensions></trkpt>
+<trkpt lat="55.67523" lon="12.58688"><ele>  3</ele><time>2024-08-21T20:17:22Z</time><src>computed speed</src><extensions><speed> 8</speed></extensions></trkpt>
+<trkpt lat="55.67512" lon="12.58657"><ele>  2</ele><time>2024-08-21T20:17:40Z</time><src>computed speed</src><extensions><speed> 5</speed></extensions></trkpt>
+<trkpt lat="55.67496" lon="12.58636"><ele>  2</ele><time>2024-08-21T20:17:52Z</time><src>computed speed</src><extensions><speed> 7</speed></extensions></trkpt>
+<trkpt lat="55.67486" lon="12.58607"><ele>  2</ele><time>2024-08-21T20:18:16Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67493" lon="12.58573"><ele>  3</ele><time>2024-08-21T20:18:40Z</time><src>computed speed</src><extensions><speed> 3</speed></extensions></trkpt>
+<trkpt lat="55.67503" lon="12.58540"><ele> -3</ele><time>2024-08-21T20:23:00Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+<trkpt lat="55.67506" lon="12.58508"><ele> -5</ele><time>2024-08-21T20:23:08Z</time><src>computed speed</src><extensions><speed> 9</speed></extensions></trkpt>
+<trkpt lat="55.67488" lon="12.58505"><ele>  0</ele><time>2024-08-21T20:24:30Z</time><src>computed speed</src><extensions><speed> 1</speed></extensions></trkpt>
+<trkpt lat="55.67506" lon="12.58515"><ele>  5</ele><time>2024-08-21T20:34:36Z</time><src>computed speed</src><extensions><speed> 0</speed></extensions></trkpt>
+</trkseg>
+<trkseg>
+<trkpt lat="55.67498" lon="12.58505"><ele>  1</ele><time>2024-08-21T20:49:30Z</time><extensions><speed> 0</speed></extensions></trkpt>
+</trkseg>
+</trk>
+</gpx>

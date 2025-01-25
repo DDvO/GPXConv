@@ -67,8 +67,22 @@ Command-line options:
 ```
 Other options can be set by changing values of the configuration variables.
 
+Here is an example for using GPXConv with its `-merge` option
+to combine two incomplete partially overlapping track recordings:
+```
+gpxconv 2024-08-21_Kopenhagen1.gpx  -merge  2024-08-21_Kopenhagen2.gpx -lean_stat_wpts \
+      > 2024-08-21_Kopenhagen_merged.gpx 2> 2024-08-21_Kopenhagen_merged.log
+```
+It is instructive to compare the output of [GPSVisualizer](https://www.gpsvisualizer.com/map_input?form=leaflet)
+for the two inputs (in red and green) and the merged result (in blue).
+
+<img src="2024-08-21_Kopenhagen_1_and_2.png" width="800">\
+<img src="2024-08-21_Kopenhagen_merged.png"  width="800">
+
+
 <!--
 Local IspellDict: american
 LocalWords: GPXConv STDOUT STDERR exiftool gpxconv trackpoint trackpoints waypoint
-LocalWords: infile outfile nw ni segs ext wpts cmts exts stat wpt
+LocalWords: infile outfile nw ni segs ext wpts cmts exts stat wpt cmt src gpx
+LocalWords: GPSVisualizer Kopenhagen
 -->
