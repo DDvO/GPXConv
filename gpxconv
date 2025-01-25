@@ -379,7 +379,7 @@ sub stacktrace {
 sub str_to_epoch {
     stacktrace() unless $_[0];
     my $s = $_[0];
-    return undef unless $s =~ m/^\d\d\d\d-\d\d-\d\dT\d\d(:\d\d(:\d\d(\.\d{1,})?)?)?Z$/; # pre-parse because parsedate() is not very strict
+    return undef unless $s =~ m/^\d{2,4}-\d{1,2}-\d{1,2}(T(\d{1,2}(:\d{1,2}(:\d{1,2}(\.\d{1,})?)?)?)?)?\s*([A-Z]+|[+-]\d+)$/; # pre-parse because parsedate() is not very strict
 
 # within a day, may use: seconds + 60 * (minute + 60 * hour)
 # return DateTime::Format::ISO8601->parse_datetime($s)->epoch();
