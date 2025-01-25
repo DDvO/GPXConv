@@ -20,9 +20,9 @@ GPX track converter: post-process routes and tracks produced by GPS loggers etc.
 * By default carries over missing altitude and time data between segments.
 * By default fills in missing altitude and time data by interpolation within segments.
 * By default inserts interpolated points in long time gaps (default 1800 seconds sufficient for exiftool).
-* Optionally corrects elevation and and smoothens tracks.
-  (Orthometric height = GPS ellipsoidal height - geoid height,
-  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
+* Optionally smoothens tracks.
+* Optionally corrects elevation w.r.t. geoid height (= ellipsoidal - orthometric height).
+  <!-- see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html-->
 * Optionally produces additional statistics on a per-segment or per-day basis.
 * Optionally analyzes climbing phases with extra ascent/descent and speed statistics.
 * Optionally calculates approximate total energy spent by biking along the resulting track.
@@ -30,7 +30,7 @@ GPX track converter: post-process routes and tracks produced by GPS loggers etc.
 
 Usage:
 ```
-  gpxconv <option(s) and infile(s)> [> <outfile>]
+  gpxconv <option(s) and infile(s)> [> <outfile>] [2> <logfile>]
 ```
 Command-line options:
 ```
@@ -83,6 +83,6 @@ for the two inputs (in red and green) and the merged result (in blue).
 <!--
 Local IspellDict: american
 LocalWords: GPXConv STDOUT STDERR exiftool gpxconv trackpoint trackpoints waypoint
-LocalWords: infile outfile nw ni segs ext wpts cmts exts stat wpt cmt src gpx
+LocalWords: infile outfile logfile nw ni segs ext wpts cmts exts stat wpt cmt src gpx img png
 LocalWords: GPSVisualizer Kopenhagen
 -->

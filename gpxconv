@@ -21,9 +21,8 @@
 # By default carries over missing altitude and time data between segments.
 # By default fills in missing altitude and time data by interpolation within segments.
 # By default inserts interpolated points in long time gaps (default 1800 seconds sufficient for exiftool).
-# Optionally corrects elevation and smoothens tracks.
-# (Orthometric height = GPS ellipsoidal height - geoid height,
-#  see http://www.unavco.org/edu_outreach/tutorial/geoidcorr.html)
+# Optionally smoothens tracks.
+# Optionally corrects elevation w.r.t. geoid height (= ellipsoidal - orthometric height).
 # Optionally produces additional statistics on a per-segment or per-day basis.
 # Optionally analyzes climbing phases with extra ascent/descent and speed statistics.
 # Optionally calculates approximate total energy spent by biking along the resulting track.
@@ -35,7 +34,7 @@ use constant TOOL_VERSION => "2.9.0";
 my $TOOL_ID = TOOL_NAME." v".TOOL_VERSION;
 
 my $usage =
-"Usage:  gpxconv <option(s) and infile(s)> [> <outfile>]
+"Usage:  gpxconv <option(s) and infile(s)> [> <outfile>] [2> <logfile>]
 
 Command-line options:
   -h | -help | --help          - print these hints and exit
