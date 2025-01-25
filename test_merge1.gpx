@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <trk>
+<name>test_merge</name>
 <trkpt lat="0" lon="1"><ele>1</ele><time>2000-01-01T23:01:00Z</time></trkpt>
 <trkpt lat="0" lon="1"><ele>1</ele><time>2000-01-01T23:02:00Z</time></trkpt>
 <trkpt lat="0" lon="1"><ele>3</ele><time>2000-01-01T23:11:00Z</time><cmt>skipped during merge</cmt></trkpt>

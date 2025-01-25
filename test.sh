@@ -28,6 +28,8 @@ gpxconv -src_wpts corrected test_sanitization.gpx >test_sanitization.out 2>test_
     diff test_sanitization{_reference,}.log
 
 echo -e "\n### test_merge #####################################################"
-gpxconv -cmt_wpts alternative test_merge1.gpx -merge test_merge2.gpx -days -lean_stat_wpts >test_merge.out 2>test_merge.log;
+gpxconv -cmt_wpts alternative test_merge1.gpx -merge test_merge2.gpx -days -split test_merge_out -lean_stat_wpts >test_merge.out 2>test_merge.log;
     diff test_merge{_reference,}.out;
-    diff test_merge{_reference,}.log
+    diff test_merge{_reference,}.log;
+    diff test_merge{_reference,}_out_1.gpx;
+    diff test_merge{_reference,}_out_2.gpx

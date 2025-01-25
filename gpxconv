@@ -46,6 +46,7 @@ Command-line options:
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
   -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
+  -split <basename>            - produce GPX files per day or segment, with name <basename>_<i>.gpx
   -lean_stat_wpts              - only one stat. wpt per segment/day with data except ascent/descent
   -info_wpts                   - provide info points also in the form of waypoints
   -warn_wpts                   - provide warning points also in the form of waypoints
@@ -261,6 +262,7 @@ my @WTIM; # or "" if not available
 my @WSEC; # computed from @WTIM, possibly adapted, or undefined if not available
 my @WTXT; # inner waypoint text after </time>, or "" if not available
 my @WSTR; # for diagnostics only: full original but indented waypoint text surrounded by '...', or undefined for statistics waypoint
+my @WIDX; # index of trkpt related to this wpt belongs, or -1
 
 # ascent/descent phase data
 
@@ -296,6 +298,7 @@ my ($min_tim, $max_tim) = ("", ""); # $max_tim is not really used
 
 my ($segs, $days);
 my ($part_start, $part_end, $part_offset);
+my $split;
 my $lean_stat_wpts = 0;
 # the following arrays hold statistic data per part, with index ($part_start - 1) holding the overall values
 my (@MAX_SPD      , @MIN_ELE      , @MAX_ELE      , @MAX_GAIN      , @MAX_LOSS      ); # TODO remove these redundant arrays (GAIN/LOSS via RAT)
@@ -845,6 +848,10 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
             ($part_start, $part_end, $part_offset) = ($1, $2, $3); # $part_end < $part_start will lead to empty selection, just like without $opt
             splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
         }
+    } elsif ($opt eq "-split") {
+        abort("missing file argument for -$opt option") if $#ARGV - $i < 1;
+        $split = $arg1;
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     } elsif ($opt eq "-lean_stat_wpts") {
         $lean_stat_wpts = 1;
     } elsif ($opt eq "-info_wpts") {
@@ -852,9 +859,11 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
     } elsif ($opt eq "-warn_wpts") {
         $warn_wpts = 1;
     } elsif ($opt eq "-cmt_wpts") {
+        abort("missing file argument for -$opt option") if $#ARGV - $i < 1;
         $cmt_wpts = $arg1;
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     } elsif ($opt eq "-src_wpts") {
+        abort("missing file argument for -$opt option") if $#ARGV - $i < 1;
         $src_wpts = $arg1;
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     } elsif ($opt eq "-weight") {
@@ -1044,6 +1053,7 @@ sub read_tracks
                 push @WTXT, $rest . ($exts ? "<extensions>$exts</extensions>" : "");
                 $wpt =~ s/(^|\n)/\n  /sg; # indent waypoint lines, just for better readability of diagnostics
                 push @WSTR, "'$wpt\n'";
+                push @WIDX, -1;
             }
         }
 
@@ -2025,7 +2035,7 @@ for (my $direction, my $prev_sec, my $timediff,
     next_part(++$day) if $new_part && $days;
     next_part(++$seg) if $new_part && $segs;
     if (defined $part && $new_part) {
-        $PART_START_INDEX[$part] = $i; # so far unused
+        $PART_START_INDEX[$part] = $i;
         $part_start_sec = $part_end_sec = $SEC[$i];
     } else {
         $part_start_sec = $part_end_sec = $SEC[$i] unless defined $part_start_sec;
@@ -2676,6 +2686,36 @@ sub out_trkpt {
     print $out "<fix>$FIX[$i]</fix>" if !DISABLE_TRKPT_FIX && $FIX[$i];
     print $out "<extensions>$EXT[$i]</extensions>" if         $EXT[$i];
     print $out "</trkpt>\n";
+}
+
+if ($split) {
+    my $j = 0; # index for waypoints, which are assumed to be in same (time-wise) order as trackpoints and parts
+    for (my $p = $all + 1; $p <= $part_last; $p++) {
+        my $part_wpts = "";
+        while ($j <= $#WTIM && $WIDX[$j] < $PART_START_INDEX[$p]) {
+            $j++;
+        }
+        while ($j <= $#WTIM && $WIDX[$j] <= $PART_END_INDEX[$p]) {
+            $part_wpts .= wpt($j) if $WIDX[$j] != -1;
+            $j++;
+        }
+        # TODO possibly adapt metadata
+        my $head_part = $HEAD;
+        $head_part =~ s/(<trk>)/$part_wpts$1/s; # prepend waypoints related to current part
+        $head_part =~ s|(<trk>)|$1<name><![CDATA[$split]]></name>|s unless $head_part =~ m|<trk>\s*<name>|s;
+        $head_part =~ s|(<trk>.*?)(\]*>?</name>)|$1." ".part_number(' ', $p).$2|se;
+        # TODO possibly adapt cmt with statistics
+
+        my $Part = "_".part_number('0', $p).".gpx";
+        my $out_part;
+        open($out_part, "> $split$Part");
+        print $out_part $head_part;
+        for (my $i = $PART_START_INDEX[$p]; $i <= $PART_END_INDEX[$p]; $i++) {
+            out_trkpt($out_part, $i);
+        }
+        print $out_part "</trkseg>\n</trk>\n</gpx>\n";
+        close $out_part;
+    }
 }
 
 my $all_wpts = "";
