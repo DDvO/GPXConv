@@ -2345,14 +2345,18 @@ sub add_stat_wpt {
     splice @WSEC, $j, 0, $sec_;
     splice @WTXT, $j, 0, $txt;
     splice @WSTR, $j, 0, undef;
+    splice @WIDX, $j, 0, $i;
 }
 
 # add overall statistics and for parts
 
 my $part_last = $part_end // $part // $all;
+sub part_number {
+    my ($char, $i) = @_;
+    return ($char x (length($part_last + $part_offset) - length($i + $part_offset))).($i + $part_offset);
+}
 for (my $i = $all; $i <= $part_last; $i++) {
-    my $Part = $i == $all ? "" : ($segs ? "segment" : "day")." ".
-        (' ' x (length($part_last + $part_offset) - length($i + $part_offset))).($i + $part_offset)." ";
+    my $Part = $i == $all ? "" : ($segs ? "segment" : "day")." ".part_number(' ', $i)." ";
     my $Min_ele      = defined $MIN_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]) : "";
     my $Max_ele      = defined $MAX_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]) : "";
     my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? " ".spd_full($SPD[$MAX_SPD_INDEX [$i]]) : "";
@@ -2653,22 +2657,17 @@ for (my $i = 0; $i <= $#TIM; $i++) {
     $EXT[$i] = $exts;
 }
 
-my $all_wpts = "";
-for (my $j = 0; $j <= $#WTIM; $j++) {
-    $all_wpts .= wpt($j);
-}
-$HEAD =~ s/(<trk>)/$all_wpts$1/s;    # prepend collected and computed waypoints to track
-
 abort("FATAL: end of track header not found") unless $HEAD =~ m/<trk>(.*?)<trkseg>/s;
 # add preliminarily empty comment in track; # if not already existing:
 abort("FATAL: end of track header not found") unless $1 =~ m/<cmt>/ || $HEAD =~ s|(<trk>(\s*<name>.*?</name>)?)|$1\n<cmt></cmt>|s;
 $HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
+# HEAD includes <gpx> <trk> <trkseg>
 
 
 ### write final output
 
-print $out $HEAD;                     # includes <gpx> <trk> <trkseg>
-for (my $i = 0; $i <= $#TIM ;$i++) {
+sub out_trkpt {
+    my ($out, $i) = @_;
     print $out '<trkpt lat="' . lat_str($LAT[$i]) . '" lon="' . lon_str($LON[$i]) . '">';
     print $out "<ele>" . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
     print $out "<time>".round_tim($TIM[$i])."</time>" if $TIM[$i];
@@ -2677,9 +2676,20 @@ for (my $i = 0; $i <= $#TIM ;$i++) {
     print $out "<fix>$FIX[$i]</fix>" if !DISABLE_TRKPT_FIX && $FIX[$i];
     print $out "<extensions>$EXT[$i]</extensions>" if         $EXT[$i];
     print $out "</trkpt>\n";
-    print $out "</trkseg>\n<trkseg>\n" if $SEG[$i + 1] && $i < $#TIM;
+}
+
+my $all_wpts = "";
+for (my $j = 0; $j <= $#WTIM; $j++) {
+    $all_wpts .= wpt($j);
+}
+$HEAD =~ s/(<trk>)/$all_wpts$1/s;    # prepend collected and computed waypoints to track
+
+print $out $HEAD;
+for (my $i = 0; $i <= $#TIM ;$i++) {
+    out_trkpt($out, $i);
+    print $out "</trkseg>\n<trkseg>\n" if $i < $#TIM && $SEG[$i + 1];
 }
 print $out "</trkseg>\n</trk>\n</gpx>\n";
-
 close $out;   # does not hurt in case STDOUT
+
 exit 0;
