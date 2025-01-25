@@ -46,6 +46,7 @@ Command-line options:
   -lean_stat_wpts              - only one stat. wpt per segment/day with data except ascent/descent
   -info_wpts                   - provide info points also in the form of waypoints
   -warn_wpts                   - provide warning points also in the form of waypoints
+  -cmt_wpts <pattern>          - add info waypoints for trackpoints with matching 'cmt' element
   -merge <file>                - augment tracks in infile(s) with data from given GPX file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time

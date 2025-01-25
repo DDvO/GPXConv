@@ -50,6 +50,7 @@ Command-line options:
   -lean_stat_wpts              - only one stat. wpt per segment/day with data except ascent/descent
   -info_wpts                   - provide info points also in the form of waypoints
   -warn_wpts                   - provide warning points also in the form of waypoints
+  -cmt_wpts <pattern>          - add info waypoints for trackpoints with matching 'cmt' element
   -merge <file>                - augment tracks in infile(s) with data from given alternative file
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
@@ -129,6 +130,7 @@ my $output_info                  =     1; # whether outputting information is en
 my $output_warnings              =     1; # whether outputting warnings is enabled
 my $info_wpts                    =     0; # whether to output information points in addition as waypoints
 my $warn_wpts                    =     0; # whether to output warning     points in addition as waypoints
+my $cmt_wpts = ""; # pattern to match for adding info waypoints for trackpoints with matching 'cmt' element
 use constant WARNING_TPT_DIST    => 2000; # threshold for trackpoint distance warning (in meters)
 use constant WARNING_WPT_DIST    =>  100; # threshold for waypoint distance warning (in meters)
 use constant MAX_SPEED_DEVIATION => 0.25; # threshold for speed measuring deviation warning (fraction of MAX_PLAUSIBLE_SPEED)
@@ -848,6 +850,9 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
         $info_wpts = 1;
     } elsif ($opt eq "-warn_wpts") {
         $warn_wpts = 1;
+    } elsif ($opt eq "-cmt_wpts") {
+        $cmt_wpts = $arg1;
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     } elsif ($opt eq "-weight") {
         abort("missing value argument for -$opt option") if $#ARGV - $i < 1;
         abort("cannot parse value argument in '$opt $arg1'") unless looks_like_number($arg1);
@@ -2605,6 +2610,7 @@ for (my $i = 0; $i <= $#TIM; $i++) {
         $cmt .= append_unless_present($cmt, "start alternative"    ) if $FLG[$i] & START_MERGE;
         $cmt .= append_unless_present($cmt, "pause alternative"    ) if $FLG[$i] & PAUSE_MERGE;
         $CMT[$i] = $cmt;
+        add_stat_wpt($i, "INFO: "   .$cmt) if $cmt_wpts && $cmt && $cmt =~ m|$cmt_wpts|;
     }
 
     if (!DISABLE_TRKPT_SRC) {
