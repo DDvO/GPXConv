@@ -1106,6 +1106,8 @@ sub read_tracks
             }
 
             my $flags = 0;
+            $flags |= START_MERGE if $cmt =~ m/start alternative/;
+            $flags |= PAUSE_MERGE if $cmt =~ m/pause alternative/;
             my $dis = $i == 0 || $state == 1 ? 0 : distance_curr($prev_lat, $prev_lon, $prev_ele);
             if ($state < 3) { # at the first point in trkseg, first handle last point of segment before
                 $prev_avail_ele = "";
