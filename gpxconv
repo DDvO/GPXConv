@@ -911,7 +911,7 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
 
      # not checking for operlap with shell-level redirection of STDOUT using '>'
         abort("missing outfile argument for -o option") if $#ARGV - $i < 1;
-        open($out, "> $arg1");
+        open($out, "> $arg1") || abort("FATAL: cannot open output file $arg1: $.");
         splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     } elsif ($opt eq "-debug") {
         $debug = 1;
@@ -2204,7 +2204,8 @@ sub neg_geoid_height {    # potentially $updates $found_corr and $ele_corr
     (my $fh, my $tmp_GeoidEval) = tempfile();
     system "wget --quiet -O $tmp_GeoidEval "
       . "http://geographiclib.sourceforge.net/cgi-bin/GeoidEval?input=$lat+$lon";
-    open G, $tmp_GeoidEval;
+    open G, $tmp_GeoidEval || abort("FATAL: cannot open geoid data file $tmp_GeoidEval: $.");
+
     while (<G>) {
         if (m#EGM84</a>\s*=\s*<font.*?>\s*(-?[\.\d]+)\s*</font>#i) {
             $found_corr = 1;
@@ -2720,7 +2721,7 @@ if ($split) {
 
         my $Part = "_".part_number('0', $p).".gpx";
         my $out;
-        open($out, "> $split$Part");
+        open($out, "> $split$Part") || abort("FATAL: cannot open spilt GPX output file $split$Part: $.");
         print_part($out, $p, $part_head, $part_wpts);
     }
 } else {
