@@ -2042,7 +2042,6 @@ for (my $direction, my $prev_sec, my $timediff,
     }
     # preliminary values are updated on each iteration:
     $part_end_sec = $SEC[$i] if defined $SEC[$i];
-    $PART_END_INDEX[$all ] = $i;
     $PART_END_INDEX[$part] = $i if defined $part;
 
     if ($SEG[$i]) { # track segment start (which includes the start: $i == 0)
@@ -2187,6 +2186,8 @@ for (my $direction, my $prev_sec, my $timediff,
         }
     }
 }
+$PART_START_INDEX[$all] = 0;
+$PART_END_INDEX  [$all] = $#TIM;
 $lat_prec_len = max(length(lat_str($max_lat)), length(lat_str($min_lat)));
 $lon_prec_len = max(length(lon_str($max_lon)), length(lon_str($min_lon)));
 
@@ -2676,18 +2677,28 @@ $HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
 
 ### write final output
 
-sub out_trkpt {
-    my ($out, $i) = @_;
-    print $out '<trkpt lat="' . lat_str($LAT[$i]) . '" lon="' . lon_str($LON[$i]) . '">';
-    print $out "<ele>" . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
-    print $out "<time>".round_tim($TIM[$i])."</time>" if $TIM[$i];
-    print $out "<cmt>$CMT[$i]</cmt>" if !DISABLE_TRKPT_CMT && $CMT[$i];
-    print $out "<src>$SRC[$i]</src>" if !DISABLE_TRKPT_SRC && $SRC[$i];
-    print $out "<fix>$FIX[$i]</fix>" if !DISABLE_TRKPT_FIX && $FIX[$i];
-    print $out "<extensions>$EXT[$i]</extensions>" if         $EXT[$i];
-    print $out "</trkpt>\n";
+$PART_END_INDEX[$all] = $#TIM; # possibly has changed meanwhile
+
+sub print_part {
+    my ($out, $p, $head, $wpts) = @_;
+    print $out ($head =~ s/(<trk>)/$wpts$1/sr); # prepend collected and computed waypoints to track
+
+    for (my $i = $PART_START_INDEX[$p]; $i <= $PART_END_INDEX[$p]; $i++) {
+        print $out '<trkpt lat="' . lat_str($LAT[$i]) . '" lon="' . lon_str($LON[$i]) . '">';
+        print $out "<ele>"  . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
+        print $out "<time>" . round_tim($TIM[$i]) . "</time>"                           if $TIM[$i];
+        print $out "<cmt>$CMT[$i]</cmt>"                          if !DISABLE_TRKPT_CMT && $CMT[$i];
+        print $out "<src>$SRC[$i]</src>"                          if !DISABLE_TRKPT_SRC && $SRC[$i];
+        print $out "<fix>$FIX[$i]</fix>"                          if !DISABLE_TRKPT_FIX && $FIX[$i];
+        print $out "<extensions>$EXT[$i]</extensions>"                                  if $EXT[$i];
+        print $out "</trkpt>\n";
+        print $out "</trkseg>\n<trkseg>\n" if $p == $all && $i < $#TIM && $SEG[$i + 1];
+    }
+    print $out "</trkseg>\n</trk>\n</gpx>\n";
+    close $out;
 }
 
+my $all_wpts = "";
 if ($split) {
     my $j = 0; # index for waypoints, which are assumed to be in same (time-wise) order as trackpoints and parts
     for (my $p = $all + 1; $p <= $part_last; $p++) {
@@ -2696,40 +2707,27 @@ if ($split) {
             $j++;
         }
         while ($j <= $#WTIM && $WIDX[$j] <= $PART_END_INDEX[$p]) {
-            $part_wpts .= wpt($j) if $WIDX[$j] != -1;
+            my $wpt_str = wpt($j);
+            $all_wpts  .= $wpt_str; # assuming that the parts cover all data
+            $part_wpts .= $wpt_str if $WIDX[$j] != -1;
             $j++;
         }
         # TODO possibly adapt metadata
-        my $head_part = $HEAD;
-        $head_part =~ s/(<trk>)/$part_wpts$1/s; # prepend waypoints related to current part
-        $head_part =~ s|(<trk>)|$1<name><![CDATA[$split]]></name>|s unless $head_part =~ m|<trk>\s*<name>|s;
-        $head_part =~ s|(<trk>.*?)(\]*>?</name>)|$1." ".part_number(' ', $p).$2|se;
+        my $part_head = $HEAD;
+        $part_head =~ s|(<trk>)|$1<name><![CDATA[$split]]></name>|s unless $part_head =~ m|<trk>\s*<name>|s;
+        $part_head =~ s|(<trk>.*?)(\]*>?</name>)|$1." ".part_number(' ', $p).$2|se;
         # TODO possibly adapt cmt with statistics
 
         my $Part = "_".part_number('0', $p).".gpx";
-        my $out_part;
-        open($out_part, "> $split$Part");
-        print $out_part $head_part;
-        for (my $i = $PART_START_INDEX[$p]; $i <= $PART_END_INDEX[$p]; $i++) {
-            out_trkpt($out_part, $i);
-        }
-        print $out_part "</trkseg>\n</trk>\n</gpx>\n";
-        close $out_part;
+        my $out;
+        open($out, "> $split$Part");
+        print_part($out, $p, $part_head, $part_wpts);
+    }
+} else {
+    for (my $j = 0; $j <= $#WTIM; $j++) {
+        $all_wpts .= wpt($j);
     }
 }
-
-my $all_wpts = "";
-for (my $j = 0; $j <= $#WTIM; $j++) {
-    $all_wpts .= wpt($j);
-}
-$HEAD =~ s/(<trk>)/$all_wpts$1/s;    # prepend collected and computed waypoints to track
-
-print $out $HEAD;
-for (my $i = 0; $i <= $#TIM ;$i++) {
-    out_trkpt($out, $i);
-    print $out "</trkseg>\n<trkseg>\n" if $i < $#TIM && $SEG[$i + 1];
-}
-print $out "</trkseg>\n</trk>\n</gpx>\n";
-close $out;   # does not hurt in case STDOUT
+print_part($out, $all, $HEAD, $all_wpts);
 
 exit 0;
