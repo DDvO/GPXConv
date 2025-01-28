@@ -120,8 +120,7 @@ use constant ENABLE_SMOOTHING  =>  0; # by default disable smoothing
 use constant SMOOTHING_MAX_GAP => 60; # maximum number of seconds between trackpoint to be smoothened and its neighbors
 
 # control insertion of points within long time gaps
-use constant INSERT_POINTS       =>    1; # enable inserting points with interpolated data in long time gaps
-my $insert_points = INSERT_POINTS;
+my $insert_points                =     1; # whether to enable inserting points with interpolated data in long time gaps
 use constant INSERT_SEGMENT      =>    0; # enable inserting segment for long time gaps just before segment start
 use constant INSERTION_MAX_GAP   => 1800; # length of gap in seconds between consecutive trackpoints before
 # insertion should be used (1800 for exiftool default GeoMaxIntSecs; for TrailGuru 3600 would be sufficient)
@@ -825,7 +824,7 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
     } elsif ($opt eq "-no_sanitize") {
         $sanitize = !SANITIZE_TRKPTS;
     } elsif ($opt eq "-no_insert") {
-        $insert_points = !INSERT_POINTS;
+        $insert_points = 0;
     } elsif ($opt eq "-smooth") {
         $smoothing = 1;
     } elsif ($opt eq "-phases") {
