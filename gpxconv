@@ -2526,6 +2526,7 @@ sub insert_points_in_gap {
             $DIS[$i] = $seg ? 0 : $dis_delta; # recalculate distance
             # ascent/decent rate as well as speed stays the same, due to linear interpolation
 
+            my $i_before = $i;
             for (my $n = 0; $n <= $n_end; $n++) {
                 if ($n >= $start) {
                     my $flags;
@@ -2563,6 +2564,13 @@ sub insert_points_in_gap {
                 $ele_curr += $ele_delta if defined $ele_delta;
                 $sec_curr += $sec_delta;
             }
+            # update indexes
+            my $num_inserted = $i - $i_before;
+            for (my $p = $all; $p <= $part_last; $p++) {
+                $PART_START_INDEX[$p] += $num_inserted if $PART_START_INDEX[$p] >= $i_before;
+                $PART_END_INDEX  [$p] += $num_inserted if $PART_END_INDEX  [$p] >= $i_before;
+            }
+
         }
     }
     return ($num_inserted_trkpts, $num_duplicated_trkpts);
@@ -2677,8 +2685,6 @@ $HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
 
 
 ### write final output
-
-$PART_END_INDEX[$all] = $#TIM; # possibly has changed meanwhile
 
 sub print_part {
     my ($out, $p, $head, $wpts) = @_;

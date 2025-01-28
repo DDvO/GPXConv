@@ -5,7 +5,7 @@
 <trkpt lat="0" lon="1"><ele>1</ele><time>2000-01-01T23:02:00Z</time></trkpt>
 <trkpt lat="0" lon="1"><ele>3</ele><time>2000-01-01T23:11:00Z</time><cmt>skipped during merge</cmt></trkpt>
 <trkpt lat="0" lon="1"><ele>5.1</ele><time>2000-01-01T23:22:00Z</time></trkpt>
-<trkpt lat="0" lon="1"><ele>5.2</ele><time>2000-01-01T23:52:00Z</time></trkpt>
+<trkp_ lat="0" lon="1"><ele>5.2</ele><time>2000-01-01T23:52:00Z</time><cmt>to be inserted in gap</cmt></trkp_>
 <trkpt lat="0" lon="1"><ele>5.3</ele><time>2000-01-02T00:22:00Z</time></trkpt>
 <trkpt lat="0" lon="1"><ele>7</ele><time>2000-01-02T00:24:00Z</time></trkpt>
 </trk>
