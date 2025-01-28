@@ -31,7 +31,6 @@ At lat,lon,ele = 0.00001,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; lengt
 3 sections merged from alternative input
 9 merged points
 1 regular point skipped during merge
-1 point inserted due to time gaps > 1800 seconds
 elevation not corrected
 GPXConv statistics end
 </cmt>

@@ -2481,7 +2481,7 @@ for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
 ## fill long time gaps as far as needed for exiftool etc. by inserting intermediate points with linear interpolation of data
 
 # must not be called in between computing and using max/min etc. index values as these may get invalidated by inserting points
-sub insert_points_in_gap {
+sub insert_points_in_gaps {
     my ($num_inserted_trkpts, $num_duplicated_trkpts) = (0, 0);
     for (my $i = 1; $i <= $#TIM; $i++) {
         ($lat    , $lon    , $ele    , $tim    ) =
@@ -2526,7 +2526,7 @@ sub insert_points_in_gap {
             $DIS[$i] = $seg ? 0 : $dis_delta; # recalculate distance
             # ascent/decent rate as well as speed stays the same, due to linear interpolation
 
-            my $i_before = $i;
+            # my $i_before = $i; # no more needed
             for (my $n = 0; $n <= $n_end; $n++) {
                 if ($n >= $start) {
                     my $flags;
@@ -2564,18 +2564,17 @@ sub insert_points_in_gap {
                 $ele_curr += $ele_delta if defined $ele_delta;
                 $sec_curr += $sec_delta;
             }
-            # update indexes
-            my $num_inserted = $i - $i_before;
-            for (my $p = $all; $p <= $part_last; $p++) {
-                $PART_START_INDEX[$p] += $num_inserted if $PART_START_INDEX[$p] >= $i_before;
-                $PART_END_INDEX  [$p] += $num_inserted if $PART_END_INDEX  [$p] >= $i_before;
-            }
+            # update indexes no more needed
+            # my $num_inserted = $i - $i_before;
+            # for (my $p = $all; $p <= $part_last; $p++) {
+            #     $PART_START_INDEX[$p] += $num_inserted if $PART_START_INDEX[$p] >= $i_before;
+            #     $PART_END_INDEX  [$p] += $num_inserted if $PART_END_INDEX  [$p] >= $i_before;
+            # }
 
         }
     }
     return ($num_inserted_trkpts, $num_duplicated_trkpts);
 }
-my ($num_inserted_trkpts, $num_duplicated_trkpts) = $insert_points ? insert_points_in_gap() : (0, 0);
 
 
 ### generate final output
@@ -2609,8 +2608,7 @@ $final_text .= points($num_removals_diff )." ignored due to time difference less
 $final_text .= plural($num_ext_below, "extension element")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
 $final_text .= plural($num_ext_above, "extension element")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "");
-$final_text .= points($num_inserted_trkpts)." inserted ".(INSERT_SEGMENT ? "and ".points($num_duplicated_trkpts)." duplicated " : "").
-    "due to time gaps > ".INSERTION_MAX_GAP." seconds\n" if $insert_points;
+# info on points inserted due to time gaps may be added later at this position
 $final_text .= "elevation ". (!GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ($found_corr ? "last retrieved" : "assumed") . " geoid height = $ele_corr m") . "\n";
 
@@ -2624,9 +2622,6 @@ my $stats = "GPXConv statistics (not including $sanitized_text"."periods between
     "not reported because they are below the threshold of +/-$PHASES_REPORT_THRESHOLD m\n" : "")
     .$final_text.
 "GPXConv statistics end";
-
-print_line(""); # empty line
-info($stats);
 
 ## expand metadata in trackpoints
 for (my $i = 0; $i <= $#TIM; $i++) {
@@ -2647,11 +2642,7 @@ for (my $i = 0; $i <= $#TIM; $i++) {
 
     if (!DISABLE_TRKPT_SRC) {
         my $src = $SRC[$i];
-        my $gap = $FLG[$i] & INSERTED_POINT ? "bridging time gap: inserted point"
-            : $FLG[$i] & DUPLICATED_POINT ? "bridging time gap: duplicated point "
-            . ($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before") : "";
         # cannot place info on interpolation etc. in <trkseg> element because it cannot hold a comment
-        $src .= append_unless_present($src, $gap) if $gap ne "";
         $src .= append_unless_present($src, "interpolated altitude") if $FLG[$i] & INTERPOLATED_ELE;
         $src .= append_unless_present($src, "interpolated time"    ) if $FLG[$i] & INTERPOLATED_TIM;
         $src .= append_unless_present($src, "substituted altitude" ) if $FLG[$i] & SUBSTITUTED_ELE;
@@ -2661,11 +2652,7 @@ for (my $i = 0; $i <= $#TIM; $i++) {
         $SRC[$i] = $src;
         add_stat_wpt($i, "WARNING: ".$src) if $src_wpts && $src && $src =~ m|$src_wpts|;
     }
-
-    if (!DISABLE_TRKPT_FIX) {
-        $FIX[$i] = "none" if $FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT);
-        # TODO check; was before: $fix = $flags == 0 ? "" : ($FLG[$i] & (INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM) == 0 ? "2d" : "none");
-    }
+    # cannot yet expand metadata on points inserted due to time gaps
 
     my $exts = $EXT[$i];
     $exts =~ s#<gpxtpx:TrackPointExtension>\s*<gpxtpx:speed>.*?</gpxtpx:speed>\s*</gpxtpx:TrackPointExtension>##sg if PRUNE_RECORDED_SPEED;
@@ -2735,6 +2722,36 @@ if ($split) {
         $all_wpts .= wpt($j);
     }
 }
+
+if ($insert_points) {
+    my ($num_inserted_trkpts, $num_duplicated_trkpts) = insert_points_in_gaps();
+    $PART_END_INDEX[$all] = $#TIM; # update after likely change due to insertions
+
+    for (my $i = 0; $i <= $#TIM; $i++) {
+        if (!DISABLE_TRKPT_SRC) {
+            if ($FLG[$i] & INSERTED_POINT) {
+                $SRC[$i] = "bridging time gap: inserted point"
+            } elsif ($FLG[$i] & DUPLICATED_POINT) {
+                $SRC[$i] = "bridging time gap: duplicated point " .
+                    ($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before");
+            }
+        }
+        if (!DISABLE_TRKPT_FIX) {
+            $FIX[$i] = "none" if $FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT);
+            # TODO check; was before: $fix = $flags == 0 ? "" : ($FLG[$i] & (INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM) == 0 ? "2d" : "none");
+        }
+    }
+
+    my $info = points($num_inserted_trkpts)." inserted ".
+        (INSERT_SEGMENT ? "and ".points($num_duplicated_trkpts)." duplicated " : "").
+        "due to time gaps > ".INSERTION_MAX_GAP." seconds" ;
+    abort("FATAL: failed adding info to stats on points inserted due to time gaps")
+        unless $stats =~ s/(\nelevation [^\n]*\nGPXConv statistics end)/\n$info$1/s;
+    abort("FATAL: failed adding info to HEAD on points inserted due to time gaps")
+        unless $HEAD  =~ s/(\nelevation [^\n]*\nGPXConv statistics end)/\n$info$1/s;
+}
+print_line(""); # empty line before stats
+info($stats);
 print_part($out, $all, $HEAD, $all_wpts);
 
 exit 0;
