@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo -e "\n### test_minimal ###################################################"
-gpxconv -info_wpts -warn_wpts test_minimal.gpx  >test_minimal.out  2>test_minimal.log;
+echo -e "### test_minimal ###################################################"
+gpxconv -info_wpts -warn_wpts test_minimal.gpx  >test_minimal.out  2>test_minimal.log || (cat test_minimal.log && kill $$);
     diff test_minimal{_reference,}.out;
     diff test_minimal{_reference,}.log
 gpxconv test_minimal.out  >test_minimal.out2 2>test_minimal.log2
