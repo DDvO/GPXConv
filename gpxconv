@@ -2712,15 +2712,16 @@ if ($split) {
             $part_wpts .= $wpt_str if $WIDX[$j] != -1;
             $j++;
         }
+        my $part_name = part_number('0', $p);
         # TODO possibly adapt metadata
         my $part_head = $HEAD;
         $part_head =~ s|(<trk>)|$1<name><![CDATA[$split]]></name>|s unless $part_head =~ m|<trk>\s*<name>|s;
-        $part_head =~ s|(<trk>.*?)(\]*>?</name>)|$1." ".part_number(' ', $p).$2|se;
+        $part_head =~ s|(<trk>.*?)(\]*>?</name>)|$1 $part_name$2|s;
         # TODO possibly adapt cmt with statistics
 
-        my $Part = "_".part_number('0', $p).".gpx";
+        my $file_name = $split."_$part_name.gpx";
         my $out;
-        open($out, "> $split$Part") || abort("FATAL: cannot open spilt GPX output file $split$Part: $.");
+        open($out, "> $file_name") || abort("FATAL: cannot open spilt GPX output file $file_name: $.");
         print_part($out, $p, $part_head, $part_wpts);
     }
 } else {
