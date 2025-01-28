@@ -184,8 +184,8 @@ use constant SPD_PRECISION0 =>   "%.0f";
 use constant ACC_PRECISION  =>   "%.1f"; # acceleration resolution = 0.1 m/s/s
 
 # trkpt flags
-use constant DUPLICATED_POINT   => 1 << 0;
-use constant INSERTED_POINT     => 1 << 1;
+use constant DUPLICATED_POINT   => 1 << 0; # no more used
+use constant INSERTED_POINT     => 1 << 1; # its use could be removed
 use constant INTERPOLATED_ELE   => 1 << 2;
 use constant INTERPOLATED_TIM   => 1 << 3;
 use constant SUBSTITUTED_ELE    => 1 << 4;
@@ -1642,6 +1642,8 @@ sub ignore_trkpt {
 
 my $avg_timediff if $smoothing;
 
+my $bride_gap_insert_txt    = "bridging time gap: inserted point";
+my $bride_gap_duplicate_txt = "bridging time gap: duplicated point ";
 my ($num_removals_ele, $num_removals_dir, $num_removals_spd, $num_removals_acc, $num_removals_dec,
     $num_removals_gain, $num_removals_loss, $num_removals_diff) = (0, 0, 0, 0, 0, 0, 0, 0);
 sub sanitize
@@ -1652,7 +1654,8 @@ sub sanitize
     for (my $i = 0; $i <= $#TIM; $i++) {
 
     # silently ignore any point inserted or duplicated by a previous run of this tool
-        if ($SRC[$i] =~ m#(^|\W)bridging time gap($|\W)# && $FIX[$i] =~ m#(^|\W)none($|\W)#) {
+        if ($SRC[$i] =~ m#^^($bride_gap_insert_txt|$bride_gap_duplicate_txt(after|before))$# &&
+            $FIX[$i] eq "none") {
             remove_trkpt($i--, 1);
             next;
         }
@@ -2542,6 +2545,9 @@ sub insert_points_in_gaps {
                         $flags = INSERTED_POINT;
                         $num_inserted_trkpts++;
                     }
+                    my $src = $flags & INSERTED_POINT
+                        ? $bride_gap_insert_txt
+                        : $bride_gap_duplicate_txt .($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before");
                     splice @IGN, $i, 0, $n == $start ? $ign : 0;
                     splice @SEG, $i, 0, $n == 0;
                     splice @FLG, $i, 0, $flags;
@@ -2554,8 +2560,9 @@ sub insert_points_in_gaps {
                     splice @RAT, $i, 0, "";
                     splice @SPD, $i, 0, "";
                     splice @CMT, $i, 0, "";
-                    splice @SRC, $i, 0, "";
-                    splice @FIX, $i, 0, "";
+                    splice @SRC, $i, 0, DISABLE_TRKPT_SRC ? "" : $src;
+                    splice @FIX, $i, 0, DISABLE_TRKPT_FIX ? "" : "none";
+                    # TODO check; was before: $fix = $flags == 0 ? "" : ($FLG[$i] & (INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM) == 0 ? "2d" : "none");
                     splice @EXT, $i, 0, "";
                     $i++;
                 }
@@ -2652,7 +2659,7 @@ for (my $i = 0; $i <= $#TIM; $i++) {
         $SRC[$i] = $src;
         add_stat_wpt($i, "WARNING: ".$src) if $src_wpts && $src && $src =~ m|$src_wpts|;
     }
-    # cannot yet expand metadata on points inserted due to time gaps
+    # no need to expand metadata on points inserted/duplicated due to time gaps
 
     my $exts = $EXT[$i];
     $exts =~ s#<gpxtpx:TrackPointExtension>\s*<gpxtpx:speed>.*?</gpxtpx:speed>\s*</gpxtpx:TrackPointExtension>##sg if PRUNE_RECORDED_SPEED;
@@ -2726,21 +2733,6 @@ if ($split) {
 if ($insert_points) {
     my ($num_inserted_trkpts, $num_duplicated_trkpts) = insert_points_in_gaps();
     $PART_END_INDEX[$all] = $#TIM; # update after likely change due to insertions
-
-    for (my $i = 0; $i <= $#TIM; $i++) {
-        if (!DISABLE_TRKPT_SRC) {
-            if ($FLG[$i] & INSERTED_POINT) {
-                $SRC[$i] = "bridging time gap: inserted point"
-            } elsif ($FLG[$i] & DUPLICATED_POINT) {
-                $SRC[$i] = "bridging time gap: duplicated point " .
-                    ($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before");
-            }
-        }
-        if (!DISABLE_TRKPT_FIX) {
-            $FIX[$i] = "none" if $FLG[$i] & (INSERTED_POINT | DUPLICATED_POINT);
-            # TODO check; was before: $fix = $flags == 0 ? "" : ($FLG[$i] & (INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM) == 0 ? "2d" : "none");
-        }
-    }
 
     my $info = points($num_inserted_trkpts)." inserted ".
         (INSERT_SEGMENT ? "and ".points($num_duplicated_trkpts)." duplicated " : "").
