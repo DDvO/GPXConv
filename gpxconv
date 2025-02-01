@@ -2151,10 +2151,11 @@ for (my $direction, my $prev_sec, my $timediff,
     $max_lat = $lat if $i == 0 || $max_lat < $lat;
     $min_lon = $lon if $i == 0 || $min_lon > $lon;
     $max_lon = $lon if $i == 0 || $max_lon < $lon;
-    $min_tim = $tim if $min_tim eq ""    || defined $sec && $sec < $min_sec;
-    $min_sec = $sec if !defined $min_sec || defined $sec && $sec < $min_sec;
-    $max_tim = $tim if $max_tim eq ""    || defined $sec && $sec > $max_sec;
-    $max_sec = $sec if !defined $max_sec || defined $sec && $sec > $max_sec;
+    # calculate min and max tim/sec values rather efficiently asumming ascending order:
+    $min_tim = $tim if $min_tim eq ""   ; # || defined $sec && $sec < $min_sec;
+    $min_sec = $sec if !defined $min_sec; # || defined $sec && $sec < $min_sec;
+    $max_tim = $tim if $tim ne ""  ; # if $max_tim eq ""    || defined $sec && $sec > $max_sec;
+    $max_sec = $sec if defined $sec; # if !defined $max_sec || defined $sec && $sec > $max_sec;
     if ($ele ne "") {
         ($MIN_ELE[$all ], $MIN_ELE_INDEX[$all ]) = ($ele , $i) if !defined $MIN_ELE[$all ] || $MIN_ELE[$all ] > $ele;
         ($MAX_ELE[$all ], $MAX_ELE_INDEX[$all ]) = ($ele , $i) if !defined $MAX_ELE[$all ] || $MAX_ELE[$all ] < $ele;
