@@ -173,6 +173,7 @@ use constant ELE_PRECISION  =>  "%5.0f"; #  altitude resolution = 1 meters
 use constant ELE_PRECISION0 =>   "%.0f";
 use constant ELE_PRECISION3 =>   "%.3f";
 use constant DIF_PRECISION  => "%+5.0f"; #  altitude difference          resolution = 1 meters
+use constant SLOPE_PRECISION=>  "%2.0f"; #     slope resolution = 1 %
 use constant RAT_PRECISION  => "%+5.0f"; #  altitude ascent/descent rate resolution = 1 meters
 use constant RAT_PRECISION2 => "%+6.0f"; #  altitude ascent/descent rate resolution = 1 meters
 use constant DIS_PRECISION  =>   "%.3f"; #  distance resolution = 0.001 km
@@ -302,8 +303,8 @@ my ($part_start, $part_end, $part_offset);
 my $split;
 my $lean_stat_wpts = 0;
 # the following arrays hold statistic data per part, with index ($part_start - 1) holding the overall values
-my (@MAX_SPD      , @MIN_ELE      , @MAX_ELE      , @MAX_GAIN      , @MAX_LOSS      ); # TODO remove these redundant arrays (GAIN/LOSS via RAT)
-my (@MAX_SPD_INDEX, @MIN_ELE_INDEX, @MAX_ELE_INDEX, @MAX_GAIN_INDEX, @MAX_LOSS_INDEX);
+my (@MAX_SPD      , @MIN_ELE      , @MAX_ELE      , @MAX__ASC,        @MAX_DESC      , @MAX_GAIN      , @MAX_LOSS      );
+my (@MAX_SPD_INDEX, @MIN_ELE_INDEX, @MAX_ELE_INDEX, @MAX__ASC_INDEX,  @MAX_DESC_INDEX, @MAX_GAIN_INDEX, @MAX_LOSS_INDEX);
 my (@LAST_GAIN_INDEX, @LAST_LOSS_INDEX, @PART_START_INDEX, @PART_END_INDEX);
 my (@SUM__ASCENT, @TIME__ASCENT, @MISSING__ASCENT_TIME,
     @SUM_DESCENT, @TIME_DESCENT, @MISSING_DESCENT_TIME);
@@ -2203,6 +2204,12 @@ for (my $direction, my $prev_sec, my $timediff,
             $SUM_TIMEDIFF_MOV[$all ] += $timediff;
             $SUM_TIMEDIFF_MOV[$part] += $timediff if defined $part;
         }
+        my $prev_ele = $ELE[$i - 1];
+        if ($dis != 0 && $ele ne "" && $prev_ele ne "" && !section($i)) {
+            my $slope = ($ele - $prev_ele) / $dis;
+            set_max(\@MAX__ASC, \@MAX__ASC_INDEX, $slope, $i, $all, $part) if $slope >= 0;
+            set_min(\@MAX_DESC, \@MAX_DESC_INDEX, $slope, $i, $all, $part) if $slope <= 0;
+        }
         my $rate = $RAT[$i];
         if ($rate ne "" && !section($i)) {
             set_max(\@MAX_GAIN, \@MAX_GAIN_INDEX, $rate, $i, $all, $part) if $rate > 0;
@@ -2405,8 +2412,12 @@ for (my $i = $all; $i <= $part_last; $i++) {
         $Max_loss_spd = substr($Max_loss_spd, 1);
     }
 
-    my $Max_gain = sprintf RAT_PRECISION, $MAX_GAIN[$i] // 0;
-    my $Max_loss = sprintf RAT_PRECISION, $MAX_LOSS[$i] // 0;
+    my $Max__asc = sprintf SLOPE_PRECISION, $MAX__ASC[$i] // 0; # relevant only if defined $MAX__ASC_INDEX[$i]
+    my $Max_desc = sprintf SLOPE_PRECISION, $MAX_DESC[$i] // 0; # relevant only if defined $MAX_DESC_INDEX[$i]
+    $Max_desc =~ s/\+0/-0/;
+
+    my $Max_gain = sprintf RAT_PRECISION, $MAX_GAIN[$i] // 0; # relevant only if defined $MAX_GAIN_INDEX[$i]
+    my $Max_loss = sprintf RAT_PRECISION, $MAX_LOSS[$i] // 0; # relevant only if defined $MAX_LOSS_INDEX[$i]
     $Max_loss =~ s/\+0/-0/;
 
     #my $Avg_gain=sprintf RAT_PRECISION, $avg_gain;
@@ -2427,6 +2438,8 @@ for (my $i = $all; $i <= $part_last; $i++) {
     my $max_ele_text  = "max altitude     = $Max_ele m";       # may use "" if not defined
     my $ascent_text   = "total  ascent    = $text__ascent";
     my $descent_text  = "total descent    = $text_descent";
+    my $max__asc_text = "max  ascent (slope) = $Max__asc %"                     ; # relevant only if defined $MAX__ASC_INDEX[$i]
+    my $max_desc_text = "max descent (slope) = $Max_desc %"                     ; # relevant only if defined $MAX_DESC_INDEX[$i]
     my $max_gain_text = "max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # relevant only if defined $MAX_GAIN_INDEX[$i]
     my $max_loss_text = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # relevant only if defined $MAX_LOSS_INDEX[$i]
     my $part_end_text = $Part."end";
@@ -2452,6 +2465,8 @@ for (my $i = $all; $i <= $part_last; $i++) {
     add_stat_point($MAX_ELE_INDEX  [$i], $Part.$max_ele_text );
     add_stat_point($LAST_GAIN_INDEX[$i], $Part.$ascent_text  );
     add_stat_point($LAST_LOSS_INDEX[$i], $Part.$descent_text );
+    add_stat_point($MAX__ASC_INDEX [$i], $Part.$max__asc_text);
+    add_stat_point($MAX_DESC_INDEX [$i], $Part.$max_desc_text);
     add_stat_point($MAX_GAIN_INDEX [$i], $Part.$max_gain_text);
     add_stat_point($MAX_LOSS_INDEX [$i], $Part.$max_loss_text);
     $LAT[$#TIM] += 0.00001 if $i != $all && $i == $part_last;    # make sure that last "part end" wpt is placed separately
