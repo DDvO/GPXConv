@@ -13,16 +13,14 @@
 newlines are kept</extensions>
 </metadata>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T10:00:00Z</time><name>[2001-01-01T10:00:00Z segment 102 max altitude = 50 m]</name><sym>emoji-🔼</sym></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[2001-01-01T10:30:00Z max descent (slope) = -1 %]</name><sym>emoji-↘️</sym></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[2001-01-01T10:30:00Z segment 102 max descent (slope) = -1 %]</name><sym>emoji-↘️</sym></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[2001-01-01T10:30:00Z segment 102 max ascent (slope) = 0 degrees]</name><sym>emoji-↗️</sym></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[2001-01-01T10:30:00Z segment 102 max descent (slope) = 0 degrees]</name><sym>emoji-↘️</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[2001-01-01T10:30:00Z 1st max speed = 0 km/h; avg speed = 0 km/h]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  40</ele><time>2001-01-01T10:30:00Z</time><name>[2001-01-01T10:30:00Z 1st max rate = -20 m/h; avg rate = -20 m/h]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  20</ele><time>2001-01-01T11:30:00Z</time><name>[2001-01-01T11:30:00Z 1st descent = -30 m; distance = 0.030 km; duration = 1:30:00 h]</name></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2001-01-01T11:40:00Z max ascent (slope) = 1 %]</name><sym>emoji-↗️</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2001-01-01T11:40:00Z max ascent rate = +180 m/h at 0 km/h]</name><sym>emoji-⏫</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2001-01-01T11:40:00Z segment 102 max speed = 0 km/h]</name><sym>emoji-⏩</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2001-01-01T11:40:00Z segment 102 total ascent = +30 m; avg rate = +180 m/h]</name><sym>emoji-⬆️</sym></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2001-01-01T11:40:00Z segment 102 max ascent (slope) = 1 %]</name><sym>emoji-↗️</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2001-01-01T11:40:00Z segment 102 max ascent rate = +180 m/h at 0 km/h]</name><sym>emoji-⏫</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2001-01-01T11:40:00Z 2nd ascent = +30 m; distance = 0.030 km; duration = 0:10:00 h]</name></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele>  50</ele><time>2001-01-01T11:40:00Z</time><name>[2001-01-01T11:40:00Z 2nd max speed = 0 km/h; avg speed = 0 km/h]</name></wpt>
@@ -42,7 +40,6 @@ newlines are kept</extensions>
 <wpt lat="45.90000" lon="4.30000"><ele> 490</ele><time>2001-01-02T15:00:00Z</time><name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type><extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 max altitude = 90 m]</name><sym>emoji-🔼</sym></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 total ascent = +100 m; avg rate unknown due to missing time]</name><sym>emoji-⬆️</sym></wpt>
-<wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 max descent (slope) = 0 %]</name><sym>emoji-↘️</sym></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 end; length = 27.090 km]</name><sym>emoji-🎬</sym></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z 4th ascent = +100 m; distance =27.090 km]</name></wpt>
 <wpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><name>[2001-01-02T18:00:00Z max speed = 10 km/h]</name><sym>emoji-⏩</sym></wpt>
@@ -52,11 +49,14 @@ newlines are kept</extensions>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[2001-01-02T18:30:01Z 5th max speed = 2 km/h; avg speed = 2 km/h]</name></wpt>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[2001-01-02T18:30:01Z 5th max rate = +50 m/h; avg rate = +50 m/h]</name></wpt>
 <wpt lat="44.00001" lon="2.28002">                                                <name>[start]</name><sym>emoji-▶️</sym></wpt>
-<wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 max ascent (slope) = 0 %]</name><sym>emoji-↗️</sym></wpt>
-<wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 max descent (slope) = 0 %]</name><sym>emoji-↘️</sym></wpt>
+<wpt lat="44.00002" lon="2.00030"><ele>  74</ele>                                 <name>[max ascent (slope) = 0 degrees]</name><sym>emoji-↗️</sym></wpt>
+<wpt lat="44.00002" lon="2.00030"><ele>  74</ele>                                 <name>[max descent (slope) = 0 degrees]</name><sym>emoji-↘️</sym></wpt>
+<wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 max ascent (slope) = 0 degrees]</name><sym>emoji-↗️</sym></wpt>
+<wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 max descent (slope) = 0 degrees]</name><sym>emoji-↘️</sym></wpt>
 <wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 end; length = 11.220 km]</name><sym>emoji-🎬</sym></wpt>
 <wpt lat="45.70000" lon="4.10000"><ele> -10</ele>                                 <name>[segment 104 min altitude = -10 m]</name><sym>emoji-🔽</sym></wpt>
-<wpt lat="45.79996" lon="4.20000"><ele>  40</ele>                                 <name>[segment 104 max ascent (slope) = 0 %]</name><sym>emoji-↗️</sym></wpt>
+<wpt lat="45.79996" lon="4.20000"><ele>  40</ele>                                 <name>[segment 104 max ascent (slope) = 0 degrees]</name><sym>emoji-↗️</sym></wpt>
+<wpt lat="45.79996" lon="4.20000"><ele>  40</ele>                                 <name>[segment 104 max descent (slope) = 0 degrees]</name><sym>emoji-↘️</sym></wpt>
 <wpt lat="0.00900" lon="0.00000">                                                <name>[end; total length = 63.083 km; gross duration = 32:30:01 h; total moving time = 0:30:01 h; total average moving speed = 2.0 km/h; total biking energy = -10 kJ, leaving out 7 points where time or altitude information is missing or at start or end of merge sections]</name><sym>emoji-⏹️</sym></wpt>
 <trk>
 <name><![CDATA[2001-01-01..02_test]]></name>
@@ -68,8 +68,8 @@ At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: min altitude
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: max altitude     =   525 m
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: total  ascent    =  +155 m; avg rate  =  +232 m/h with 1 point not having time information
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: total descent    =   -90 m; avg rate  =   -49 m/h
-At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: max  ascent (slope) =  1 %
-At lat,lon,ele = 44.00000,2.00000,  40 time = 2001-01-01T10:30:00Z: max descent (slope) = -1 %
+At lat,lon,ele = 44.00002,2.00030,  74 time = NONE                : max  ascent (slope) =  0 degrees
+At lat,lon,ele = 44.00002,2.00030,  74 time = NONE                : max descent (slope) =  0 degrees
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: max  ascent rate =  +180 m/h at 0 km/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: max descent rate =  -180 m/h at 0 km/h
 At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
@@ -83,21 +83,21 @@ At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 102 
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T10:00:00Z: segment 102 max altitude     =    50 m
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: segment 102 total  ascent    =   +30 m; avg rate  =  +180 m/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 102 total descent    =   -90 m; avg rate  =   -49 m/h
-At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: segment 102 max  ascent (slope) =  1 %
-At lat,lon,ele = 44.00000,2.00000,  40 time = 2001-01-01T10:30:00Z: segment 102 max descent (slope) = -1 %
+At lat,lon,ele = 44.00000,2.00000,  40 time = 2001-01-01T10:30:00Z: segment 102 max  ascent (slope) =  0 degrees
+At lat,lon,ele = 44.00000,2.00000,  40 time = 2001-01-01T10:30:00Z: segment 102 max descent (slope) =  0 degrees
 At lat,lon,ele = 44.00000,2.00000,  50 time = 2001-01-01T11:40:00Z: segment 102 max  ascent rate =  +180 m/h at 0 km/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 102 max descent rate =  -180 m/h at 0 km/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: segment 102 end; length      = 0.120 km; duration = 2:00:00 h
 At lat,lon,ele = 45.50000,3.50000, -10 time = 2001-01-01T12:00:00Z: segment 103 min altitude     =   -10 m
 At lat,lon,ele = 45.50000,3.50000, -10 time = 2001-01-01T12:00:00Z: segment 103 max altitude     =   -10 m
-At lat,lon,ele = 45.60000,3.52000, -10 time = NONE                : segment 103 max  ascent (slope) =  0 %
-At lat,lon,ele = 45.60000,3.52000, -10 time = NONE                : segment 103 max descent (slope) =  0 %
+At lat,lon,ele = 45.60000,3.52000, -10 time = NONE                : segment 103 max  ascent (slope) =  0 degrees
+At lat,lon,ele = 45.60000,3.52000, -10 time = NONE                : segment 103 max descent (slope) =  0 degrees
 At lat,lon,ele = 45.60000,3.52000, -10 time = NONE                : segment 103 end; length      = 11.220 km
 At lat,lon,ele = 45.70000,4.10000, -10 time = NONE                : segment 104 min altitude     =   -10 m
 At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 max altitude     =    90 m
 At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 total  ascent    =  +100 m; avg rate unknown due to missing time
-At lat,lon,ele = 45.79996,4.20000,  40 time = NONE                : segment 104 max  ascent (slope) =  0 %
-At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 max descent (slope) =  0 %
+At lat,lon,ele = 45.79996,4.20000,  40 time = NONE                : segment 104 max  ascent (slope) =  0 degrees
+At lat,lon,ele = 45.79996,4.20000,  40 time = NONE                : segment 104 max descent (slope) =  0 degrees
 At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 end; length      = 27.090 km
 At lat,lon,ele = 44.00000,2.00000,  20 time = 2001-01-01T11:30:00Z: 1st descent   =   -30  m;   distance   = 0.030 km; duration = 1:30:00 h
 At lat,lon,ele = 44.00000,2.00000,  40 time = 2001-01-01T10:30:00Z: 1st max speed =     0 km/h; avg speed  =    0 km/h

@@ -759,6 +759,47 @@ sub comp_diffs {
     return ($diff_ele // "", $timediff // "", $rate, $dis, $comp_spd, $acc);
 }
 
+sub approx_slope {
+    my $i = $_[0];
+    return undef if $SEG[$i] || section($i) || $ELE[$i - 1] eq ""
+        ||  $LAT[$i] == $LAT[$i - 1] && $LON[$i] == $LON[$i - 1]; # not returning infinite here
+    return ($ELE[$i]  - $ELE[$i - 1]) / $DIS[$i]; # is approximate because $DIS[$i] includes elevation diff
+    # it is not relly worth caching these results
+}
+sub actual_slope {
+    my $i = $_[0];
+    return undef if $SEG[$i] || section($i) || $ELE[$i - 1] eq "";
+    my $ele_avg = ($ELE[$i] + $ELE[$i - 1]) / 2; # simply 0 would also be fine
+    my $ele_diff = $ELE[$i] - $ELE[$i - 1];
+    my $dis = distance($LAT[$i    ], $LON[$i    ], $ele_avg,
+                       $LAT[$i - 1], $LON[$i - 1], $ele_avg);
+    return $dis == 0 ? ($ele_diff >= 0 ? 90 : -90) : atan2($ele_diff , $dis) * RAD2DEG;
+}
+
+use constant N_AVG_SLOPE => 4;
+sub avg_approx_slope {
+    my $i = $_[0];
+    my $end = $i - N_AVG_SLOPE;
+    my $sum = 0;
+    while ($i > $end) {
+        my $slope = approx_slope($i--);
+        return 0 if !defined $slope;
+        $sum += $slope;
+    }
+    return $sum / N_AVG_SLOPE;
+}
+sub avg_actual_slope {
+    my $i = $_[0];
+    my $end = $i - N_AVG_SLOPE;
+    my $sum = 0;
+    while ($i > $end) {
+        my $slope = actual_slope($i--);
+        return 0 if !defined $slope;
+        $sum += $slope;
+    }
+    return $sum / N_AVG_SLOPE;
+}
+
 sub comp_angle { # calculate horizontal direction change (i.e., turning angle)
     # between last, current, and next point, 0 if not available
     # provides almost no efficiency penalty
@@ -2182,13 +2223,12 @@ for (my $direction, my $prev_sec, my $timediff,
             $SUM_TIMEDIFF_MOV[$all ] += $timediff;
             $SUM_TIMEDIFF_MOV[$part] += $timediff if defined $part;
         }
-        my $prev_ele = $ELE[$i - 1];
-        if ($dis != 0 && $ele ne "" && $prev_ele ne "" && !section($i)) {
-            my $slope = ($ele - $prev_ele) / $dis;
+        if ($ele ne "") {
+            my $slope = avg_approx_slope($i);
             set_max(\@MAX__ASC, \@MAX__ASC_INDEX, $slope, $i, $all, $part) if $slope >= 0;
             set_min(\@MAX_DESC, \@MAX_DESC_INDEX, $slope, $i, $all, $part) if $slope <= 0;
         }
-        my $rate = rate(diff_nonempty($ele, $prev_ele), $timediff);
+        my $rate = rate(diff_nonempty($ele, $ELE[$i - 1]), $timediff);
         if ($rate ne "" && !section($i)) {
             set_max(\@MAX_GAIN, \@MAX_GAIN_INDEX, $rate, $i, $all, $part) if $rate >= 0;
             set_min(\@MAX_LOSS, \@MAX_LOSS_INDEX, $rate, $i, $all, $part) if $rate <= 0;
@@ -2399,9 +2439,13 @@ for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
     # make sure to report max ascent & descent slopes always pairwise
     ($MAX__ASC[$i], $MAX__ASC_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX__ASC_INDEX[$i] && defined $MAX_DESC_INDEX[$i];
     ($MAX_DESC[$i], $MAX_DESC_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX_DESC_INDEX[$i] && defined $MAX__ASC_INDEX[$i];
-    my $Max__asc = sprintf SLOPE_PRECISION, $MAX__ASC[$i] // 0; # relevant only if defined $MAX__ASC_INDEX[$i]
-    my $Max_desc = sprintf SLOPE_PRECISION, $MAX_DESC[$i] // 0; # relevant only if defined $MAX_DESC_INDEX[$i]
-    $Max_desc =~ s/\+0/0/;
+    sub avg_slope {
+        my ($avg_approx_slope, $i) = @_;
+        return "" unless defined $i;
+        return sprintf SLOPE_PRECISION, $avg_approx_slope == 0 ? 0 : avg_actual_slope($i);
+    }
+    my $Max__asc =  avg_slope($MAX__ASC[$i], $MAX__ASC_INDEX[$i]);
+    my $Max_desc = (avg_slope($MAX_DESC[$i], $MAX_DESC_INDEX[$i])) =~ s/\+0/0/r;
 
     # make sure to report max ascent & descent rates always pairwise
     ($MAX_GAIN[$i], $MAX_GAIN_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX_GAIN_INDEX[$i] && defined $MAX_LOSS_INDEX[$i];
@@ -2428,8 +2472,8 @@ for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
     my $max_ele_text  = "max altitude     = $Max_ele m";       # may use "" if not defined
     my $ascent_text   = "total  ascent    = $text__ascent";
     my $descent_text  = "total descent    = $text_descent";
-    my $max__asc_text = "max  ascent (slope) = $Max__asc %";   # relevant only if defined $MAX__ASC_INDEX[$i]
-    my $max_desc_text = "max descent (slope) = $Max_desc %";   # relevant only if defined $MAX_DESC_INDEX[$i]
+    my $max__asc_text = "max  ascent (slope) = $Max__asc degrees"; # relevant  if defined $MAX__ASC_INDEX[$i]
+    my $max_desc_text = "max descent (slope) = $Max_desc degrees"; # relevant  if defined $MAX_DESC_INDEX[$i]
     my $max_gain_text = "max  ascent rate = $Max_gain m/h".
         ($Max_gain_spd eq "" ? "" : " at $Max_gain_spd km/h"); # relevant only if defined $MAX_GAIN_INDEX[$i]
     my $max_loss_text = "max descent rate = $Max_loss m/h".
