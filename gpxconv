@@ -244,7 +244,6 @@ my @ELE; # or "" if not available
 my @TIM; # or "" if not available
 my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
 my @DIS; # derived from LAT and LON, and ELE if available, also from point before, 0 for first point
-my @RAT; # derived from optionally ELE and SEC, also from point before, or "" if not available
 my @SPD; # as recorded or computed (as average since previous point if FLG contains COMPUTED_SPEED), or "" if not available
 my @CMT; # as given in input but without <cmt> and </cmt> tags, or "" if not available
 my @SRC; # as given in input but without <src> and </src> tags, or "" if not available
@@ -252,7 +251,7 @@ my @FIX; # as given in input but without <fix> and </fix> tags, or "" if not ava
 my @EXT; # or "" if not available
 
 # trackpoint data from alternative input:
-my (@IGN2, @SEG2, @FLG2, @LAT2, @LON2, @ELE2, @TIM2, @SEC2, @DIS2, @RAT2, @SPD2, @CMT2, @SRC2, @FIX2, @EXT2);
+my (@IGN2, @SEG2, @FLG2, @LAT2, @LON2, @ELE2, @TIM2, @SEC2, @DIS2, @SPD2, @CMT2, @SRC2, @FIX2, @EXT2);
 
 # waypoint data
 
@@ -273,6 +272,7 @@ my @PHASE_DIST;
 my @PHASE_SPD;
 my @PHASE_RATE;
 my @PHASE_MAX_SPD_INDEX;
+my @PHASE_MAX_RATE;
 my @PHASE_MAX_RATE_INDEX;
 my @PHASE_END_INDEX;
 my $ascent__phases_suppressed = 0;
@@ -678,15 +678,10 @@ sub recalculate_SPD { my $i = $_[0];
     my $diff_time = diff_defined($SEC[$i], $SEC[$i - 1]);
     $SPD[$i] = $DIS[$i] / $diff_time if $diff_time;
 }
-sub recalculate_RAT { my $i = $_[0];
-    return if $i <= 0 || $SEG[$i]; # || section($i);
-    $RAT[$i] = rate(diff_nonempty($ELE[$i], $ELE[$i - 1]), diff_defined($SEC[$i], $SEC[$i - 1]));
-}
 sub recalculate_all {
     my $i = $_[0];
     recalculate_DIS($i);
     recalculate_SPD($i);
-    recalculate_RAT($i);
 }
 
 sub remove_trkpt {
@@ -706,7 +701,6 @@ sub remove_trkpt {
     splice @TIM, $i, 1;
     splice @SEC, $i, 1;
     splice @DIS, $i, 1;
-    splice @RAT, $i, 1;
     splice @SPD, $i, 1;
     splice @CMT, $i, 1;
     splice @SRC, $i, 1;
@@ -715,11 +709,8 @@ sub remove_trkpt {
     return if $i > $#TIM;
     if ($undo_time_gap_fill) {
         $DIS[$i] += $dis_before if $i > 0;
-        recalculate_RAT($i);
     } else { # note that $#TIM has been decremented
-        recalculate_DIS($i);
-        recalculate_SPD($i);
-        recalculate_RAT($i);
+        recalculate_all($i);
     }
 }
 
@@ -761,9 +752,7 @@ sub comp_diffs {
 
     #http://forums.howwhatwhy.com/showflat.php?Cat=&Board=scigen&Number=-208125
     my $timediff = diff_defined($sec, $prev_sec);
-    my $rate = $RAT[$i];
-    my $rate_new = rate($diff_ele, $timediff);
-    abort_trkpt($i, "internal inconsistency on ascent/descent rate $rate vs. $rate_new at") if $rate ne $rate_new;
+    my $rate= rate($diff_ele, $timediff);
     my $comp_spd = defined $timediff ? ($timediff > 0 ? $dis / $timediff : $prev_comp_spd) : "";
     $spd_prec_len = max($spd_prec_len, length(spd_str($comp_spd))) if $comp_spd ne ""; # used only for spd_string
     my $acc = $comp_spd ne "" && $prev_comp_spd ne "" && $timediff ? ($comp_spd - $prev_comp_spd) / $timediff : "";
@@ -988,9 +977,9 @@ my $MAX_SPEED_DEVIATION = $MAX_PLAUSIBLE_SPEED * MAX_SPEED_DEVIATION;
 sub read_tracks
 {
     my $merge = $_[0];
-    my  ( $SEG ,  $FLG ,  $LAT ,  $LON ,  $ELE ,  $TIM ,  $SEC ,  $DIS ,  $RAT ) = $merge ?
-        (\@SEG2, \@FLG2, \@LAT2, \@LON2, \@ELE2, \@TIM2, \@SEC2, \@DIS2, \@RAT2) :
-        (\@SEG , \@FLG , \@LAT , \@LON , \@ELE,  \@TIM , \@SEC , \@DIS , \@RAT );
+    my  ( $SEG ,  $FLG ,  $LAT ,  $LON ,  $ELE ,  $TIM ,  $SEC ,  $DIS ) = $merge ?
+        (\@SEG2, \@FLG2, \@LAT2, \@LON2, \@ELE2, \@TIM2, \@SEC2, \@DIS2) :
+        (\@SEG , \@FLG , \@LAT , \@LON , \@ELE,  \@TIM , \@SEC , \@DIS );
 
     my $ele_miss_start  = 0; # first index of recent stretch with missing ele ; TODO restrict scope
     my $tim_miss_start  = 0; # first index of recent stretch with missing time; TODO restrict scope
@@ -1151,7 +1140,6 @@ sub read_tracks
                         $TIM->[$i - 1] = $tim;
                         $SEC->[$i - 1] = $sec;
                         recalculate_SPD($i - 1);
-                        recalculate_RAT($i - 1);
                         $tim_miss_length += $DIS->[$i - 1] if $tim_miss_start;
                         warn_trkpt_i($i - 1, "at segment end    ",
                                      "no time     was given; using value from begin of next segment");
@@ -1245,7 +1233,7 @@ sub read_tracks
                         recalculate_all($j);
                         # not changing $ele nor $prev_ele such that below time interpolation is not affected
                         $FLG->[$j] |= INTERPOLATED_ELE;
-                        ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE->[$j] dis=$DIS[$j] rate=$RAT->[$j]";
+                        ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE->[$j] dis=$DIS[$j]";
                     }
                     if ($i_end < $i) {
                         recalculate_all($j);
@@ -1277,22 +1265,16 @@ sub read_tracks
                         $SEC->[$j] = $sec_curr;
                         $TIM->[$j] = epoch_to_str($sec_curr);
                         recalculate_SPD($j);
-                        recalculate_RAT($j);
                         $FLG->[$j] |= INTERPOLATED_TIM;
-                        ## debug_log "interpolating missing time at point $j with ele=$ELE->[$j] new  time=$TIM->[$j] dis=$DIS->[$j] rate=".($RAT->[$j] // "");
+                        ## debug_log "interpolating missing time at point $j with ele=$ELE->[$j] new  time=$TIM->[$j] dis=$DIS->[$j]";
                     }
                     if ($i_end < $i) {
                         recalculate_SPD($j);
-                        recalculate_RAT($j);
                     }
                 }
                 $tim_miss_start = 0;
             }
             my $seg = $state < 3;
-            my $diff_ele = $i > 0 ? diff_nonempty($ele, $ELE->[$i - 1]) : "";
-            my $diff_sec = $i > 0 ? diff_defined ($sec, $SEC->[$i - 1]) : undef;
-            my $rate = rate($diff_ele, $diff_sec);
-
             unless ($merge) {
                 push @IGN, 0;
                 push @SEG, $seg;
@@ -1303,7 +1285,6 @@ sub read_tracks
                 push @TIM, $tim;
                 push @SEC, $sec;
                 push @DIS, $dis;
-                push @RAT, $rate;
                 push @SPD, $spd; # initially as recorded, "" if not available
                 push @CMT, $cmt;
                 push @SRC, $src;
@@ -1319,7 +1300,6 @@ sub read_tracks
                 push @TIM2, $tim;
                 push @SEC2, $sec;
                 push @DIS2, $dis;
-                push @RAT2, $rate;
                 push @SPD2, $spd; # initially as recorded, "" if not available
                 push @CMT2, $cmt;
                 push @SRC2, $src;
@@ -1427,7 +1407,6 @@ sub merge_tracks
         splice @TIM, $i, 0, $TIM2[$j];
         splice @SEC, $i, 0, $SEC2[$j];
         splice @DIS, $i, 0, $DIS2[$j];
-        splice @RAT, $i, 0, $RAT2[$j];
         splice @SPD, $i, 0, $SPD2[$j];
         splice @CMT, $i, 0, $CMT2[$j];
         splice @SRC, $i, 0, $SRC2[$j];
@@ -1447,7 +1426,6 @@ sub merge_tracks
         $TIM[$i] = $TIM2[$j];
         $SEC[$i] = $SEC2[$j];
         $DIS[$i] = $DIS2[$j];
-        $RAT[$i] = $RAT2[$j];
         $SPD[$i] = $SPD2[$j];
         $CMT[$i] = $CMT2[$j];
         $SRC[$i] = $SRC2[$j];
@@ -1689,7 +1667,7 @@ sub sanitize
             if (!section($i) && # not at merge start/pause
                 !$SEG[$i - 1] && !section($i - 1)) {
                 my $prev_timediff = diff_defined($SEC[$i - 1], $SEC[$i - 2]);
-                my $rate = $RAT[$i];
+                my $rate = rate(diff_nonempty($ele, $ELE[$i - 1]), diff_defined($sec, $SEC[$i - 1]));
                 if (defined $prev_timediff && $prev_timediff >= MIN_TUNNEL_GAP &&
                     $rate ne "" && ($rate > $MAX_PLAUSIBLE_ELE_GAIN / 4 || $rate < -$MAX_PLAUSIBLE_ELE_LOSS / 4)) {
                     warn_trkpt_i($i - 1, "      at",
@@ -1988,7 +1966,7 @@ sub push_phase {
         $dist += $DIS[$i];
         next if section($i);
 
-        $rate  = $RAT[$i];
+        $rate = rate(diff_nonempty($ELE[$i], $ELE[$i - 1]), diff_defined($SEC[$i], $SEC[$i - 1]));
         $spd_ = $SPD[$i];
         ($max_rate, $max_rate_index) = ($rate, $i) if $rate ne "" && ($diff_ele >= 0 ? $rate > $max_rate : $rate < $max_rate);
         ($max__spd, $max__spd_index) = ($spd_, $i) if $spd_ ne "" && $spd_ > $max__spd;
@@ -2001,6 +1979,7 @@ sub push_phase {
     push @PHASE_SPD,            $avg_spd;
     push @PHASE_RATE,           $avg_rate;
     push @PHASE_MAX_SPD_INDEX,  $max__spd_index;
+    push @PHASE_MAX_RATE,       $max_rate;
     push @PHASE_MAX_RATE_INDEX, $max_rate_index;
     push @PHASE_END_INDEX,      $end_index;
 }
@@ -2152,7 +2131,6 @@ for (my $direction, my $prev_sec, my $timediff,
             my $msg = "internal inconsistency on ";
             abort_trkpt($i, "$msg time difference: $timediff vs. $td at") if $timediff ne $td;
             abort_trkpi($i, "$msg distance value: $DIS[$i] vs. $dis at" ) if abs($DIS[$i] -  $dis) > 0.001;
-            abort_trkpi($i, "$msg rate" ." value: $RAT[$i] vs. $rate at") if $RAT[$i] ne $rate;
         }
 
         if ($weight) {
@@ -2210,7 +2188,7 @@ for (my $direction, my $prev_sec, my $timediff,
             set_max(\@MAX__ASC, \@MAX__ASC_INDEX, $slope, $i, $all, $part) if $slope >= 0;
             set_min(\@MAX_DESC, \@MAX_DESC_INDEX, $slope, $i, $all, $part) if $slope <= 0;
         }
-        my $rate = $RAT[$i];
+        my $rate = rate(diff_nonempty($ele, $prev_ele), $timediff);
         if ($rate ne "" && !section($i)) {
             set_max(\@MAX_GAIN, \@MAX_GAIN_INDEX, $rate, $i, $all, $part) if $rate >= 0;
             set_min(\@MAX_LOSS, \@MAX_LOSS_INDEX, $rate, $i, $all, $part) if $rate <= 0;
@@ -2524,8 +2502,8 @@ for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
         if defined $max_spd_idx;
     my $max_rate_idx = $PHASE_MAX_RATE_INDEX[$i];
     my $Rate = phase_text($i)
-        . "max rate  =" . (sprintf RAT_PRECISION2, $RAT[$max_rate_idx]) . "  m/h; "
-        . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE[$i]    ) . "  m/h"
+        . "max rate  =" . (sprintf RAT_PRECISION2, $PHASE_MAX_RATE[$i]) . "  m/h; "
+        . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE    [$i]) . "  m/h"
         if defined $max_rate_idx;
     add_stat_point($PHASE_END_INDEX     [$i], $Len );
     add_stat_point($PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
@@ -2609,7 +2587,6 @@ sub insert_points_in_gaps {
                     splice @TIM, $i, 0, epoch_to_str($sec_curr);
                     splice @SEC, $i, 0, $sec_curr;
                     splice @DIS, $i, 0, $n == 0 ? 0 : $dis_delta;
-                    splice @RAT, $i, 0, "";
                     splice @SPD, $i, 0, "";
                     splice @CMT, $i, 0, "";
                     splice @SRC, $i, 0, DISABLE_TRKPT_SRC ? "" : $src;
