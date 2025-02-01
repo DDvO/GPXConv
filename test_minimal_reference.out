@@ -4,8 +4,8 @@
 <wpt lat="0.00000" lon="0.00000">                                                <name>[WARNING: at segment start no altitude given and no previous value available]</name></wpt>
 <wpt lat="0.00000" lon="0.00000">                                                <name>[WARNING: at segment start no time given and no previous value available]</name></wpt>
 <wpt lat="0.00000" lon="0.00000">                                                <name>[INFO: last segment end]</name></wpt>
-<wpt lat="0.00000" lon="0.00000">                                                <name>[start]</name></wpt>
-<wpt lat="0.00000" lon="0.00000">                                                <name>[end]</name></wpt>
+<wpt lat="0.00000" lon="0.00000">                                                <name>[start]</name><sym>emoji-▶️</sym></wpt>
+<wpt lat="0.00000" lon="0.00000">                                                <name>[end]</name><sym>emoji-⏹️</sym></wpt>
 <trk>
 <cmt>
 GPXConv statistics (not including periods between segments)

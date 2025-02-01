@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <gpx creator="GPXConv v2.9.0" version="1.1">
 <metadata><time>2000-01-01T23:00:00Z</time><bounds minlat="0.00000" minlon="1.00000" maxlat="0.00104" maxlon="1.00000"/></metadata>
-<wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><name>[start]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><name>[start]</name><sym>emoji-▶️</sym></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>0</ele><time>2000-01-01T23:00:00Z</time><name>[INFO: before start of base input; start alternative]</name></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>1</ele><time>2000-01-01T23:01:00Z</time><name>[INFO: pause alternative]</name></wpt>
 <wpt lat="0.00101" lon="1.00000"><ele>2</ele><time>2000-01-01T23:09:00Z</time><name>[INFO: trkseg is ignored; start alternative]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:22:00Z</time><name>[day 1 end; length = 0.233 km; duration = 0:22:00 h; moving time = 0:00:02 h; average moving speed = 2.0 km/h; max speed = 2 km/h; min altitude = 0 m; max altitude = 5 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:22:00Z</time><name>[day 1 end; length = 0.233 km; duration = 0:22:00 h; moving time = 0:00:02 h; average moving speed = 2.0 km/h; max speed = 2 km/h; min altitude = 0 m; max altitude = 5 m]</name><sym>emoji--🛌</sym></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>5</ele><time>2000-01-01T23:22:00Z</time><name>[INFO: pause alternative]</name></wpt>
-<wpt lat="0.00001" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[day 2 end; length = 0.003 km; duration = 0:02:00 h; max speed = 0 km/h; min altitude = 5 m; max altitude = 8 m]</name></wpt>
+<wpt lat="0.00001" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[day 2 end; length = 0.003 km; duration = 0:02:00 h; max speed = 0 km/h; min altitude = 5 m; max altitude = 8 m]</name><sym>emoji--🛌</sym></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[INFO: after end of base input; start alternative]</name></wpt>
-<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[end; total length = 0.236 km; gross duration = 1:25:00 h; total moving time = 0:00:02 h; total average moving speed = 2.0 km/h; max speed = 2 km/h; min altitude = 0 m; max altitude = 8 m]</name></wpt>
+<wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[end; total length = 0.236 km; gross duration = 1:25:00 h; total moving time = 0:00:02 h; total average moving speed = 2.0 km/h; max speed = 2 km/h; min altitude = 0 m; max altitude = 8 m]</name><sym>emoji-⏹️</sym></wpt>
 <trk>
 <name>test_merge</name>
 <cmt>
