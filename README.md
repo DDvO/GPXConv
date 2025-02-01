@@ -43,6 +43,7 @@ Command-line options:
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
   -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
+  -tz <hours>                  - offset from UTC (timezone+DST) for -days, default taken from system
   -split <basename>            - produce GPX files per day or segment, with name <basename>_<i>.gpx
   -lean_stat_wpts              - only one stat. wpt per segment/day with data except ascent/descent
   -info_wpts                   - provide info points also in the form of waypoints

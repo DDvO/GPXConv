@@ -46,6 +46,7 @@ Command-line options:
   -phases                      - analyze and provide statistics for ascent/descent phases
   -segs [<n>..[<m>][(+|-)<d>]] - add statistics per segment n..m, may adapt indexes +/-d
   -days [<n>..[<m>][(+|-)<d>]] - add statistics per day n..m, may adapt indexes +/-d
+  -tz <hours>                  - offset from UTC (timezone+DST) for -days, default taken from system
   -split <basename>            - produce GPX files per day or segment, with name <basename>_<i>.gpx
   -lean_stat_wpts              - only one stat. wpt per segment/day with data except ascent/descent
   -info_wpts                   - provide info points also in the form of waypoints
@@ -295,6 +296,7 @@ my $min_lon, my $max_lon;
 my ($min_sec, $max_sec);
 my ($min_tim, $max_tim) = ("", ""); # $max_tim is not really used
 
+my ($tz, $sec_offset);
 my ($segs, $days);
 my ($part_start, $part_end, $part_offset);
 my $split;
@@ -847,6 +849,11 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
             ($part_start, $part_end, $part_offset) = ($1, $2, $3); # $part_end < $part_start will lead to empty selection, just like without $opt
             splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
         }
+    } elsif ($opt eq "-tz") {
+        abort("missing value argument for -$opt option") if $#ARGV - $i < 1;
+        abort("cannot parse value argument in '$opt $arg1'") unless looks_like_number($arg1);
+        $tz = $arg1 + 0;
+        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
     } elsif ($opt eq "-split") {
         abort("missing file argument for -$opt option") if $#ARGV - $i < 1;
         $split = $arg1;
@@ -2026,11 +2033,22 @@ for (my $direction, my $prev_sec, my $timediff,
 
     # local inititialization of optional statistics for parts (segements or days)
     my $new_part = 0;
-    $date = $1 if $days && $tim =~ m/^(.*?)T/;
-    $new_part = 1
-        if ($days && ($i == 0 || (defined $date && defined $prev_date
-                                  && $date ne $prev_date))); # assuming that dates, as far as available, are ascending
-    $prev_date = $date if $days;
+    if ($days) {
+        if (defined $tz && !defined $min_sec && defined $sec) {
+            # https://stackoverflow.com/questions/2143528/whats-the-best-way-to-get-the-utc-offset-in-perl
+            use Time::Local;
+            my @t = localtime($sec);
+            my $system_offset_from_UTC_in_seconds = timegm(@t) - timelocal(@t);
+            $sec_offset = $tz * H2S - $system_offset_from_UTC_in_seconds;
+            # more accurate but more involed alternative: https://metacpan.org/pod/Geo::Location::TimeZone
+        }
+        $date = defined $sec ? join("-", (localtime(defined $sec_offset ? $sec + $sec_offset : $sec))[3,4,5]) : undef;
+        $new_part = 1
+            if $i == 0
+            # assuming that dates, as far as available, are ascending:
+            || (defined $date && defined $prev_date && $date ne $prev_date);
+        $prev_date = $date if $days;
+    }
     $new_part = 1 if $segs && $SEG[$i];
     $DURATION[$part] = diff_defined($part_end_sec, $part_start_sec)
         if defined $part && ($new_part || $i == $#TIM); # implies $i != 0
