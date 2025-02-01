@@ -2633,6 +2633,10 @@ sub insert_points_in_gaps {
 ### generate final output
 
 my $final_text = "";
+$final_text .=
+    "$ascent__phases_suppressed ascent phases and $descent_phases_suppressed descent phases " .
+    "not reported because they are below the threshold of +/-$PHASES_REPORT_THRESHOLD m\n"
+    if $phases && $PHASES_REPORT_THRESHOLD > ELE_THRESHOLD;
 $final_text .= "average deviation between recorded and computed speed (for points at most ".MAX_TIMEDIFF_RECORDED_SPEED." seconds apart) = ".
     int(0.5 + 100 * $sum_speed_deviation / ($sum_speed / 2))." %\n" if $sum_speed;
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
@@ -2661,20 +2665,14 @@ $final_text .= points($num_removals_diff )." ignored due to time difference less
 $final_text .= plural($num_ext_below, "extension element")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
 $final_text .= plural($num_ext_above, "extension element")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
 $final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "");
-# info on points inserted due to time gaps may be added later at this position
-$final_text .= "elevation ". (!GEOID_ELE_CORRECTION ? "not corrected" :
-                               "corrected by " . ($found_corr ? "last retrieved" : "assumed") . " geoid height = $ele_corr m") . "\n";
 
 my $num_sanitized = $num_removals_ele + $num_removals_dir + $num_removals_spd + $num_removals_acc
     + $num_removals_dec + $num_removals_gain + $num_removals_loss + $num_removals_diff;
 my $sanitized_text = $num_sanitized ? plural($num_sanitized, "sanitized trackpoint")." nor " : "";
-my $stats = "GPXConv statistics (not including $sanitized_text"."periods between segments)\n"
-  . $stat_points
-  .($phases && $PHASES_REPORT_THRESHOLD > ELE_THRESHOLD ?
-    "$ascent__phases_suppressed ascent phases and $descent_phases_suppressed descent phases " .
-    "not reported because they are below the threshold of +/-$PHASES_REPORT_THRESHOLD m\n" : "")
-    .$final_text.
-"GPXConv statistics end";
+my $stats_start = "GPXConv statistics (not including $sanitized_text"."periods between segments)\n";
+my $stats_end = "elevation ". (!GEOID_ELE_CORRECTION ? "not corrected" :
+                               "corrected by " . ($found_corr ? "last retrieved" : "assumed") . " geoid height = $ele_corr m") . "\n"
+    . "GPXConv statistics end";
 
 ## expand metadata in trackpoints
 for (my $i = 0; $i <= $#TIM; $i++) {
@@ -2720,14 +2718,16 @@ for (my $i = 0; $i <= $#TIM; $i++) {
 abort("FATAL: end of track header not found") unless $HEAD =~ m/<trk>(.*?)<trkseg>/s;
 # add preliminarily empty comment in track; # if not already existing:
 abort("FATAL: end of track header not found") unless $1 =~ m/<cmt>/ || $HEAD =~ s|(<trk>(\s*<name>.*?</name>)?)|$1\n<cmt></cmt>|s;
-$HEAD =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
 # HEAD includes <gpx> <trk> <trkseg>
 
 
 ### write final output
 
 sub print_part {
-    my ($out, $p, $head, $wpts) = @_;
+    my ($out, $p, $head, $stat_points, $wpts) = @_;
+    my $stats = $stats_start.$stat_points.$final_text.$stats_end;
+    info($stats) if $p == $all;
+    $head =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
     print $out ($head =~ s/(<trk>)/$wpts$1/sr); # prepend collected and computed waypoints to track
 
     for (my $i = $PART_START_INDEX[$p]; $i <= $PART_END_INDEX[$p]; $i++) {
@@ -2759,17 +2759,15 @@ if ($split) {
             $part_wpts .= $wpt_str if $WIDX[$j] != -1;
             $j++;
         }
-        my $part_name = part_number('0', $p);
-        # TODO possibly adapt metadata
         my $part_head = $HEAD;
+        my $part_name = part_number('0', $p);
         $part_head =~ s|(<trk>)|$1<name><![CDATA[$split]]></name>|s unless $part_head =~ m|<trk>\s*<name>|s;
         $part_head =~ s|(<trk>.*?)(\]*>?</name>)|$1 $part_name$2|s;
-        # TODO possibly adapt cmt with statistics
 
         my $file_name = $split."_$part_name.gpx";
         my $out;
         open($out, "> $file_name") || abort("FATAL: cannot open spilt GPX output file $file_name: $.");
-        print_part($out, $p, $part_head, $part_wpts);
+        print_part($out, $p, $part_head, $stat_points, $part_wpts); # TODO adapt $stat_points
     }
 } else {
     for (my $j = 0; $j <= $#WTIM; $j++) {
@@ -2777,20 +2775,15 @@ if ($split) {
     }
 }
 
+my $all_head = $HEAD;
 if ($insert_points) {
     my ($num_inserted_trkpts, $num_duplicated_trkpts) = insert_points_in_gaps();
     $PART_END_INDEX[$all] = $#TIM; # update after likely change due to insertions
-
-    my $info = points($num_inserted_trkpts)." inserted ".
+    $final_text .= points($num_inserted_trkpts)." inserted ".
         (INSERT_SEGMENT ? "and ".points($num_duplicated_trkpts)." duplicated " : "").
-        "due to time gaps > ".INSERTION_MAX_GAP." seconds" ;
-    abort("FATAL: failed adding info to stats on points inserted due to time gaps")
-        unless $stats =~ s/(\nelevation [^\n]*\nGPXConv statistics end)/\n$info$1/s;
-    abort("FATAL: failed adding info to HEAD on points inserted due to time gaps")
-        unless $HEAD  =~ s/(\nelevation [^\n]*\nGPXConv statistics end)/\n$info$1/s;
+        "due to time gaps > ".INSERTION_MAX_GAP." seconds\n" ;
 }
 print_line(""); # empty line before stats
-info($stats);
-print_part($out, $all, $HEAD, $all_wpts);
+print_part($out, $all, $all_head, $stat_points, $all_wpts);
 
 exit 0;
