@@ -2323,7 +2323,7 @@ $HEAD =~ s/ *$//;
 
 # statistics must be generated before interpolating, which may shift indexes
 
-my $stat_points = "";
+my @STAT; # collecting texts for all statistics points
 add_stat_point(0, "start", "", "emoji-▶️");
 
 sub wpt {
@@ -2344,10 +2344,12 @@ sub point {
 }
 
 sub add_stat_point { # generate trackpoint-related statistics output and waypoint with same data
-    my ($i, $txt, $extra, $sym) = @_; # $i is index of trackpoint containing the location and time
+    my ($i, $txt, $extra, $sym, $part) = @_; # $i is index of trackpoint containing the location and time
     return unless defined $i;
 
-    $stat_points .= point($i, $txt);
+    my $point_txt = point($i, $txt);
+    $STAT[$all ] .= $point_txt;
+    $STAT[$part] .= $point_txt if defined $part && $part != $all;
     add_stat_wpt(@_) if !$lean_stat_wpts || defined $extra;
 }
 
@@ -2399,7 +2401,10 @@ sub part_number {
     my ($char, $i) = @_;
     return ($char x (length($part_last + $part_offset) - length($i + $part_offset))).($i + $part_offset);
 }
-for (my $i = $all; $i <= $part_last; $i++) {
+
+for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
+    $STAT[$i] = $overall_stat if $i != $all; # prepend overall statistics to all parts
+
     my $Part = $i == $all ? "" : ($segs ? "segment" : "day")." ".part_number(' ', $i)." ";
     my $Min_ele      = defined $MIN_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]) : "";
     my $Max_ele      = defined $MAX_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]) : "";
@@ -2469,20 +2474,21 @@ for (my $i = $all; $i <= $part_last; $i++) {
         $part_end_text .= "\ntotal biking energy        = ".(sprintf "%.0f", $sum_energy / 1000)." kJ";
         $part_end_text .= ", leaving out ".points($num_energy_missing)." where time or altitude information is missing or at start or end of merge sections" if $num_energy_missing;
     }
-    add_stat_point($MAX_SPD_INDEX  [$i], $Part.$max_spd_text , undef, "emoji-⏩");
-    add_stat_point($MIN_ELE_INDEX  [$i], $Part.$min_ele_text , undef, "emoji-🔽");
-    add_stat_point($MAX_ELE_INDEX  [$i], $Part.$max_ele_text , undef, "emoji-🔼");
-    add_stat_point($LAST_GAIN_INDEX[$i], $Part.$ascent_text  , undef, "emoji-⬆️");
-    add_stat_point($LAST_LOSS_INDEX[$i], $Part.$descent_text , undef, "emoji-⬇️");
-    add_stat_point($MAX__ASC_INDEX [$i], $Part.$max__asc_text, undef, "emoji-↗️");
-    add_stat_point($MAX_DESC_INDEX [$i], $Part.$max_desc_text, undef, "emoji-↘️");
-    add_stat_point($MAX_GAIN_INDEX [$i], $Part.$max_gain_text, undef, "emoji-⏫");
-    add_stat_point($MAX_LOSS_INDEX [$i], $Part.$max_loss_text, undef, "emoji-⏫");
+    add_stat_point($MAX_SPD_INDEX  [$i], $Part.$max_spd_text , undef, "emoji-⏩", $i);
+    add_stat_point($MIN_ELE_INDEX  [$i], $Part.$min_ele_text , undef, "emoji-🔽", $i);
+    add_stat_point($MAX_ELE_INDEX  [$i], $Part.$max_ele_text , undef, "emoji-🔼", $i);
+    add_stat_point($LAST_GAIN_INDEX[$i], $Part.$ascent_text  , undef, "emoji-⬆️", $i);
+    add_stat_point($LAST_LOSS_INDEX[$i], $Part.$descent_text , undef, "emoji-⬇️", $i);
+    add_stat_point($MAX__ASC_INDEX [$i], $Part.$max__asc_text, undef, "emoji-↗️", $i);
+    add_stat_point($MAX_DESC_INDEX [$i], $Part.$max_desc_text, undef, "emoji-↘️", $i);
+    add_stat_point($MAX_GAIN_INDEX [$i], $Part.$max_gain_text, undef, "emoji-⏫", $i);
+    add_stat_point($MAX_LOSS_INDEX [$i], $Part.$max_loss_text, undef, "emoji-⏫", $i);
     $LAT[$#TIM] += 0.00001 if $i != $all && $i == $part_last;    # make sure that last "part end" wpt is placed separately
     add_stat_point($PART_END_INDEX [$i], $part_end_text,
                    $lean_stat_wpts ? ("; $max_spd_text; $min_ele_text; $max_ele_text") =~ s/\s+/ /gr : "",
-                   "emoji-" . ($i == $all ? "⏹️" : $days ? "-🛌" : "🎬"));
+                   "emoji-" . ($i == $all ? "⏹️" : $days ? "-🛌" : "🎬"), $i);
     $LAT[$#TIM] -= 0.00001 if $i != $all && $i == $part_last;    # make sure that last "part end" wpt is placed separately
+    $overall_stat = $STAT[$all] if $i == $all;
 }
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
@@ -2724,8 +2730,8 @@ abort("FATAL: end of track header not found") unless $1 =~ m/<cmt>/ || $HEAD =~ 
 ### write final output
 
 sub print_part {
-    my ($out, $p, $head, $stat_points, $wpts) = @_;
-    my $stats = $stats_start.$stat_points.$final_text.$stats_end;
+    my ($out, $p, $head, $wpts) = @_;
+    my $stats = $stats_start.$STAT[$p].$final_text.$stats_end;
     info($stats) if $p == $all;
     $head =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
     print $out ($head =~ s/(<trk>)/$wpts$1/sr); # prepend collected and computed waypoints to track
@@ -2767,7 +2773,7 @@ if ($split) {
         my $file_name = $split."_$part_name.gpx";
         my $out;
         open($out, "> $file_name") || abort("FATAL: cannot open spilt GPX output file $file_name: $.");
-        print_part($out, $p, $part_head, $stat_points, $part_wpts); # TODO adapt $stat_points
+        print_part($out, $p, $part_head, $part_wpts);
     }
 } else {
     for (my $j = 0; $j <= $#WTIM; $j++) {
@@ -2784,6 +2790,6 @@ if ($insert_points) {
         "due to time gaps > ".INSERTION_MAX_GAP." seconds\n" ;
 }
 print_line(""); # empty line before stats
-print_part($out, $all, $all_head, $stat_points, $all_wpts);
+print_part($out, $all, $all_head, $all_wpts);
 
 exit 0;
