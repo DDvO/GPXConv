@@ -2444,7 +2444,7 @@ for (my $i = $all; $i <= $part_last; $i++) {
     my $max_loss_text = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # relevant only if defined $MAX_LOSS_INDEX[$i]
     my $part_end_text = $Part."end";
     my $sep = $i == $all ? "\ntotal" : ";";
-    $part_end_text .= "$sep length ".($i == $all ? "              ": "")."= ".dis_string($SUM_DIS[$i]) if defined $SUM_DIS[$i];
+    $part_end_text .= "$sep length ".($i == $all ? "              ": "     ")."= ".dis_string($SUM_DIS[$i]) if defined $SUM_DIS[$i];
     if ($i == $all) {
         $part_end_text .= "\ngross duration             = ".timediff_string(diff_defined($max_sec, $min_sec) // 0) if defined $SUM_DIS[$all];
     } else {

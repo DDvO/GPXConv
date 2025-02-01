@@ -27,13 +27,13 @@ At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T23:00:00Z: day 1 min altitu
 At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:22:00Z: day 1 max altitude     =     5 m
 At lat,lon,ele = 0.00103,1.00000,4 time = 2000-01-01T23:20:00Z: day 1 max  ascent (slope) =  1 %
 At lat,lon,ele = 0.00104,1.00000,4 time = 2000-01-01T23:20:02Z: day 1 max  ascent rate =  +180 m/h at 2 km/h
-At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:22:00Z: day 1 end; length = 0.233 km; duration = 0:22:00 h; moving time = 0:00:02 h; average moving speed = 2.0 km/h
+At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-01T23:22:00Z: day 1 end; length      = 0.233 km; duration = 0:22:00 h; moving time = 0:00:02 h; average moving speed = 2.0 km/h
 At lat,lon,ele = 0.00000,1.00000,7 time = 2000-01-02T00:24:00Z: day 2 max speed        =     0 km/h
 At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-02T00:22:00Z: day 2 min altitude     =     5 m
 At lat,lon,ele = 0.00000,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 max altitude     =     8 m
 At lat,lon,ele = 0.00000,1.00000,5 time = 2000-01-02T00:22:00Z: day 2 max  ascent (slope) =  1 %
 At lat,lon,ele = 0.00000,1.00000,7 time = 2000-01-02T00:24:00Z: day 2 max  ascent rate =   +51 m/h at 0 km/h
-At lat,lon,ele = 0.00001,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; length = 0.003 km; duration = 0:02:00 h
+At lat,lon,ele = 0.00001,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; length      = 0.003 km; duration = 0:02:00 h
 3 sections merged from alternative input
 9 merged points
 1 regular point skipped during merge
