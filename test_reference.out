@@ -42,6 +42,7 @@ newlines are kept</extensions>
 <wpt lat="45.90000" lon="4.30000"><ele> 490</ele><time>2001-01-02T15:00:00Z</time><name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type><extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 max altitude = 90 m]</name></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 total ascent = +100 m; avg rate unknown due to missing time]</name></wpt>
+<wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 max descent (slope) = 0 %]</name></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 end; length = 27.090 km]</name></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z 4th ascent = +100 m; distance =27.090 km]</name></wpt>
 <wpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><name>[2001-01-02T18:00:00Z max speed = 10 km/h]</name></wpt>
@@ -96,6 +97,7 @@ At lat,lon,ele = 45.70000,4.10000, -10 time = NONE                : segment 104 
 At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 max altitude     =    90 m
 At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 total  ascent    =  +100 m; avg rate unknown due to missing time
 At lat,lon,ele = 45.79996,4.20000,  40 time = NONE                : segment 104 max  ascent (slope) =  0 %
+At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 max descent (slope) =  0 %
 At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 end; length      = 27.090 km
 At lat,lon,ele = 44.00000,2.00000,  20 time = 2001-01-01T11:30:00Z: 1st descent   =   -30  m;   distance   = 0.030 km; duration = 1:30:00 h
 At lat,lon,ele = 44.00000,2.00000,  40 time = 2001-01-01T10:30:00Z: 1st max speed =     0 km/h; avg speed  =    0 km/h

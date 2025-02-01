@@ -2212,8 +2212,8 @@ for (my $direction, my $prev_sec, my $timediff,
         }
         my $rate = $RAT[$i];
         if ($rate ne "" && !section($i)) {
-            set_max(\@MAX_GAIN, \@MAX_GAIN_INDEX, $rate, $i, $all, $part) if $rate > 0;
-            set_min(\@MAX_LOSS, \@MAX_LOSS_INDEX, $rate, $i, $all, $part) if $rate < 0;
+            set_max(\@MAX_GAIN, \@MAX_GAIN_INDEX, $rate, $i, $all, $part) if $rate >= 0;
+            set_min(\@MAX_LOSS, \@MAX_LOSS_INDEX, $rate, $i, $all, $part) if $rate <= 0;
         }
     }
 }
@@ -2412,13 +2412,19 @@ for (my $i = $all; $i <= $part_last; $i++) {
         $Max_loss_spd = substr($Max_loss_spd, 1);
     }
 
+    # make sure to report max ascent & descent slopes always pairwise
+    ($MAX__ASC[$i], $MAX__ASC_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX__ASC_INDEX[$i] && defined $MAX_DESC_INDEX[$i];
+    ($MAX_DESC[$i], $MAX_DESC_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX_DESC_INDEX[$i] && defined $MAX__ASC_INDEX[$i];
     my $Max__asc = sprintf SLOPE_PRECISION, $MAX__ASC[$i] // 0; # relevant only if defined $MAX__ASC_INDEX[$i]
     my $Max_desc = sprintf SLOPE_PRECISION, $MAX_DESC[$i] // 0; # relevant only if defined $MAX_DESC_INDEX[$i]
-    $Max_desc =~ s/\+0/-0/;
+    $Max_desc =~ s/\+0/0/;
 
+    # make sure to report max ascent & descent rates always pairwise
+    ($MAX_GAIN[$i], $MAX_GAIN_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX_GAIN_INDEX[$i] && defined $MAX_LOSS_INDEX[$i];
+    ($MAX_LOSS[$i], $MAX_LOSS_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX_LOSS_INDEX[$i] && defined $MAX_GAIN_INDEX[$i];
     my $Max_gain = sprintf RAT_PRECISION, $MAX_GAIN[$i] // 0; # relevant only if defined $MAX_GAIN_INDEX[$i]
     my $Max_loss = sprintf RAT_PRECISION, $MAX_LOSS[$i] // 0; # relevant only if defined $MAX_LOSS_INDEX[$i]
-    $Max_loss =~ s/\+0/-0/;
+    $Max_loss =~ s/\+0/0/;
 
     #my $Avg_gain=sprintf RAT_PRECISION, $avg_gain;
     sub sum_avg_rate {
@@ -2438,10 +2444,12 @@ for (my $i = $all; $i <= $part_last; $i++) {
     my $max_ele_text  = "max altitude     = $Max_ele m";       # may use "" if not defined
     my $ascent_text   = "total  ascent    = $text__ascent";
     my $descent_text  = "total descent    = $text_descent";
-    my $max__asc_text = "max  ascent (slope) = $Max__asc %"                     ; # relevant only if defined $MAX__ASC_INDEX[$i]
-    my $max_desc_text = "max descent (slope) = $Max_desc %"                     ; # relevant only if defined $MAX_DESC_INDEX[$i]
-    my $max_gain_text = "max  ascent rate = $Max_gain m/h at $Max_gain_spd km/h"; # relevant only if defined $MAX_GAIN_INDEX[$i]
-    my $max_loss_text = "max descent rate = $Max_loss m/h at $Max_loss_spd km/h"; # relevant only if defined $MAX_LOSS_INDEX[$i]
+    my $max__asc_text = "max  ascent (slope) = $Max__asc %";   # relevant only if defined $MAX__ASC_INDEX[$i]
+    my $max_desc_text = "max descent (slope) = $Max_desc %";   # relevant only if defined $MAX_DESC_INDEX[$i]
+    my $max_gain_text = "max  ascent rate = $Max_gain m/h".
+        ($Max_gain_spd eq "" ? "" : " at $Max_gain_spd km/h"); # relevant only if defined $MAX_GAIN_INDEX[$i]
+    my $max_loss_text = "max descent rate = $Max_loss m/h".
+        ($Max_loss_spd eq "" ? "" : " at $Max_loss_spd km/h"); # relevant only if defined $MAX_LOSS_INDEX[$i]
     my $part_end_text = $Part."end";
     my $sep = $i == $all ? "\ntotal" : ";";
     $part_end_text .= "$sep length ".($i == $all ? "              ": "     ")."= ".dis_string($SUM_DIS[$i]) if defined $SUM_DIS[$i];
