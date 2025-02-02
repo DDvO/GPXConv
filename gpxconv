@@ -613,8 +613,8 @@ sub abort_trkpt {
 
 sub print_trkpt_i {
     my $i    = $_[0];
-    my $head = $_[1];    # may be empty
-    my $tail = $_[2];    # may be empty
+    my $head = $_[1]; # may be empty
+    my $tail = $_[2]; # may be empty
     $tail = " ".$tail if $tail && !($tail =~ m/^;/);
     my ($lati, $long, $elev, $t) =
       $i < 0
@@ -865,7 +865,7 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
     } elsif ($opt eq "-merge") {
         abort("missing file argument for -$opt option") if $#ARGV - $i < 1;
         $merge = $arg1;
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-segs" || $opt eq "-days") {
         if ($opt eq "-segs") {
             abort("cannot use both -days and -$opt option") if $days;
@@ -878,17 +878,17 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
             abort("argument '$arg1' of -$opt option is not of the form <n>..[<m>][(+|-)<d>] with natural numbers n, m, and integer d")
             unless $arg1 =~ m/^(\d+)\.\.(\d+)?([-+]\d+)?+$/ && $1 > 0;
             ($part_start, $part_end, $part_offset) = ($1, $2, $3); # $part_end < $part_start will lead to empty selection, just like without $opt
-            splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+            splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
         }
     } elsif ($opt eq "-tz") {
         abort("missing value argument for -$opt option") if $#ARGV - $i < 1;
         abort("cannot parse value argument in '$opt $arg1'") unless looks_like_number($arg1);
         $tz = $arg1 + 0;
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-split") {
         abort("missing file argument for -$opt option") if $#ARGV - $i < 1;
         $split = $arg1;
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-lean_stat_wpts") {
         $lean_stat_wpts = 1;
     } elsif ($opt eq "-info_wpts") {
@@ -898,42 +898,42 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
     } elsif ($opt eq "-cmt_wpts") {
         abort("missing file argument for -$opt option") if $#ARGV - $i < 1;
         $cmt_wpts = $arg1;
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-src_wpts") {
         abort("missing file argument for -$opt option") if $#ARGV - $i < 1;
         $src_wpts = $arg1;
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-weight") {
         abort("missing value argument for -$opt option") if $#ARGV - $i < 1;
         abort("cannot parse value argument in '$opt $arg1'") unless looks_like_number($arg1);
         $weight = $arg1 + 0;
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-begin" || $opt eq "-end") {
         abort("missing time argument for $opt option") if $#ARGV - $i < 1;
         my $sec = str_to_epoch($arg1);
         abort("cannot parse time argument in '$opt $arg1'") unless defined $sec;
         $begin_sec = $sec if $opt eq "-begin";
         $end_sec   = $sec if $opt eq "-end";
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-resolution") {
         abort("missing number of seconds argument for $opt option") if $#ARGV - $i < 1;
         abort("illegal natural number argument in '$opt $arg1'") unless $arg1 =~ m/^\d+$/;
         $min_timediff_parsing = $arg1 + 0;
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-max" || $opt eq "-min") {
         abort("missing element name argument for $opt option") if $#ARGV - $i < 1;
         abort("missing limit argument for -$opt option") if $#ARGV - $i < 2;
         abort("cannot parse limit argument in '$opt $arg1 $arg2'") unless looks_like_number($arg2);
         ($max_elem, $max_elem_limit) = ($arg1, $arg2 + 0) if $opt eq "-max";;
         ($min_elem, $min_elem_limit) = ($arg1, $arg2 + 0) if $opt eq "-min";;
-        splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
+        splice @ARGV, $i + 1, 2; # remove from ARGV the option arguments
     } elsif ($opt eq "-max_ext" || $opt eq "-min_ext") {
         abort("missing extension name argument for $opt option") if $#ARGV - $i < 1;
         abort("missing limit argument for -$opt option") if $#ARGV - $i < 2;
         abort("cannt parse limit argument in '$opt $arg1 $arg2'") unless looks_like_number($arg2);
         ($max_ext, $max_ext_limit) = ($arg1, $arg2 + 0) if $opt eq "-max_ext";
         ($min_ext, $min_ext_limit) = ($arg1, $arg2 + 0) if $opt eq "-min_ext";
-        splice @ARGV, $i + 1, 2;    # remove from ARGV the option arguments
+        splice @ARGV, $i + 1, 2; # remove from ARGV the option arguments
     } elsif ($opt eq "-prune_wpts") {
         $prune_wpts = 1;
     } elsif ($opt eq "-prune_cmts") {
@@ -949,16 +949,16 @@ for (my $i = 0; $#ARGV - $i >= 0;) {
      # not checking for operlap with shell-level redirection of STDOUT using '>'
         abort("missing outfile argument for -o option") if $#ARGV - $i < 1;
         open($out, "> $arg1") || abort("FATAL: cannot open output file $arg1: $.");
-        splice @ARGV, $i + 1, 1;    # remove from ARGV the option argument
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-debug") {
         $debug = 1;
     } elsif ($opt =~ m/^-/) {
         abort("unknown option: $opt");
     } else {
         $i++;
-        next;                   # infile
+        next; # infile
     }
-    splice @ARGV, $i, 1;        # remove from ARGV the option just handled
+    splice @ARGV, $i, 1; # remove from ARGV the option just handled
 }
 if ($prune_exts) {
     warning("-min_ext option has little effect since -prune_exts is given") if $min_ext;
@@ -1107,10 +1107,10 @@ sub read_tracks
             } else {
                 s#(^.*</type>).*#$1\n<trkseg>\n#s; #ignore rest of (header-only) file having no trkpt
             }
-            s#[ \t]+(\r?\n)$#$1#s;    #remove any trailing spaces on line before
+            s#[ \t]+(\r?\n)$#$1#s; # remove any trailing spaces on line before
             s#[ \t]*(<trkseg>)#$1#s;
             $HEAD  = $_ unless $merge; # ignore header of alternative input
-            $state = 1;         # expecting the very first trkpt
+            $state = 1; # expecting the very first trkpt
         } elsif (m#(<gpx[ >])#s) { # processing further GPX header, typically from next file
             ++$num_ignored_hdrs;
             if ($smoothing && m#\r?\nGPXConv statistics (.*?smoothened)(.*?)GPXConv statistics end\r?\n#)
@@ -1121,7 +1121,7 @@ sub read_tracks
                 info_trkpt_i($i - 1, "end of segment at") if $i > 0;
                 info("further track, from file $ARGV");
             }
-            $state = 2 if $state > 2;    # expecting new trkseg
+            $state = 2 if $state > 2; # expecting new trkseg
         } else {
             # when $state == 1 || $state == 2: processing first trkpt in new trkseg
             # when $state == 3: processing further trkpt in trkseg
@@ -1219,8 +1219,8 @@ sub read_tracks
                     if ($prev_tim eq "") {
                         $resolution = " and no previous value available";
                     } elsif (CARRY_OVER_TIME) {
-                        $tim = $prev_tim;    # will become $TIM->[$i]
-                        $sec = $prev_sec;    # will become $SEC->[$i]
+                        $tim = $prev_tim; # will become $TIM->[$i]
+                        $sec = $prev_sec; # will become $SEC->[$i]
                         $flags |= SUBSTITUTED_TIM;
                         $resolution = "; using previous value";
                     } else {
@@ -1229,7 +1229,7 @@ sub read_tracks
                     warn_trkpt("at segment start  ",
                                "no time     ".($resolution =~ / using / ? "was " : "")."given$resolution");
                 }
-            } else {    # state == 3, further (i.e., not the first) point in trkseg
+            } else { # state == 3, further (i.e., not the first) point in trkseg
                 if ($ele eq "" && FILL_MISSING_ELE && ($ele_miss_start || $prev_ele ne "")) { # $prev_avail_ele
                     ($ele_miss_start, $ele_miss_length) = ($i, 0)
                       if !$ele_miss_start; # $i is > 0
@@ -1239,8 +1239,8 @@ sub read_tracks
                 # substitute missing time if posssible using previous time, recorded speed, and distance from previous point
                 if (!defined $sec && defined $prev_sec && $spd ne "" && $dis > 0 && $spd > 0) {
                     my $comp_sec = $prev_sec + $dis / $spd;
-                    $tim = epoch_to_str($comp_sec);    # will become $TIM->[$i]
-                    $sec = $comp_sec;                  # will become $SEC->[$i]
+                    $tim = epoch_to_str($comp_sec); # will become $TIM->[$i]
+                    $sec = $comp_sec;               # will become $SEC->[$i]
                     warn_trkpt("at                ", " no time recognized, " .
                                "filled in using time difference calculated by distance / speed");
                     $FLG->[$i] |= SUBSTITUTED_TIM;
@@ -1256,7 +1256,7 @@ sub read_tracks
             if ($ele ne "" && $ele_miss_start) { # fill in missing altitude
                 my $i_end = $i;
                 if ($state < 3)
-                {    # have been carrying over ele to end of last section
+                { # have been carrying over ele to end of last section
                     $i_end--;
                 } else {   # state == 3, further (i.e., not the first) point in trkseg
                     $ele_miss_length += $dis;
@@ -1285,10 +1285,10 @@ sub read_tracks
                 $ele_miss_start = 0;
             }
             # note: cannot interpolate missing time within stretch of missing altitude with all same lat/lon; would need another pass
-            if ($tim ne "" && $tim_miss_start) {    # fill in missing time by interpolation
+            if ($tim ne "" && $tim_miss_start) { # fill in missing time by interpolation
                 my $i_end = $i;
                 if ($state < 3)
-                {    # have been carrying over time to end of last section
+                { # have been carrying over time to end of last section
                     $i_end--;
                 } else {   # state == 3, further (i.e., not the first) point in trkseg
                     $tim_miss_length += $dis;
@@ -2246,7 +2246,7 @@ $lon_prec_len = max(length(lon_str($max_lon)), length(lon_str($min_lon)));
 
 ## optional elevation correction by geoid height
 
-sub neg_geoid_height {    # potentially $updates $found_corr and $ele_corr
+sub neg_geoid_height { # potentially $updates $found_corr and $ele_corr
     my $lat = $_[0];
     my $lon = $_[1];
     return $ele_corr if !GEOID_ELE_CORRECTION;
@@ -2282,9 +2282,9 @@ sub linear_ele_correction {
       int(($sec - $sec1) / ($sec2 - $sec1) * ($ele2 - $ele1) + $ele1);
 }
 
-sub correct_ele {    # may update $ele_corr; uses $ele_corr
-    my $j = $_[0];    # index of waypoint if >= 0
-    my $i = $_[1];    # otherwise, index of trackpoint or < 0 for none
+sub correct_ele { # may update $ele_corr; uses $ele_corr
+    my $j = $_[0]; # index of waypoint if >= 0
+    my $i = $_[1]; # otherwise, index of trackpoint or < 0 for none
     return "" if $j < 0 && $i < 0;
     my ($lat, $lon, $ele, $sec) =
       $j >= 0
@@ -2321,14 +2321,14 @@ if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' op
       . '" minlon="' . lon_str($min_lon)
       . '" maxlat="' . lat_str($max_lat)
       . '" maxlon="' . lon_str($max_lon) . '"/>';
-    $HEAD =~ s|\r?\n?[ \t]*<bounds .*?/>||sg;                # remove any pre-existing bounds entry
+    $HEAD =~ s|\r?\n?[ \t]*<bounds .*?/>||sg; # remove any pre-existing bounds entry
     abort("FATAL: cannot add <bounds> to header")
         unless $HEAD =~ s|(\r?\n?[ \t]*<extensions>)|$indent$bounds$1|s
         ||     $HEAD =~ s|(\r?\n?[ \t]*</metadata>)|$indent$bounds$1|s;
 
     if ($min_tim ne "") {
         $min_tim = round_tim($min_tim);
-        $HEAD =~ s|\r?\n?[ \t]*<time>.*?</time>||sg;   # remove any pre-existing time entry
+        $HEAD =~ s|\r?\n?[ \t]*<time>.*?</time>||sg; # remove any pre-existing time entry
         abort("FATAL: cannot add <time> to header")
             unless $HEAD =~ s|(\r?\n?[ \t]*<keywords>)|$indent<time>$min_tim</time>$1|s
             ||     $HEAD =~ s|(\r?\n?[ \t]*<bounds[ >])|$indent<time>$min_tim</time>$1|s;
@@ -2467,9 +2467,9 @@ for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
     my $text_descent = sum_avg_rate($SUM_DESCENT[$i], $TIME_DESCENT[$i], $MISSING_DESCENT_TIME[$i]);
     $text_descent =~ s/\+0/-0/g;
 
-    my $max_spd_text  = "max speed        = $Max_spd km/h";    # may use "" if not defined
-    my $min_ele_text  = "min altitude     = $Min_ele m";       # may use "" if not defined
-    my $max_ele_text  = "max altitude     = $Max_ele m";       # may use "" if not defined
+    my $max_spd_text  = "max speed        = $Max_spd km/h"; # may use "" if not defined
+    my $min_ele_text  = "min altitude     = $Min_ele m";    # may use "" if not defined
+    my $max_ele_text  = "max altitude     = $Max_ele m";    # may use "" if not defined
     my $ascent_text   = "total  ascent    = $text__ascent";
     my $descent_text  = "total descent    = $text_descent";
     my $max__asc_text = "max  ascent (slope) = $Max__asc degrees"; # relevant  if defined $MAX__ASC_INDEX[$i]
@@ -2505,11 +2505,11 @@ for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
     add_stat_point($MAX_DESC_INDEX [$i], $Part.$max_desc_text, undef, "emoji-↘️", $i);
     add_stat_point($MAX_GAIN_INDEX [$i], $Part.$max_gain_text, undef, "emoji-⏫", $i);
     add_stat_point($MAX_LOSS_INDEX [$i], $Part.$max_loss_text, undef, "emoji-⏫", $i);
-    $LAT[$#TIM] += 0.00001 if $i != $all && $i == $part_last;    # make sure that last "part end" wpt is placed separately
+    $LAT[$#TIM] += 0.00001 if $i != $all && $i == $part_last; # make sure that last "part end" wpt is placed separately
     add_stat_point($PART_END_INDEX [$i], $part_end_text,
                    $lean_stat_wpts ? ("; $max_spd_text; $min_ele_text; $max_ele_text") =~ s/\s+/ /gr : "",
                    "emoji-" . ($i == $all ? "⏹️" : $days ? "-🛌" : "🎬"), $i);
-    $LAT[$#TIM] -= 0.00001 if $i != $all && $i == $part_last;    # make sure that last "part end" wpt is placed separately
+    $LAT[$#TIM] -= 0.00001 if $i != $all && $i == $part_last; # make sure that last "part end" wpt is placed separately
     $overall_stat = $STAT[$all] if $i == $all;
 }
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
