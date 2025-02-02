@@ -2568,7 +2568,7 @@ sub insert_points_in_gaps {
         my $diff_time = diff_defined($sec, $SEC[$i - 1]) // 0;
         my $dis_text = dis_str(DIS_PRECISION2, $dis);
         ## debug_log "at ".point_str($i).", considering gap of $diff_time seconds and $dis_text";
-        if ($diff_time > INSERTION_MAX_GAP) {
+        if (int($diff_time) > INSERTION_MAX_GAP) {
             # note that this is done only between adjacent track points that both have time information
             my $lin_spd = $dis / $diff_time;
             my $gap_text = "gap = ".timediff_str("%2d", $diff_time)." over $dis_text";

@@ -58,7 +58,6 @@ WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO
 WARNING: no time         at <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME             ; cannot calculate energy here
 WARNING: no time     before <trkpt lat="45.90"     lon="4.30"     <ele>  90   2001-01-02T15:00:00Z; cannot calculate energy here
 WARNING: no time         at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME             ; cannot calculate energy here
-INFO   : before <trkpt lat="44.00010"  lon="2.0"      <ele>40.000 2001-01-01T10:30:00Z gap =  0:30:00 h over  0.015 km; inserting 0 points each 0:30:00 h
 WARNING: before <trkpt lat="-0.081"    lon="0"        <ele> 500   2001-01-02T16:00:00Z gap =  1:00:00 h over 5127.920 km; not inserting points because linear speed would be 5128 km/h, higher than 10
 INFO   : before <trkpt lat="-0.009"    lon="0"        <ele> 500   2001-01-02T18:00:00Z gap =  2:00:00 h over  8.000 km; inserting 3 points each 0:30:00 h
 INFO   : before <trkpt lat="0.000"     lon="0"        <ele> 525   2001-01-02T18:30:01Z gap =  0:30:01 h over  1.000 km; inserting 1 point each 0:15:01 h
