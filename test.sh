@@ -16,11 +16,12 @@ gpxconv $GPXCONV_TEST_ARGS test.gpx  >test.out  2>test.log;
     diff test{_reference,}.out;
     diff test{_reference,}.log
 gpxconv $GPXCONV_TEST_ARGS test.out  >test.out2 2>test.log2
-# 3rd iteration should not lead to changes compared to 2nd one:
-echo -e "\n### test, after two iterations #####################################"
 gpxconv $GPXCONV_TEST_ARGS test.out2 >test.out3 2>test.log3;
-    diff test.out{2,3};
-    diff test.log{2,3}
+# 4th iteration should not lead to changes compared to 2nd one:
+echo -e "\n### test, after three iterations #####################################"
+gpxconv $GPXCONV_TEST_ARGS test.out3 >test.out4 2>test.log4;
+    diff test.out{3,4};
+    diff test.log{3,4}
 
 echo -e "\n### test_sanitization ##############################################"
 gpxconv -src_wpts corrected test_sanitization.gpx >test_sanitization.out 2>test_sanitization.log;
