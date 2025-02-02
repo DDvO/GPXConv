@@ -45,10 +45,10 @@ newlines are kept</extensions>
 
   <trkseg>
     <trkpt lat="44"  lon="2"><cmt>ele=50.00 and time=2001-01-01T10:00:00Z to be carried over from previous segment</cmt></trkpt>
-    <trkpt lat="44" lon="2.0"> <cmt>elevation 40 and time 2001-01-01T10:30:00Z to be interpolated</cmt></trkpt>
-    <trkpt lat="44" lon="2.00"> <time>2001-01-01T11:00:00Z</time><cmt>elevation 30 to be interpolated; time gap too short to be filled</cmt></trkpt>
-    <trkpt lat="44" lon="2.000"><ele>20.00</ele><time>2001-01-01T11:30Z</time><cmt>first descent that is counted: -30</cmt></trkpt>
-    <trkpt lat="44" lon="2.0000"> <ele>50.00</ele><cmt>time 2001-01-01T11:40:00Z to be interpolated; first ascent 30</cmt></trkpt>
+    <trkpt lat="44.00010" lon="2.0"> <cmt>elevation 40 and time 2001-01-01T10:30:00Z to be interpolated</cmt></trkpt>
+    <trkpt lat="44.00020" lon="2.00"> <time>2001-01-01T11:00:00Z</time><cmt>elevation 30 to be interpolated; time gap too short to be filled</cmt></trkpt>
+    <trkpt lat="44.00030" lon="2.000"><ele>20.00</ele><time>2001-01-01T11:30Z</time><cmt>first descent that is counted: -30</cmt></trkpt>
+    <trkpt lat="44.00060" lon="2.0000"> <ele>50.00</ele><cmt>time 2001-01-01T11:40:00Z to be interpolated; first ascent 30</cmt></trkpt>
     <trkpt lat="44"  lon="2.00000"><cmt>ele=-10 and time=2001-01-01T12:00:00Z to be carried over from next segment; second descent -60</cmt><extensions><keep_before_speed></keep_before_speed></extensions></trkpt>
   </trkseg>
 </trk>
