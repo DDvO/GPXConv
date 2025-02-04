@@ -244,7 +244,7 @@ my @ELE; # or "" if not available
 my @TIM; # or "" if not available
 my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
 my @DIS; # derived from LAT and LON, and ELE if available, also from point before, 0 for first point
-my @SPD; # as recorded or computed (as average since previous point if FLG contains COMPUTED_SPEED), or "" if not available
+my @SPD; # as recorded or computed (average from previous point if FLG contains COMPUTED_SPEED), or "" if not available
 my @CMT; # as given in input but without <cmt> and </cmt> tags, or "" if not available
 my @SRC; # as given in input but without <src> and </src> tags, or "" if not available
 my @FIX; # as given in input but without <fix> and </fix> tags, or "" if not available
@@ -674,7 +674,7 @@ sub recalculate_DIS { my $i = $_[0];
                         $LAT[$i - 1], $LON[$i - 1], $ELE[$i - 1]);
 }
 sub recalculate_SPD { my $i = $_[0];
-    return if $i <= 0 || $SEG[$i] || !($FLG[$i] & COMPUTED_SPEED); # || section($i);
+    return if $i <= 0 || $SEG[$i] || section($i) || !($FLG[$i] & COMPUTED_SPEED);
     my $diff_time = diff_defined($SEC[$i], $SEC[$i - 1]);
     $SPD[$i] = $DIS[$i] / $diff_time if $diff_time;
 }
