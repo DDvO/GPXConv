@@ -722,6 +722,7 @@ sub remove_trkpt {
 #    # max relative error is < 0.027  for latitudes below North Cape
 #}
 my @COS;
+my @SQR;
 sub distance {
     stacktrace() if !defined $_[0] || !defined $_[1] || !defined $_[2] || !defined $_[3] || !defined $_[4] || !defined $_[5];
     my ($lat, $lon, $ele, $lat2, $lon2, $ele2) = @_;
@@ -734,7 +735,10 @@ sub distance {
         ($COS[$rounded_mean_lat] // ($COS[$rounded_mean_lat] = cos(deg2rad($approx_mean_lat))));
     # my $diff_lon = ($lon * cos(deg2rad($lat)) - $prev_lon * cos(deg2rad($prev_lat))) * METERS_PER_DEGREE_LAT;
     my $diff_ele = diff_nonempty($ele, $ele2) // 0; # assuming no altitude change if no altitude available
-    return sqrt($diff_lat * $diff_lat + $diff_lon * $diff_lon + $diff_ele * $diff_ele);
+    my $sq_dis = $diff_lat * $diff_lat + $diff_lon * $diff_lon + $diff_ele * $diff_ele;
+    # with the following, cache hit rate is around 98% and resulting error is rarely more than a meter:
+    return sqrt($sq_dis) if $sq_dis >= 10000; #  do not cache for distances >= 100 m
+    return $SQR[$sq_dis] // ($SQR[$sq_dis] = sqrt($sq_dis));
 #
 #$distance = Math::Trig::great_circle_distance( #does not account for $diff_ele!
 #						  deg2rad($lon) , deg2rad(90 - $lat ),

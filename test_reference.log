@@ -101,8 +101,8 @@ At lat,lon,ele = 45.79996,4.20000,  40 time = NONE                : segment 104 
 At lat,lon,ele = 45.79996,4.20000,  40 time = NONE                : segment 104 max descent (slope) =  0 degrees
 At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 end; length      = 27.098 km
 At lat,lon,ele = 44.00030,2.00000,  20 time = 2001-01-01T11:30:00Z: 1st descent   =   -30  m;   distance   = 0.045 km; duration = 1:30:00 h
-At lat,lon,ele = 44.00020,2.00000,  30 time = 2001-01-01T11:00:00Z: 1st max speed =     0 km/h; avg speed  =    0 km/h
-At lat,lon,ele = 44.00020,2.00000,  30 time = 2001-01-01T11:00:00Z: 1st max rate  =   -20  m/h; avg rate   =  -20  m/h
+At lat,lon,ele = 44.00010,2.00000,  40 time = 2001-01-01T10:30:00Z: 1st max speed =     0 km/h; avg speed  =    0 km/h
+At lat,lon,ele = 44.00010,2.00000,  40 time = 2001-01-01T10:30:00Z: 1st max rate  =   -20  m/h; avg rate   =  -20  m/h
 At lat,lon,ele = 44.00060,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd ascent    =   +30  m;   distance   = 0.045 km; duration = 0:10:00 h
 At lat,lon,ele = 44.00060,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd max speed =     0 km/h; avg speed  =    0 km/h
 At lat,lon,ele = 44.00060,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd max rate  =  +180  m/h; avg rate   = +180  m/h
