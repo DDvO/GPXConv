@@ -26,12 +26,12 @@ newlines are kept</extensions>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z min altitude = -10 m]</name><sym>emoji-🔽</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z total descent = -90 m; avg rate = -49 m/h]</name><sym>emoji-⬇️</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z max descent (slope) = -21 degrees]</name><sym>emoji-↘️</sym></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z max descent rate = -180 m/h at 0 km/h]</name><sym>emoji-⏫</sym></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z max descent rate = -180 m/h at 0 km/h]</name><sym>emoji-⏬</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 max speed = 0 km/h]</name><sym>emoji-⏩</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 min altitude = -10 m]</name><sym>emoji-🔽</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 total descent = -90 m; avg rate = -49 m/h]</name><sym>emoji-⬇️</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 max descent (slope) = -21 degrees]</name><sym>emoji-↘️</sym></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 max descent rate = -180 m/h at 0 km/h]</name><sym>emoji-⏫</sym></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 max descent rate = -180 m/h at 0 km/h]</name><sym>emoji-⏬</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 end; length = 0.179 km; duration = 2:00:00 h]</name><sym>emoji-🎬</sym></wpt>
 <wpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 103 min altitude = -10 m]</name><sym>emoji-🔽</sym></wpt>
 <wpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 103 max altitude = -10 m]</name><sym>emoji-🔼</sym></wpt>

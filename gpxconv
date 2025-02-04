@@ -2504,7 +2504,7 @@ for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
     add_stat_point($MAX__ASC_INDEX [$i], $Part.$max__asc_text, undef, "emoji-↗️", $i);
     add_stat_point($MAX_DESC_INDEX [$i], $Part.$max_desc_text, undef, "emoji-↘️", $i);
     add_stat_point($MAX_GAIN_INDEX [$i], $Part.$max_gain_text, undef, "emoji-⏫", $i);
-    add_stat_point($MAX_LOSS_INDEX [$i], $Part.$max_loss_text, undef, "emoji-⏫", $i);
+    add_stat_point($MAX_LOSS_INDEX [$i], $Part.$max_loss_text, undef, "emoji-⏬", $i);
     $LAT[$#TIM] += 0.00001 if $i != $all && $i == $part_last; # make sure that last "part end" wpt is placed separately
     add_stat_point($PART_END_INDEX [$i], $part_end_text,
                    $lean_stat_wpts ? ("; $max_spd_text; $min_ele_text; $max_ele_text") =~ s/\s+/ /gr : "",
