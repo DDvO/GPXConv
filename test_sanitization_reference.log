@@ -3,7 +3,7 @@ INFO   : first   segment at <trkpt lat="0.0" lon="1.0" <ele>0 1969-12-31T23:30:0
 INFO   : end of  segment at <trkpt lat="0.0" lon="1.0"     <ele>   0    1970-01-01T00:30:00Z
 INFO   : further segment at <trkpt lat="0.00016" lon="1.00048" <ele>   1    1970-01-01T00:40:00Z after a time gap of 0:10:00 h and 0.056 km
 INFO   : end of  segment at <trkpt lat="0.00016" lon="1.00803" <ele>   1    1970-01-01T00:41:01.5Z
-INFO   : further segment at <trkpt lat="0.0000"  lon="1"       <ele>  45    1970-01-01T00:45:00Z   after a time gap of 0:03:59 h and 0.893 km
+INFO   : further segment at <trkpt lat="0.0000"  lon="1"       <ele>  45    1970-01-01T00:45:00Z   after a time gap of 0:03:59 h and 0.894 km
 INFO   : end of  segment at <trkpt lat="0.0007"  lon="0.9997"  <ele>  15    1970-01-01T00:45:10Z
 INFO   : further segment at <trkpt lat="0"       lon="1"       <ele>  90    1970-01-01T00:48:00Z   after a time gap of 0:02:50 h and 0.113 km
 INFO   : end of  segment at <trkpt lat="0"       lon="1"       <ele>  00    1970-01-01T00:48:24Z

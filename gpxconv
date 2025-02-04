@@ -166,7 +166,7 @@ use constant DEFAULT_ELE_CORRECTION => 0; # 47; # if used should be -(average ge
 use constant H2S            =>    3600 ; # factor for converting hours to seconds
 use constant M2KM           =>    0.001; # factor for converting m to km
 use constant MPS2KMPH       =>H2S * M2KM;# factor for converting m/s to km/h
-use constant METERS_PER_DEGREE_LAT => 10000 * 1000 / 90; # on Earth, by definition
+use constant METERS_PER_DEGREE_LAT => 111133; # at 45 degrees, cf. https://en.wikipedia.org/wiki/Latitude#Length_of_a_degree_of_latitude
 use constant LAT_PRECISION  =>   "%.5f"; #  latitude resolution = 0.00001 degrees (<= 1.11 meters)
 use constant LON_PRECISION  =>   "%.5f"; # longitude resolution = 0.00001 degrees (<= 1.11 meters)
 use constant ELE_PRECISION  =>  "%5.0f"; #  altitude resolution = 1 meters
