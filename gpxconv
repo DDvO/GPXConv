@@ -235,6 +235,7 @@ my $prune_exts       = PRUNE_EXTENSIONS;
 my $num_pruned_exts  = 0;
 
 # regular trackpoint data input from infile(s)
+my @TXT; # text (containing trkpt output) to prepend when printing
 my @IGN; # number of points ignored immediately before this one
 my @SEG;
 my @FLG;
@@ -2290,6 +2291,12 @@ sub linear_ele_correction {
       int(($sec - $sec1) / ($sec2 - $sec1) * ($ele2 - $ele1) + $ele1);
 }
 
+sub corrected_ele {
+    my ($ele, $sec) = @_;
+    return $ele + $ele_corr + linear_ele_correction($sec) if $ele_corr && $ele ne "" && defined $sec;
+    return $ele;
+}
+
 sub correct_ele { # may update $ele_corr; uses $ele_corr
     my $j = $_[0]; # index of waypoint if >= 0
     my $i = $_[1]; # otherwise, index of trackpoint or < 0 for none
@@ -2302,8 +2309,7 @@ sub correct_ele { # may update $ele_corr; uses $ele_corr
     $ele_corr = neg_geoid_height($lat, $lon) if ($j >= 0 || $i == 0 || defined $SEC[$i - 1]) ;
     # do expensive operation only at specific points or beginning of track segment
 
-    $ele += $ele_corr + linear_ele_correction($sec) if $ele_corr && $ele ne "" && defined $sec;
-    return $ele;
+    return corrected_ele($ele, $sec);
 }
 
 
@@ -2565,15 +2571,13 @@ for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
 
 ## fill long time gaps as far as needed for exiftool etc. by inserting intermediate points with linear interpolation of data
 
-# must not be called in between computing and using max/min etc. index values as these may get invalidated by inserting points
-sub insert_points_in_gaps {
-    my ($num_inserted_trkpts, $num_duplicated_trkpts) = (0, 0);
-    for (my $i = 1; $i <= $#TIM; $i++) {
+my ($num_inserted_trkpts, $num_duplicated_trkpts) = (0, 0);
+sub insert_points_in_gaps { # only done virtually, as string to be printed before the respective points
+    for (my $i = 0; $i <= $#TIM; $i++) {
         ($lat    , $lon    , $ele    , $tim    ) =
-        ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]); # needed also for print_trkpt
-        my ($sec    , $dis    ) =
-           ($SEC[$i], $DIS[$i]);
-        my $diff_time = diff_defined($sec, $SEC[$i - 1]) // 0;
+        ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]); # needed also for {warn,info}_trkpt()
+        my $dis = $DIS[$i];
+        my $diff_time = diff_defined($SEC[$i], $SEC[$i - 1]) // 0;
         my $dis_text = dis_str(DIS_PRECISION2, $dis);
         ## debug_log "at ".point_str($i).", considering gap of $diff_time seconds and $dis_text";
         if (int($diff_time) > INSERTION_MAX_GAP) {
@@ -2581,7 +2585,8 @@ sub insert_points_in_gaps {
             my $lin_spd = $dis / $diff_time;
             my $gap_text = "gap = ".timediff_str("%2d", $diff_time)." over $dis_text";
             if (MPS2KMPH * $lin_spd > $INSERTION_MAX_SPEED) {
-                warn_trkpt("before", "$gap_text; not inserting points because linear speed would be ".spd_str($lin_spd)." km/h, higher than $INSERTION_MAX_SPEED");
+                warn_trkpt("before", "$gap_text; not inserting points because linear speed would be ".
+                           spd_str($lin_spd)." km/h, higher than $INSERTION_MAX_SPEED");
                 next;
             }
             # insert equidistant points with interpolated data, plus
@@ -2594,16 +2599,15 @@ sub insert_points_in_gaps {
             my $p = $i - 1;
             my $flags_before = $FLG[$p];
             my $flags_after  = $FLG[$i];
-            my ($lat_curr, $lon_curr, $ele_curr, $sec_curr) = ($LAT[$p], $LON[$p], $ELE[$p], $SEC[$p]);
             my $dis_delta  = $dis / $n_spans;
-            my $lat_delta = ($lat - $lat_curr) / $n_spans;
-            my $lon_delta = ($lon - $lon_curr) / $n_spans;
+            my $lat_delta = ($lat - $LAT[$p]) / $n_spans;
+            my $lon_delta = ($lon - $LON[$p]) / $n_spans;
             my $sec_delta = $diff_time / $n_spans; # 0 < $sec_delta <= INSERTION_MAX_GAP
-            my $ele_delta = diff_nonempty($ele, $ele_curr);
+            my $ele_delta = diff_nonempty($ele, $ELE[$p]);
             $ele_delta /= $n_spans if defined $ele_delta;
             info_trkpt("before", "$gap_text; inserting ".points($n_spans - 1)." each ".timediff_string($sec_delta));
 
-            # point $i will become the point past the insertion (possibly with duplication before and after segment)
+            # point $i will become the point past the insertion (possibly with duplication before and after it)
             # need to move info about previous ignored points from point past the insertion to first new point
             my $ign = $IGN[$i];
             # for the point that will be the one past the insertion:
@@ -2611,9 +2615,13 @@ sub insert_points_in_gaps {
             $DIS[$i] = $seg ? 0 : $dis_delta; # recalculate distance
             # ascent/decent rate as well as speed stays the same, due to linear interpolation
 
-            # my $i_before = $i; # no more needed
+            # https://www.informit.com/articles/article.aspx?p=1582932&seqNum=4
+            # You can build up a string with a filehandle
+            open my ($str_fh), '>>', \my $inserted_points;
+            ($lat, $lon, $ele, $sec) = ($LAT[$p], $LON[$p], $ELE[$p], $SEC[$p]); # needed also for add_stat_wpt()
             for (my $n = 0; $n <= $n_end; $n++) {
                 if ($n >= $start) {
+                    $tim = epoch_to_str($sec); # needed also for add_stat_wpt()
                     my $flags;
                     if ($n == 0) {
                         # place a new segment start, with contents to be duplicated from previous point (at segment end just before)
@@ -2627,42 +2635,29 @@ sub insert_points_in_gaps {
                         $flags = INSERTED_POINT;
                         $num_inserted_trkpts++;
                     }
-                    my $src = $flags & INSERTED_POINT
+                    my $cmt = "";
+                    $cmt = plural($ign, "previous point")." ignored" if !DISABLE_TRKPT_CMT && $n == $start && $ign != 0;
+                    my $src = "";
+                    $src = $flags & INSERTED_POINT
                         ? $bride_gap_insert_txt
-                        : $bride_gap_duplicate_txt .($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before");
-                    splice @IGN, $i, 0, $n == $start ? $ign : 0;
-                    splice @SEG, $i, 0, $n == 0;
-                    splice @FLG, $i, 0, $flags;
-                    splice @LAT, $i, 0, $lat_curr;
-                    splice @LON, $i, 0, $lon_curr;
-                    splice @ELE, $i, 0, $ele_curr;
-                    splice @TIM, $i, 0, epoch_to_str($sec_curr);
-                    splice @SEC, $i, 0, $sec_curr;
-                    splice @DIS, $i, 0, $n == 0 ? 0 : $dis_delta;
-                    splice @SPD, $i, 0, "";
-                    splice @CMT, $i, 0, "";
-                    splice @SRC, $i, 0, DISABLE_TRKPT_SRC ? "" : $src;
-                    splice @FIX, $i, 0, DISABLE_TRKPT_FIX ? "" : "none";
+                        : $bride_gap_duplicate_txt .($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before")
+                        if !DISABLE_TRKPT_SRC;
+                    print_point($str_fh, $n == 0, $lat, $lon, corrected_ele($ele, $sec),
+                                $tim, $cmt, $src, DISABLE_TRKPT_FIX ? "" : "none", "");
                     # TODO check; was before: $fix = $flags == 0 ? "" : ($FLG[$i] & (INSERTED_POINT | INTERPOLATED_TIM | SUBSTITUTED_TIM) == 0 ? "2d" : "none");
-                    splice @EXT, $i, 0, "";
-                    $i++;
+                    add_stat_wpt(-1, "INFO: "    . $cmt) if $cmt_wpts && $cmt && $cmt =~ m|$cmt_wpts|;
+                    add_stat_wpt(-1, "WARNING: " . $src) if $src_wpts && $src && $src =~ m|$src_wpts|;
                 }
-                $lat_curr += $lat_delta;
-                $lon_curr += $lon_delta;
-                $ele_curr += $ele_delta if defined $ele_delta;
-                $sec_curr += $sec_delta;
+                $lat += $lat_delta;
+                $lon += $lon_delta;
+                $ele += $ele_delta if defined $ele_delta;
+                $sec += $sec_delta;
             }
-            # update indexes no more needed
-            # my $num_inserted = $i - $i_before;
-            # for (my $p = $all; $p <= $part_last; $p++) {
-            #     $PART_START_INDEX[$p] += $num_inserted if $PART_START_INDEX[$p] >= $i_before;
-            #     $PART_END_INDEX  [$p] += $num_inserted if $PART_END_INDEX  [$p] >= $i_before;
-            # }
-
+            $TXT[$i] = $inserted_points;
         }
     }
-    return ($num_inserted_trkpts, $num_duplicated_trkpts);
 }
+insert_points_in_gaps() if $insert_points;
 
 
 ### generate final output
@@ -2699,7 +2694,9 @@ $final_text .= points($num_removals_loss )." ignored due to descent rate more th
 $final_text .= points($num_removals_diff )." ignored due to time difference less than $MIN_TIMEDIFF sec\n"        if $num_removals_diff;
 $final_text .= plural($num_ext_below, "extension element")." with name '$min_ext' and value below $min_ext_limit pruned\n" if $min_ext;
 $final_text .= plural($num_ext_above, "extension element")." with name '$max_ext' and value above $max_ext_limit pruned\n" if $max_ext;
-$final_text .= ($smoothing ? points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" : "");
+$final_text .= points($num_smoothened)." being at most ${ \SMOOTHING_MAX_GAP } seconds apart smoothened\n" if $smoothing;
+$final_text .= points($num_inserted_trkpts)." inserted ".(INSERT_SEGMENT ? "and ".points($num_duplicated_trkpts)." duplicated " : "").
+    "due to time gaps > ".INSERTION_MAX_GAP." seconds\n" if $insert_points;
 
 my $num_sanitized = $num_removals_ele + $num_removals_dir + $num_removals_spd + $num_removals_acc
     + $num_removals_dec + $num_removals_gain + $num_removals_loss + $num_removals_diff;
@@ -2709,7 +2706,7 @@ my $stats_end = "elevation ". (!GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ($found_corr ? "last retrieved" : "assumed") . " geoid height = $ele_corr m") . "\n"
     . "GPXConv statistics end";
 
-## expand metadata in trackpoints
+## expand metadata in trackpoints and optionally add waypoints for matching 'cmt' and 'src' elements
 for (my $i = 0; $i <= $#TIM; $i++) {
     sub append_unless_present { my ($str, $msg) = @_; return $str =~ m/$msg/ ? "" : ($str eq "" ? "" : "; ") . $msg; }
 
@@ -2723,7 +2720,7 @@ for (my $i = 0; $i <= $#TIM; $i++) {
         $cmt .= append_unless_present($cmt, "start alternative"    ) if $FLG[$i] & START_MERGE;
         $cmt .= append_unless_present($cmt, "pause alternative"    ) if $FLG[$i] & PAUSE_MERGE;
         $CMT[$i] = $cmt;
-        add_stat_wpt($i, "INFO: "   .$cmt) if $cmt_wpts && $cmt && $cmt =~ m|$cmt_wpts|;
+        add_stat_wpt($i, "INFO: " . $cmt) if $cmt_wpts && $cmt && $cmt =~ m|$cmt_wpts|;
     }
 
     if (!DISABLE_TRKPT_SRC) {
@@ -2736,9 +2733,9 @@ for (my $i = 0; $i <= $#TIM; $i++) {
         $src .= append_unless_present($src, "computed speed"       ) if $FLG[$i] & COMPUTED_SPEED && INCLUDE_SPEED;
         $src .= append_unless_present($src, "corrected altitude"   ) if $FLG[$i] & CORRECTED_ELE;
         $SRC[$i] = $src;
-        add_stat_wpt($i, "WARNING: ".$src) if $src_wpts && $src && $src =~ m|$src_wpts|;
+        add_stat_wpt($i, "WARNING: " . $src) if $src_wpts && $src && $src =~ m|$src_wpts|;
     }
-    # no need to expand metadata on points inserted/duplicated due to time gaps
+    # as far as needed, metadata on points inserted/duplicated due to time gaps already handled by insert_points_in_gaps()
 
     my $exts = $EXT[$i];
     $exts =~ s#<gpxtpx:TrackPointExtension>\s*<gpxtpx:speed>.*?</gpxtpx:speed>\s*</gpxtpx:TrackPointExtension>##sg if PRUNE_RECORDED_SPEED;
@@ -2758,6 +2755,19 @@ abort("FATAL: end of track header not found") unless $1 =~ m/<cmt>/ || $HEAD =~ 
 
 ### write final output
 
+sub print_point {
+    my ($out, $seg, $lat, $lon, $ele, $tim, $cmt, $src, $fix, $ext) = @_;
+        print $out "</trkseg>\n<trkseg>\n" if $seg;
+        print $out '<trkpt lat="' . lat_str($lat) . '" lon="' . lon_str($lon) . '">';
+        print $out "<ele>"  . ele_string($ele_prec_len, $ele) . "</ele>" if $ele ne "";
+        print $out "<time>" . round_tim($tim) . "</time>"                           if $tim;
+        print $out "<cmt>$cmt</cmt>"                          if !DISABLE_TRKPT_CMT && $cmt;
+        print $out "<src>$src</src>"                          if !DISABLE_TRKPT_SRC && $src;
+        print $out "<fix>$fix</fix>"                          if !DISABLE_TRKPT_FIX && $fix;
+        print $out "<extensions>$ext</extensions>"                                  if $ext;
+        print $out "</trkpt>\n";
+}
+
 sub print_part {
     my ($out, $p, $head, $wpts) = @_;
     my $stats = $stats_start.$STAT[$p].$final_text.$stats_end;
@@ -2766,15 +2776,9 @@ sub print_part {
     print $out ($head =~ s/(<trk>)/$wpts$1/sr); # prepend collected and computed waypoints to track
 
     for (my $i = $PART_START_INDEX[$p]; $i <= $PART_END_INDEX[$p]; $i++) {
-        print $out '<trkpt lat="' . lat_str($LAT[$i]) . '" lon="' . lon_str($LON[$i]) . '">';
-        print $out "<ele>"  . ele_string($ele_prec_len, correct_ele(-1, $i)) . "</ele>" if $ELE[$i] ne "";
-        print $out "<time>" . round_tim($TIM[$i]) . "</time>"                           if $TIM[$i];
-        print $out "<cmt>$CMT[$i]</cmt>"                          if !DISABLE_TRKPT_CMT && $CMT[$i];
-        print $out "<src>$SRC[$i]</src>"                          if !DISABLE_TRKPT_SRC && $SRC[$i];
-        print $out "<fix>$FIX[$i]</fix>"                          if !DISABLE_TRKPT_FIX && $FIX[$i];
-        print $out "<extensions>$EXT[$i]</extensions>"                                  if $EXT[$i];
-        print $out "</trkpt>\n";
-        print $out "</trkseg>\n<trkseg>\n" if $p == $all && $i < $#TIM && $SEG[$i + 1];
+        print $out $TXT[$i] if $TXT[$i];
+        print_point($out, $p == $all && $i > 0 && $SEG[$i], $LAT[$i], $LON[$i],
+                    correct_ele(-1, $i), $TIM[$i], $CMT[$i], $SRC[$i], $FIX[$i],$EXT[$i]);
     }
     print $out "</trkseg>\n</trk>\n</gpx>\n";
     close $out;
@@ -2811,13 +2815,6 @@ if ($split) {
 }
 
 my $all_head = $HEAD;
-if ($insert_points) {
-    my ($num_inserted_trkpts, $num_duplicated_trkpts) = insert_points_in_gaps();
-    $PART_END_INDEX[$all] = $#TIM; # update after likely change due to insertions
-    $final_text .= points($num_inserted_trkpts)." inserted ".
-        (INSERT_SEGMENT ? "and ".points($num_duplicated_trkpts)." duplicated " : "").
-        "due to time gaps > ".INSERTION_MAX_GAP." seconds\n" ;
-}
 print_line(""); # empty line before stats
 print_part($out, $all, $all_head, $all_wpts);
 

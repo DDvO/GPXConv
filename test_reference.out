@@ -47,7 +47,11 @@ newlines are kept</extensions>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 total ascent = +100 m; avg rate unknown due to missing time]</name><sym>emoji-⬆️</sym></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 end; length = 27.103 km]</name><sym>emoji-🎬</sym></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z 4th ascent = +100 m; distance =27.103 km]</name></wpt>
+<wpt lat="-0.06300" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:30:00Z</time><name>[2001-01-02T16:30:00Z WARNING: bridging time gap: inserted point]</name></wpt>
+<wpt lat="-0.04500" lon="0.00000"><ele> 500</ele><time>2001-01-02T17:00:00Z</time><name>[2001-01-02T17:00:00Z WARNING: bridging time gap: inserted point]</name></wpt>
+<wpt lat="-0.02700" lon="0.00000"><ele> 500</ele><time>2001-01-02T17:30:00Z</time><name>[2001-01-02T17:30:00Z WARNING: bridging time gap: inserted point]</name></wpt>
 <wpt lat="-0.00900" lon="0.00000"><ele> 500</ele><time>2001-01-02T18:00:00Z</time><name>[2001-01-02T18:00:00Z max speed = 10 km/h]</name><sym>emoji-⏩</sym></wpt>
+<wpt lat="-0.00450" lon="0.00000"><ele> 512</ele><time>2001-01-02T18:15:01Z</time><name>[2001-01-02T18:15:00.500Z WARNING: bridging time gap: inserted point]</name></wpt>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[2001-01-02T18:30:01Z max altitude = 525 m]</name><sym>emoji-🔼</sym></wpt>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[2001-01-02T18:30:01Z total ascent = +155 m; avg rate = +232 m/h with 1 point not having time information]</name><sym>emoji-⬆️</sym></wpt>
 <wpt lat="0.00000" lon="0.00000"><ele> 525</ele><time>2001-01-02T18:30:01Z</time><name>[2001-01-02T18:30:01Z 5th ascent = +25 m; distance = 1.001 km; duration = 0:30:01 h]</name></wpt>
