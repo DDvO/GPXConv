@@ -11,7 +11,7 @@ gpxconv test_minimal.out2 >test_minimal.out3 2>test_minimal.log3;
     diff test_minimal.log{2,3}
 
 echo -e "\n### test, initial pass #############################################"
-export GPXCONV_TEST_ARGS="-walk -min_ext value 101 -max_ext value 101 -smooth -weight 50 -phases -segs 2..4+100"
+export GPXCONV_TEST_ARGS="-walk -min_ext value 101 -max_ext value 101 -smooth -weight 50 -phases -segs 2..4+100 -cmt_wpts elevation -src_wpts substituted|inserted"
 gpxconv $GPXCONV_TEST_ARGS test.gpx  >test.out  2>test.log;
     diff test{_reference,}.out;
     diff test{_reference,}.log
