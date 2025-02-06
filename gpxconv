@@ -2387,7 +2387,7 @@ sub add_stat_point { # generate trackpoint-related statistics output and waypoin
 
 sub add_stat_wpt {
     my ($i, $txt, $extra, $sym) = @_; # $i is index of trackpoint containing the location and time
-    my  ($lat_   , $lon_   , $ele_   , $tim_   , $sec_   ) = $i < 0 ?
+    my  ($lat    , $lon    , $ele    , $tim    , $sec    ) = $i < 0 ?
         ($lat    , $lon    , $ele    , $tim    , $sec    ) :
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i]);
 
@@ -2396,31 +2396,44 @@ sub add_stat_wpt {
     $txt =~ s/\n/; /g;
     $txt =~ s/; $//;
     $txt =~ s/\s+/ /g;
-    $txt = "$tim_ $txt" if !$lean_stat_wpts && $tim_ ne "";
+    $txt = "$tim $txt" if !$lean_stat_wpts && $tim ne "";
     $txt = "<name>[$txt]</name>" if $txt ne "";
     $txt .= "<sym>$sym</sym>" if defined $sym;
+
+    # adapt to avoid rouding issues on comparison
+    $lat = lat_str($lat);
+    $lon = lon_str($lon);
+    $ele = ele_string($ele_prec_len, $ele) if $ele ne "";
+    $tim = round_tim($tim) if $tim ne "";
+    sub eq_nonempty { return $_[0] eq "" ? $_[1] eq ""
+                          :  $_[1] eq "" ? $_[0] eq "" : $_[0] == $_[1] }
 
     # insert wpt in existing array, avoiding duplicates,
     # in ascending time order after any entries with same time, where missing time is considered infinite,
     # assuming that the array is already ordered
 
-    my $sec_or_inf = $sec_ // $MAX_UNDEF_TIME;
+    my $sec_or_inf = $sec // $MAX_UNDEF_TIME;
     my $j = 0;
     while ($j <= $#WSEC && ($WSEC[$j] // $MAX_UNDEF_TIME) < $sec_or_inf) {
-        $j++
+        $j++;
     }
     while ($j <= $#WSEC && ($WSEC[$j] // $MAX_UNDEF_TIME) == $sec_or_inf
            && ($txt =~ m/(Z |\[)end; / || !($WTXT[$j] =~ m/(Z |\[)end; /))) { # make sure that "end" wpt is placed last
-        return if # do not add duplicates
-            $WLAT[$j] == $lat_ && $WLON[$j] == $lon_ && $WELE[$j] eq $ele_ &&
-            $WTIM[$j] eq $tim_ && $WTXT[$j] eq $txt;
-        $j++
+        return if # do not add duplicates before point of insertion
+            $WLAT[$j] == $lat && $WLON[$j] == $lon && eq_nonempty ($WELE[$j], $ele) &&
+            $WTIM[$j] eq $tim && $WTXT[$j] eq $txt;
+        $j++;
     }
-    splice @WLAT, $j, 0, $lat_;
-    splice @WLON, $j, 0, $lon_;
-    splice @WELE, $j, 0, $ele_;
-    splice @WTIM, $j, 0, $tim_;
-    splice @WSEC, $j, 0, $sec_;
+    for (my $k = $j; $k <= $#WSEC; $k++) {
+        return if # do not add duplicates at point of insertion or after it
+            $WLAT[$k] == $lat && $WLON[$k] == $lon && eq_nonempty ($WELE[$k], $ele) &&
+            $WTIM[$k] eq $tim && $WTXT[$k] eq $txt;
+    }
+    splice @WLAT, $j, 0, $lat;
+    splice @WLON, $j, 0, $lon;
+    splice @WELE, $j, 0, $ele;
+    splice @WTIM, $j, 0, $tim;
+    splice @WSEC, $j, 0, $sec;
     splice @WTXT, $j, 0, $txt;
     splice @WSTR, $j, 0, undef;
     splice @WIDX, $j, 0, $i;
