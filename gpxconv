@@ -2447,15 +2447,15 @@ sub part_number {
     return ($char x (length($part_last + $part_offset) - length($i + $part_offset))).($i + $part_offset);
 }
 
-for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
-    $STAT[$i] = $overall_stat if $i != $all; # prepend overall statistics to all parts
+for (my $overall_stat, my $p = $all; $p <= $part_last; $p++) {
+    $STAT[$p] = $overall_stat if $p != $all; # prepend overall statistics to all parts
 
-    my $Part = $i == $all ? "" : ($segs ? "segment" : "day")." ".part_number(' ', $i)." ";
-    my $Min_ele      = defined $MIN_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$i]) : "";
-    my $Max_ele      = defined $MAX_ELE_INDEX[$i] ? sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$i]) : "";
-    my $Max_spd      = defined $MAX_SPD_INDEX [$i] ? " ".spd_full($SPD[$MAX_SPD_INDEX [$i]]) : "";
-    my $Max_gain_spd = defined $MAX_GAIN_INDEX[$i] ?     spd_str ($SPD[$MAX_GAIN_INDEX[$i]]) : "";
-    my $Max_loss_spd = defined $MAX_LOSS_INDEX[$i] ?     spd_str ($SPD[$MAX_LOSS_INDEX[$i]]) : "";
+    my $Part = $p == $all ? "" : ($segs ? "segment" : "day")." ".part_number(' ', $p)." ";
+    my $Min_ele      = defined $MIN_ELE_INDEX[$p] ? sprintf ELE_PRECISION, correct_ele(-1, $MIN_ELE_INDEX[$p]) : "";
+    my $Max_ele      = defined $MAX_ELE_INDEX[$p] ? sprintf ELE_PRECISION, correct_ele(-1, $MAX_ELE_INDEX[$p]) : "";
+    my $Max_spd      = defined $MAX_SPD_INDEX [$p] ? " ".spd_full($SPD[$MAX_SPD_INDEX [$p]]) : "";
+    my $Max_gain_spd = defined $MAX_GAIN_INDEX[$p] ?     spd_str ($SPD[$MAX_GAIN_INDEX[$p]]) : "";
+    my $Max_loss_spd = defined $MAX_LOSS_INDEX[$p] ?     spd_str ($SPD[$MAX_LOSS_INDEX[$p]]) : "";
     while (substr($Max_gain_spd, 0, 1) eq " " &&
            substr($Max_loss_spd, 0, 1) eq " ")
     {
@@ -2464,21 +2464,21 @@ for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
     }
 
     # make sure to report max ascent & descent slopes always pairwise
-    ($MAX__ASC[$i], $MAX__ASC_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX__ASC_INDEX[$i] && defined $MAX_DESC_INDEX[$i];
-    ($MAX_DESC[$i], $MAX_DESC_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX_DESC_INDEX[$i] && defined $MAX__ASC_INDEX[$i];
+    ($MAX__ASC[$p], $MAX__ASC_INDEX[$p]) = (0, $PART_END_INDEX[$p]) if !defined $MAX__ASC_INDEX[$p] && defined $MAX_DESC_INDEX[$p];
+    ($MAX_DESC[$p], $MAX_DESC_INDEX[$p]) = (0, $PART_END_INDEX[$p]) if !defined $MAX_DESC_INDEX[$p] && defined $MAX__ASC_INDEX[$p];
     sub avg_slope {
-        my ($avg_approx_slope, $i) = @_;
-        return "" unless defined $i;
-        return sprintf SLOPE_PRECISION, $avg_approx_slope == 0 ? 0 : avg_actual_slope($i);
+        my ($avg_approx_slope, $p) = @_;
+        return "" unless defined $p;
+        return sprintf SLOPE_PRECISION, $avg_approx_slope == 0 ? 0 : avg_actual_slope($p);
     }
-    my $Max__asc =  avg_slope($MAX__ASC[$i], $MAX__ASC_INDEX[$i]);
-    my $Max_desc = (avg_slope($MAX_DESC[$i], $MAX_DESC_INDEX[$i])) =~ s/\+0/0/r;
+    my $Max__asc =  avg_slope($MAX__ASC[$p], $MAX__ASC_INDEX[$p]);
+    my $Max_desc = (avg_slope($MAX_DESC[$p], $MAX_DESC_INDEX[$p])) =~ s/\+0/0/r;
 
     # make sure to report max ascent & descent rates always pairwise
-    ($MAX_GAIN[$i], $MAX_GAIN_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX_GAIN_INDEX[$i] && defined $MAX_LOSS_INDEX[$i];
-    ($MAX_LOSS[$i], $MAX_LOSS_INDEX[$i]) = (0, $PART_END_INDEX[$i]) if !defined $MAX_LOSS_INDEX[$i] && defined $MAX_GAIN_INDEX[$i];
-    my $Max_gain = sprintf RAT_PRECISION, $MAX_GAIN[$i] // 0; # relevant only if defined $MAX_GAIN_INDEX[$i]
-    my $Max_loss = sprintf RAT_PRECISION, $MAX_LOSS[$i] // 0; # relevant only if defined $MAX_LOSS_INDEX[$i]
+    ($MAX_GAIN[$p], $MAX_GAIN_INDEX[$p]) = (0, $PART_END_INDEX[$p]) if !defined $MAX_GAIN_INDEX[$p] && defined $MAX_LOSS_INDEX[$p];
+    ($MAX_LOSS[$p], $MAX_LOSS_INDEX[$p]) = (0, $PART_END_INDEX[$p]) if !defined $MAX_LOSS_INDEX[$p] && defined $MAX_GAIN_INDEX[$p];
+    my $Max_gain = sprintf RAT_PRECISION, $MAX_GAIN[$p] // 0; # relevant only if defined $MAX_GAIN_INDEX[$p]
+    my $Max_loss = sprintf RAT_PRECISION, $MAX_LOSS[$p] // 0; # relevant only if defined $MAX_LOSS_INDEX[$p]
     $Max_loss =~ s/\+0/0/;
 
     #my $Avg_gain=sprintf RAT_PRECISION, $avg_gain;
@@ -2490,8 +2490,8 @@ for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
             : "unknown due to missing time";
         return (sprintf DIF_PRECISION, $sum // 0)." m; avg rate $Avg_rate";
     }
-    my $text__ascent = sum_avg_rate($SUM__ASCENT[$i], $TIME__ASCENT[$i], $MISSING__ASCENT_TIME[$i]);
-    my $text_descent = sum_avg_rate($SUM_DESCENT[$i], $TIME_DESCENT[$i], $MISSING_DESCENT_TIME[$i]);
+    my $text__ascent = sum_avg_rate($SUM__ASCENT[$p], $TIME__ASCENT[$p], $MISSING__ASCENT_TIME[$p]);
+    my $text_descent = sum_avg_rate($SUM_DESCENT[$p], $TIME_DESCENT[$p], $MISSING_DESCENT_TIME[$p]);
     $text_descent =~ s/\+0/-0/g;
 
     my $max_spd_text  = "max speed        = $Max_spd km/h"; # may use "" if not defined
@@ -2499,45 +2499,45 @@ for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
     my $max_ele_text  = "max altitude     = $Max_ele m";    # may use "" if not defined
     my $ascent_text   = "total  ascent    = $text__ascent";
     my $descent_text  = "total descent    = $text_descent";
-    my $max__asc_text = "max  ascent (slope) = $Max__asc degrees"; # relevant  if defined $MAX__ASC_INDEX[$i]
-    my $max_desc_text = "max descent (slope) = $Max_desc degrees"; # relevant  if defined $MAX_DESC_INDEX[$i]
+    my $max__asc_text = "max  ascent (slope) = $Max__asc degrees"; # relevant  if defined $MAX__ASC_INDEX[$p]
+    my $max_desc_text = "max descent (slope) = $Max_desc degrees"; # relevant  if defined $MAX_DESC_INDEX[$p]
     my $max_gain_text = "max  ascent rate = $Max_gain m/h".
-        ($Max_gain_spd eq "" ? "" : " at $Max_gain_spd km/h"); # relevant only if defined $MAX_GAIN_INDEX[$i]
+        ($Max_gain_spd eq "" ? "" : " at $Max_gain_spd km/h"); # relevant only if defined $MAX_GAIN_INDEX[$p]
     my $max_loss_text = "max descent rate = $Max_loss m/h".
-        ($Max_loss_spd eq "" ? "" : " at $Max_loss_spd km/h"); # relevant only if defined $MAX_LOSS_INDEX[$i]
+        ($Max_loss_spd eq "" ? "" : " at $Max_loss_spd km/h"); # relevant only if defined $MAX_LOSS_INDEX[$p]
     my $part_end_text = $Part."end";
-    my $sep = $i == $all ? "\ntotal" : ";";
-    $part_end_text .= "$sep length ".($i == $all ? "              ": "     ")."= ".dis_string($SUM_DIS[$i]) if defined $SUM_DIS[$i];
-    if ($i == $all) {
+    my $sep = $p == $all ? "\ntotal" : ";";
+    $part_end_text .= "$sep length ".($p == $all ? "              ": "     ")."= ".dis_string($SUM_DIS[$p]) if defined $SUM_DIS[$p];
+    if ($p == $all) {
         $part_end_text .= "\ngross duration             = ".timediff_string(diff_defined($max_sec, $min_sec) // 0) if defined $SUM_DIS[$all];
     } else {
-        $part_end_text .= "$sep duration = ".timediff_string($DURATION[$i]) if $DURATION[$i];
+        $part_end_text .= "$sep duration = ".timediff_string($DURATION[$p]) if $DURATION[$p];
     }
-    if ($SUM_TIMEDIFF_MOV[$i]) {
-        $part_end_text .= "$sep moving time ".($i == $all ? "         ": "")."= ".
-            timediff_string($SUM_TIMEDIFF_MOV[$i]); # ", with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
+    if ($SUM_TIMEDIFF_MOV[$p]) {
+        $part_end_text .= "$sep moving time ".($p == $all ? "         ": "")."= ".
+            timediff_string($SUM_TIMEDIFF_MOV[$p]); # ", with speed being at least ${\MIN_SPEED_MOVING} km/h\n";
         $part_end_text .= "$sep average moving speed = ".
-            (sprintf AVG_PRECISION, MPS2KMPH * $SUM_DIS_MOV[$i] / $SUM_TIMEDIFF_MOV[$i])." km/h";
+            (sprintf AVG_PRECISION, MPS2KMPH * $SUM_DIS_MOV[$p] / $SUM_TIMEDIFF_MOV[$p])." km/h";
     }
-    if ($i == $all && $weight) {
+    if ($p == $all && $weight) {
         $part_end_text .= "\ntotal biking energy        = ".(sprintf "%.0f", $sum_energy / 1000)." kJ";
         $part_end_text .= ", leaving out ".points($num_energy_missing)." where time or altitude information is missing or at start or end of merge sections" if $num_energy_missing;
     }
-    add_stat_point($MAX_SPD_INDEX  [$i], $Part.$max_spd_text , undef, "emoji-⏩", $i);
-    add_stat_point($MIN_ELE_INDEX  [$i], $Part.$min_ele_text , undef, "emoji-🔽", $i);
-    add_stat_point($MAX_ELE_INDEX  [$i], $Part.$max_ele_text , undef, "emoji-🔼", $i);
-    add_stat_point($LAST_GAIN_INDEX[$i], $Part.$ascent_text  , undef, "emoji-⬆️", $i);
-    add_stat_point($LAST_LOSS_INDEX[$i], $Part.$descent_text , undef, "emoji-⬇️", $i);
-    add_stat_point($MAX__ASC_INDEX [$i], $Part.$max__asc_text, undef, "emoji-↗️", $i);
-    add_stat_point($MAX_DESC_INDEX [$i], $Part.$max_desc_text, undef, "emoji-↘️", $i);
-    add_stat_point($MAX_GAIN_INDEX [$i], $Part.$max_gain_text, undef, "emoji-⏫", $i);
-    add_stat_point($MAX_LOSS_INDEX [$i], $Part.$max_loss_text, undef, "emoji-⏬", $i);
-    $LAT[$#TIM] += 0.00001 if $i != $all && $i == $part_last; # make sure that last "part end" wpt is placed separately
-    add_stat_point($PART_END_INDEX [$i], $part_end_text,
+    add_stat_point($MAX_SPD_INDEX  [$p], $Part.$max_spd_text , undef, "emoji-⏩", $p);
+    add_stat_point($MIN_ELE_INDEX  [$p], $Part.$min_ele_text , undef, "emoji-🔽", $p);
+    add_stat_point($MAX_ELE_INDEX  [$p], $Part.$max_ele_text , undef, "emoji-🔼", $p);
+    add_stat_point($LAST_GAIN_INDEX[$p], $Part.$ascent_text  , undef, "emoji-⬆️", $p);
+    add_stat_point($LAST_LOSS_INDEX[$p], $Part.$descent_text , undef, "emoji-⬇️", $p);
+    add_stat_point($MAX__ASC_INDEX [$p], $Part.$max__asc_text, undef, "emoji-↗️", $p);
+    add_stat_point($MAX_DESC_INDEX [$p], $Part.$max_desc_text, undef, "emoji-↘️", $p);
+    add_stat_point($MAX_GAIN_INDEX [$p], $Part.$max_gain_text, undef, "emoji-⏫", $p);
+    add_stat_point($MAX_LOSS_INDEX [$p], $Part.$max_loss_text, undef, "emoji-⏬", $p);
+    $LAT[$#TIM] += 0.00001 if $p != $all && $p == $part_last; # make sure that last "part end" wpt is placed separately
+    add_stat_point($PART_END_INDEX [$p], $part_end_text,
                    $lean_stat_wpts ? ("; $max_spd_text; $min_ele_text; $max_ele_text") =~ s/\s+/ /gr : "",
-                   "emoji-" . ($i == $all ? "⏹️" : $days ? "-🛌" : "🎬"), $i);
-    $LAT[$#TIM] -= 0.00001 if $i != $all && $i == $part_last; # make sure that last "part end" wpt is placed separately
-    $overall_stat = $STAT[$all] if $i == $all;
+                   "emoji-" . ($p == $all ? "⏹️" : $days ? "-🛌" : "🎬"), $p);
+    $LAT[$#TIM] -= 0.00001 if $p != $all && $p == $part_last; # make sure that last "part end" wpt is placed separately
+    $overall_stat = $STAT[$all] if $p == $all;
 }
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
 #	                  : "descent rate between highest and lowest")." point = $Avg_gain m/h
@@ -2545,40 +2545,40 @@ for (my $overall_stat, my $i = $all; $i <= $part_last; $i++) {
 # add statistics for phases
 
 sub order_postfix {
-    my $i = $_[0];
-    my $d = $i % 10;
-    return 11 <= $i && $i <= 13 ? "th" :
+    my $n = $_[0];
+    my $d = $n % 10;
+    return 11 <= $n && $n <= 13 ? "th" :
         $d == 1 ? "st" :
         $d == 2 ? "nd" :
         $d == 3 ? "rd" :
         "th";
 }
 sub phase_text {
-    my $i = $_[0] + 1;
-    my $d = $i % 10;
-    return (" " x max(0, length($#PHASE_END_INDEX + 1) - length($i)))
-        .$i.order_postfix($i)." ";
+    my $n = $_[0] + 1;
+    my $d = $n % 10;
+    return (" " x max(0, length($#PHASE_END_INDEX + 1) - length($n)))
+        .$n.order_postfix($n)." ";
 }
 
-for (my $i = 0; $i <= $#PHASE_END_INDEX; $i++) {
-    my $type = $PHASE_DIFF[$i] >= 0 ? "ascent " : "descent";
-    my $Len = phase_text($i) . "$type   = " . (sprintf DIF_PRECISION, $PHASE_DIFF[$i]) . "  m;   "
-      . "distance   =".($PHASE_DIST[$i] / 1000 >= 10 ? "" : " ").dis_string($PHASE_DIST[$i]);
-    my $duration = $PHASE_DURATION[$i];
+for (my $p = 0; $p <= $#PHASE_END_INDEX; $p++) {
+    my $type = $PHASE_DIFF[$p] >= 0 ? "ascent " : "descent";
+    my $Len = phase_text($p) . "$type   = " . (sprintf DIF_PRECISION, $PHASE_DIFF[$p]) . "  m;   "
+      . "distance   =".($PHASE_DIST[$p] / 1000 >= 10 ? "" : " ").dis_string($PHASE_DIST[$p]);
+    my $duration = $PHASE_DURATION[$p];
     $Len .= "; duration = " . timediff_string($duration) if $duration;
-    my $max_spd_idx = $PHASE_MAX_SPD_INDEX[$i];
-    my $Spd = phase_text($i)
+    my $max_spd_idx = $PHASE_MAX_SPD_INDEX[$p];
+    my $Spd = phase_text($p)
         . "max speed =  ".spd_full($SPD[$max_spd_idx])." km/h; "
-        . "avg speed  = ".spd_full($PHASE_SPD[    $i])." km/h"
+        . "avg speed  = ".spd_full($PHASE_SPD[    $p])." km/h"
         if defined $max_spd_idx;
-    my $max_rate_idx = $PHASE_MAX_RATE_INDEX[$i];
-    my $Rate = phase_text($i)
-        . "max rate  =" . (sprintf RAT_PRECISION2, $PHASE_MAX_RATE[$i]) . "  m/h; "
-        . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE    [$i]) . "  m/h"
+    my $max_rate_idx = $PHASE_MAX_RATE_INDEX[$p];
+    my $Rate = phase_text($p)
+        . "max rate  =" . (sprintf RAT_PRECISION2, $PHASE_MAX_RATE[$p]) . "  m/h; "
+        . "avg rate   =" . (sprintf RAT_PRECISION, $PHASE_RATE    [$p]) . "  m/h"
         if defined $max_rate_idx;
-    add_stat_point($PHASE_END_INDEX     [$i], $Len );
-    add_stat_point($PHASE_MAX_SPD_INDEX [$i], $Spd ) if defined $max_spd_idx;
-    add_stat_point($PHASE_MAX_RATE_INDEX[$i], $Rate) if defined $max_rate_idx;
+    add_stat_point($PHASE_END_INDEX     [$p], $Len );
+    add_stat_point($PHASE_MAX_SPD_INDEX [$p], $Spd ) if defined $max_spd_idx;
+    add_stat_point($PHASE_MAX_RATE_INDEX[$p], $Rate) if defined $max_rate_idx;
 }
 
 
