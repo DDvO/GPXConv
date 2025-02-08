@@ -368,7 +368,7 @@ sub debug_log {
 }
 
 # https://stackoverflow.com/questions/229009/how-can-i-get-a-call-stack-listing-in-perl
-# alternatively to making explicit individual calls to stacktras, may use: perl -d:Confess
+# alternatively to making explicit individual calls to stacktrace, may use: perl -d:Confess
 sub stacktrace {
     use Devel::StackTrace;
     print_line("");
@@ -823,7 +823,7 @@ sub comp_angle { # calculate horizontal direction change (i.e., turning angle)
 ### parse command line
 # TODO clean up use of ARGV
 
-for (my $i = 0; $#ARGV - $i >= 0;) {
+for (my $i = 0; $#ARGV - $i >= 0; ) {
     my $opt  = $ARGV[$i];
     my $arg1 = $ARGV[$i + 1];
     my $arg2 = $ARGV[$i + 2];
@@ -1154,7 +1154,7 @@ sub read_tracks
                     if ($i > 0 && $ELE->[$i - 1] eq "") {
                         # fill in altitude in last point of segment before
                         $FLG->[$i - 1] |= SUBSTITUTED_ELE;
-                        $ELE->[$i - 1] = $prev_ele = $ele;
+                        $ELE->[$i - 1]  = $prev_ele = $ele;
                         recalculate_all($i - 1);
                         $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # recalculation
                         $ele_miss_length += $DIS->[$i - 1] if $ele_miss_start;
@@ -1170,8 +1170,8 @@ sub read_tracks
                     if ($i > 0 && $TIM->[$i - 1] eq "") {
                         # fill in time in last point of segment before
                         $FLG->[$i - 1] |= SUBSTITUTED_TIM;
-                        $TIM->[$i - 1] = $tim;
-                        $SEC->[$i - 1] = $sec;
+                        $TIM->[$i - 1]  = $tim;
+                        $SEC->[$i - 1]  = $sec;
                         recalculate_SPD($i - 1);
                         $tim_miss_length += $DIS->[$i - 1] - $prev_dis if $tim_miss_start;
                         warn_trkpt_i($i - 1, "at segment end    ",
@@ -1261,11 +1261,11 @@ sub read_tracks
                     my $j;
                     for ($j = $ele_miss_start; $j < $i_end; $j++) {
                         $ele_curr += ($ele_miss_length > 0 ? $DIS->[$j] : 1) * $ele_gradient;
-                        $ELE->[$j] = sprintf ELE_PRECISION3, $ele_curr;
+                        $ELE->[$j]  = sprintf ELE_PRECISION3, $ele_curr;
+                        $FLG->[$j] |= INTERPOLATED_ELE;
                         $ele_full_len = max($ele_full_len, length($ELE->[$j]));
                         recalculate_all($j);
                         # not changing $ele nor $prev_ele such that below time interpolation is not affected
-                        $FLG->[$j] |= INTERPOLATED_ELE;
                         ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE->[$j] dis=$DIS[$j]";
                     }
                     if ($i_end < $i) {
@@ -1295,10 +1295,10 @@ sub read_tracks
                     ## debug_log "interpolating missing time over ".dis_string($tim_miss_length).", sec_diff = $sec_diff";
                     for ($j = $tim_miss_start; $j < $i_end; $j++) {
                         $sec_curr += ($tim_miss_length > 0 ? $DIS->[$j] : 1) * $sec_gradient;
-                        $SEC->[$j] = $sec_curr;
-                        $TIM->[$j] = epoch_to_str($sec_curr);
-                        recalculate_SPD($j);
+                        $SEC->[$j]  = $sec_curr;
+                        $TIM->[$j]  = epoch_to_str($sec_curr);
                         $FLG->[$j] |= INTERPOLATED_TIM;
+                        recalculate_SPD($j);
                         ## debug_log "interpolating missing time at point $j with ele=$ELE->[$j] new  time=$TIM->[$j] dis=$DIS->[$j]";
                     }
                     if ($i_end < $i) {
@@ -1379,7 +1379,7 @@ sub read_tracks
                 if $tim =~ s/(\.\d*?)0+Z/$1Z/r ne $sec_str =~ s/(\.\d*?)0+Z/$1Z/r &&
                 !($tim =~ m/\.999Z/ && defined $sec && $tim eq epoch_to_str($sec - 0.001));
 
-            # will go wrong if previous trkpt gets ignored: $ELE->[$#$ELE] = $ELE->[$#$ELE-1] if $ele eq "" && !$SEG->[$#$ELE]; # implies $#$ELE > 0
+            # will go wrong if previous trkpt gets ignored: $ELE->[$#$ELE] = $ELE->[$#$ELE - 1] if $ele eq "" && !$SEG->[$#$ELE]; # implies $#$ELE > 0
             ($prev_lat, $prev_lon, $prev_ele, $prev_tim, $prev_sec, $prev_dis) =
             (     $lat,      $lon,      $ele,      $tim,      $sec,      $dis);
             $prev_avail_ele = $ele if $ele ne "";
@@ -1749,7 +1749,7 @@ sub sanitize
     for (my $i = $PART_START_INDEX[$all]; defined $i; $i = NEXT $i) {
         # check_PREV_NEXT($i);
 
-    # silently ignore any point inserted or duplicated by a previous run of this tool
+        # silently ignore any point inserted or duplicated by a previous run of this tool
         if ($SRC[$i] =~ m#^^($bride_gap_insert_txt|$bride_gap_duplicate_txt(after|before))$# &&
             $FIX[$i] eq "none") {
             remove_trkpt($i, 0, 1);
@@ -1810,7 +1810,7 @@ sub sanitize
             # from now on, use for $spd and $SPD[$i] the computed speed (average since previous point) if recorded speed is not available or previous point is not very recent
             if (!section($i) && # not at merge start/pause
                 ($spd eq "" || $timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED)) {
-                $SPD[$i] = $spd = $comp_spd;
+                $SPD[$i]  = $spd = $comp_spd;
                 $FLG[$i] |= COMPUTED_SPEED if $comp_spd ne "";
             }
 
@@ -1885,7 +1885,7 @@ sub sanitize
     # warning("ignored $num_removals_in_row_final points in a row") if $num_removals_in_row_final > 1;
     abort_trkpt($PART_END_INDEX[$all], "internal inconsistency on reporting number of final removals in a row: ".
                 "$num_removals_in_row vs. $num_removals_in_row_final at")
-        if $num_removals_in_row != $num_removals_in_row_final;
+        if       $num_removals_in_row !=  $num_removals_in_row_final;
     warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
     # note that in the GPX output information on points sanitzed at the end of the track will get lost
 
@@ -2538,7 +2538,7 @@ for (my $overall_stat, my $p = $all; $p <= $part_last; $p++) {
     ($MAX_LOSS[$p], $MAX_LOSS_INDEX[$p]) = (0, $PART_END_INDEX[$p]) if !defined $MAX_LOSS_INDEX[$p] && defined $MAX_GAIN_INDEX[$p];
     my $Max_gain = sprintf RAT_PRECISION, $MAX_GAIN[$p] // 0; # relevant only if defined $MAX_GAIN_INDEX[$p]
     my $Max_loss = sprintf RAT_PRECISION, $MAX_LOSS[$p] // 0; # relevant only if defined $MAX_LOSS_INDEX[$p]
-    $Max_loss =~ s/\+0/0/;
+    $Max_loss =~ s/\+0/ 0/;
 
     #my $Avg_gain=sprintf RAT_PRECISION, $avg_gain;
     sub sum_avg_rate {
@@ -2551,7 +2551,6 @@ for (my $overall_stat, my $p = $all; $p <= $part_last; $p++) {
     }
     my $text__ascent = sum_avg_rate($SUM__ASCENT[$p], $TIME__ASCENT[$p], $MISSING__ASCENT_TIME[$p]);
     my $text_descent = sum_avg_rate($SUM_DESCENT[$p], $TIME_DESCENT[$p], $MISSING_DESCENT_TIME[$p]);
-    $text_descent =~ s/\+0/-0/g;
 
     my $max_spd_text  = "max speed        = $Max_spd km/h"; # may use "" if not defined
     my $min_ele_text  = "min altitude     = $Min_ele m";    # may use "" if not defined
@@ -2650,6 +2649,7 @@ sub insert_points_in_gaps { # only done virtually, as string to be printed befor
 
         ($lat    , $lon    , $ele    , $tim    ) =
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]); # needed also for {warn,info}_trkpt()
+        # do also across segments:
         my $dis = $DIS[$i];
         my $diff_time = diff_defined($SEC[$i], $SEC[PREV $i]) // 0;
         my $dis_text = defined $dis ? dis_str(DIS_PRECISION2, $dis) : "with no distance available";
