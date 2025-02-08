@@ -606,18 +606,22 @@ sub warn_trkpt  { warn_trkpt_i (-1, @_); }
 sub print_trkpt { print_trkpt_i(-1, @_); }
 
 sub info_trkpt_i {
+    stacktrace() unless defined $_[1];
     print_trkpt_i($_[0], "INFO   : $_[1]", $_[2]) if $output_info;
 }
 
 sub warn_trkpt_i {
+    stacktrace() unless defined $_[1];
     print_trkpt_i($_[0], "WARNING: $_[1]", $_[2]) if $output_warnings;
 }
 
 sub abort_trkpt {
+    stacktrace() unless defined $_[1];
     print_trkpt_i($_[0], "FATAL: $_[1]", $_[2]);
 }
 
 sub print_trkpt_i {
+    stacktrace() unless defined $_[0];
     my $i    = $_[0];
     my $head = $_[1]; # may be empty
     my $tail = $_[2]; # may be empty
@@ -652,7 +656,7 @@ sub print_trkpt_i {
                . " <ele>" . ele_string(-$ele_full_len, $elev)
                . $time
                .($tail ? (" " x max(0, $tim_len + length(" ") - length($time))).$tail : ""));
-    abort("") if $head =~ "^FATAL:";
+    abort("\n\n\n") if $head =~ "^FATAL:";
 
     $head =~ s|^(INFO)\s*:|$1:|;
     $head =~ s/(.*):\s*$/$1/ ||
@@ -1528,6 +1532,7 @@ sub merge_tracks
         my ($lat, $lon, $ele) = ($LAT[$i], $LON[$i], $ELE[$i]) if defined $i;
         my ($tim , $sec ) = ($TIM [$i], $SEC [$i])             if defined $i;
         my ($tim2, $sec2) = ($TIM2[$j], $SEC2[$j]);
+        debug_log "at ".(defined $i ? "i:$i $tim" : "infile EOF")." ---  ".($in_merge < 0 ? "alternative EOF" : "j:$j $tim2");
 
         if (!$skip_point && defined PREV($i) && defined $SEC[PREV $i] && defined $sec) {
             my $diff_time = $sec - $SEC[PREV $i]; # difference from previous, possibly merged point
@@ -1569,7 +1574,7 @@ sub merge_tracks
         if ($in_merge == 0 || $in_merge == -2) {
             # skipping regular input, or currently not merging from alternative input, which is not just reached its EOF
             my $timediff_merge = diff_defined($sec2, $sec) // 0;
-            # debug "$tim vs. $tim2: timediff_merge $timediff_merge";
+            debug_log "$tim vs. $tim2: timediff_merge $timediff_merge";
 
             # skipping continues until point from regular input is past next alternative input
             if ($in_merge == 0 && $skip_point && !($timediff_merge < 0)) {
@@ -1592,11 +1597,11 @@ sub merge_tracks
                 $num_merged_points++;
                 if (!defined PREV $i) {
                     info("$start_merge before $infiles");
-                    # debug "$tim2: switched to merge before $infiles";
+                    debug_log "$tim2: switched to merge before $infiles";
                     insert_trkpt($i, $j);
                     $FLG[PREV $i] |= START_MERGE;
                 } elsif ($skip_point) {
-                    # debug "$tim2: continue merge";
+                    debug_log "$tim2: continue merge";
                     insert_trkpt($i, $j);
                     $skip_point = 0;
                 } else { # certainly defined PREV($i)
@@ -1610,7 +1615,7 @@ sub merge_tracks
                     my $dis1_from_merge = distance($lat2, $lon2, $ele2, $prev_lat, $prev_lon, $prev_ele);
                     my $dis2_from_merge = distance($lat2, $lon2, $ele2,      $lat,      $lon,      $ele);
                     my $dis_from_merge = ($dis1_from_merge + $dis2_from_merge) / 2;
-                    # debug "$tim: skipping regular point while switching to merging $tim2";
+                    debug_log "$tim: skipping regular point while switching to merging $tim2";
                     # replace_point($i, $j); TODO remove
                     insert_trkpt($i, $j);
                     $FLG[PREV $i] |= START_MERGE;
@@ -1623,12 +1628,12 @@ sub merge_tracks
                     goto continuation;
                 }
             } else {
-                # debug "$tim: using regular input";
+                debug_log "$tim: using regular input";
                 if ($in_merge == 0 && defined $sec) {
                     my $past_sec = $sec + $MIN_TIMEDIFF; # advance until next point no more too close to regular point
                     while ($in_merge != -2 && (!defined $sec2 || $sec2 < $past_sec)) {
                         # advance $merge as far as possible to get past regular input
-                        # debug "$tim2: skipping merge";
+                        debug_log "$tim2: skipping merge";
                         $in_merge = -2 if ++$j > $#TIM2;
                         ($tim2, $sec2) = ($TIM2[$j], $SEC2[$j]);
                     }
@@ -1652,7 +1657,7 @@ sub merge_tracks
                     if ($num_points_more > 0) { # alternative input still has more points
                         my $extra = $old_compat ? "" : " and has $num_points_more more points";
                         info_trkpt_i($i, "alternative input is $Dis away$extra, skipping regular");
-                        # debug "$tim: skipping regular input";
+                        debug_log "$tim: skipping regular input";
                         $skip_point = 1;
                         remove_trkpt($i);
                         $num_skip_points++;
@@ -1668,7 +1673,7 @@ sub merge_tracks
                 $in_merge = -2 if $in_merge == -1;
                 recalculate_all($i);
                 $FLG[$i] |= PAUSE_MERGE;
-                # debug "$tim: switched back to base input";
+                debug_log "$tim: switched back to base input";
                 warn_skipped_merged_ratio($i);
                 ($num_merged_points_last, $num_skip_points_last) =
                 ($num_merged_points     , $num_skip_points     );
@@ -1681,9 +1686,9 @@ sub merge_tracks
                     my $inserted = $PART_END_INDEX[$all];
                     info_trkpt_i($inserted, "$start_merge after end of $infiles;   first point at", "") unless $skip_point;
                     $FLG[$inserted] |= START_MERGE unless $skip_point;
-                    # debug "$tim2: switched to merge after $infiles";
+                    debug_log "$tim2: switched to merge after $infiles";
                 } else {
-                    # debug "$tim2: continued from merge";
+                    debug_log "$tim2: continued from merge";
                 }
             }
         }
@@ -1753,7 +1758,7 @@ sub sanitize
         ($lat    , $lon    , $ele    , $tim    , $sec    , $spd    ) =
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i]);
 
-        debug_log "consider sanitizing ".point_str($i)." spd=".spd_or_none($spd);
+        debug_log "consider sanitizing ".point_str($i)." spd=".spd_or_none($spd // "");
         my $ignore = 0;
 
         # handle cases that do not involve earlier points and lead to removing current point
@@ -2233,7 +2238,7 @@ for (my $direction, my $prev_sec, my $timediff,
         if ($debug) {
             (my $diff_ele_unused, my $td, my $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs($i);
             my $rate_str = $rate eq "" ? "" : sprintf "%.3f", $rate;
-            debug_log "phase analysis ".point_str($i)." dis=".(sprintf "%.3f", $dis)." rate=$rate_str spd=".spd_or_none($spd);
+            debug_log "phase analysis   at ".point_str($i)." dis=".(sprintf "%.3f", $dis)." rate=$rate_str spd=".spd_or_none($spd);
             my $msg = "internal inconsistency on ";
             abort_trkpt($i, "$msg time difference: $timediff vs. $td at") if $timediff ne $td;
             abort_trkpi($i, "$msg distance value: $DIS[$i] vs. $dis at" ) if abs($DIS[$i] -  $dis) > 0.001;
@@ -2647,8 +2652,8 @@ sub insert_points_in_gaps { # only done virtually, as string to be printed befor
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]); # needed also for {warn,info}_trkpt()
         my $dis = $DIS[$i];
         my $diff_time = diff_defined($SEC[$i], $SEC[PREV $i]) // 0;
-        my $dis_text = dis_str(DIS_PRECISION2, $dis);
-        ## debug_log "at ".point_str($i).", considering gap of $diff_time seconds and $dis_text";
+        my $dis_text = defined $dis ? dis_str(DIS_PRECISION2, $dis) : "with no distance available";
+        debug_log "considering  gap at ".point_str($i)." of $diff_time seconds and $dis_text";
         if (int($diff_time) > INSERTION_MAX_GAP) {
             # note that this is done only between adjacent track points that both have time information
             my $lin_spd = $dis / $diff_time;
