@@ -1568,8 +1568,6 @@ sub merge_tracks
         my $num_points_more;
         my $next_sec = defined NEXT($i) && defined $SEC[NEXT $i] ? $SEC[NEXT $i] : $sec;
 
-        my $old_compat = 0;
-        my $infiles = $old_compat ? "infile(s)" : "regular input";
         my $start_merge = "start using alternative input";
         if ($in_merge == 0 || $in_merge == -2) {
             # skipping regular input, or currently not merging from alternative input, which is not just reached its EOF
@@ -1596,8 +1594,8 @@ sub merge_tracks
                 $num_merges++ unless $skip_point;
                 $num_merged_points++;
                 if (!defined PREV $i) {
-                    info("$start_merge before $infiles");
-                    debug_log "$tim2: switched to merge before $infiles";
+                    info("$start_merge before regular input");
+                    debug_log "$tim2: switched to merge before regular input";
                     insert_trkpt($i, $j);
                     $FLG[PREV $i] |= START_MERGE;
                 } elsif ($skip_point) {
@@ -1607,9 +1605,7 @@ sub merge_tracks
                 } else { # certainly defined PREV($i)
                     # difference of next point from previous point from regular input:
                     my $gap_time2 = timediff_string(diff_defined($next_sec, $prev_input_sec) // 0);
-                    $old_compat
-                        ? info_trkpt_i(PREV($i), "$start_merge on ".timediff_string($gap_time)." gap after")
-                        : info_trkpt_i($i, "$start_merge due to $num_points_more more points during $gap_time2 around");
+                    info_trkpt_i($i, "$start_merge due to $num_points_more more points during $gap_time2 around");
                     my ($prev_lat , $prev_lon , $prev_ele ) = ($LAT [PREV $i], $LON [PREV $i], $ELE [PREV $i]);
                     my (     $lat2,      $lon2,      $ele2) = ($LAT2[     $j], $LON2[     $j], $ELE2[     $j]);
                     my $dis1_from_merge = distance($lat2, $lon2, $ele2, $prev_lat, $prev_lon, $prev_ele);
@@ -1620,7 +1616,7 @@ sub merge_tracks
                     insert_trkpt($i, $j);
                     $FLG[PREV $i] |= START_MERGE;
                     warn_trkpt_i(PREV($i), "points on regular track are ".dis_string($dis_from_merge)." away from first point being merged:  ")
-                        if !$old_compat && $dis_from_merge > MERGE_WARN_DIST;
+                        if $dis_from_merge > MERGE_WARN_DIST;
                     remove_trkpt($i);
                     $num_skip_points++;
                     $i = NEXT $i;
@@ -1655,8 +1651,7 @@ sub merge_tracks
                     my $Dis = dis_string(($dis1_from_infile + $dis2_from_infile) / 2);
                     $num_points_more = num_points_more($i, $j);
                     if ($num_points_more > 0) { # alternative input still has more points
-                        my $extra = $old_compat ? "" : " and has $num_points_more more points";
-                        info_trkpt_i($i, "alternative input is $Dis away$extra, skipping regular");
+                        info_trkpt_i($i, "alternative input is $Dis away and has $num_points_more more points, skipping regular");
                         debug_log "$tim: skipping regular input";
                         $skip_point = 1;
                         remove_trkpt($i);
@@ -1664,12 +1659,11 @@ sub merge_tracks
                         goto continuation; # skip current point from regular input
                     }
                     warn_trkpt_i(PREV($i), "next point on regular track is ".dis_string($dis1_from_infile)." away from the most recently merged")
-                        if !$old_compat && $dis1_from_infile > MERGE_WARN_DIST;
+                        if $dis1_from_infile > MERGE_WARN_DIST;
                 }
                 my $end_diff = timediff_string(diff_defined($sec, $SEC[PREV $i]) // 0);
                 info_trkpt_i(PREV($i), ($in_merge == 0 ? "pause using" : "     end of").
-                             ($old_compat ? " alternative input after                 "
-                                          : " alternative input                              $end_diff after"));
+                             " alternative input                              $end_diff after");
                 $in_merge = -2 if $in_merge == -1;
                 recalculate_all($i);
                 $FLG[$i] |= PAUSE_MERGE;
@@ -1684,9 +1678,9 @@ sub merge_tracks
                     $infile_EOF = 2;
                     $num_merges++;
                     my $inserted = $PART_END_INDEX[$all];
-                    info_trkpt_i($inserted, "$start_merge after end of $infiles;   first point at", "") unless $skip_point;
+                    info_trkpt_i($inserted, "$start_merge after end of regular input;   first point at", "") unless $skip_point;
                     $FLG[$inserted] |= START_MERGE unless $skip_point;
-                    debug_log "$tim2: switched to merge after $infiles";
+                    debug_log "$tim2: switched to merge after regular input";
                 } else {
                     debug_log "$tim2: continued from merge";
                 }
