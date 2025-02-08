@@ -234,7 +234,12 @@ my $num_pruned_links = 0;
 my $prune_exts       = PRUNE_EXTENSIONS;
 my $num_pruned_exts  = 0;
 
-# regular trackpoint data input from infile(s)
+# regular trackpoint with data from infile(s)
+# array with doubly linked list structure for efficient element insertion and deletion
+my @PREV; # index of point before (initially current index - 1)
+my @NEXT; # index of point after  (initially current index + 1)
+sub PREV { return defined $_[0] ? $PREV[$_[0]] : undef; }
+sub NEXT { return defined $_[0] ? $NEXT[$_[0]] : undef; }
 my @TXT; # text (containing trkpt output) to prepend when printing
 my @IGN; # number of points ignored immediately before this one
 my @SEG;
@@ -670,49 +675,19 @@ sub section { return ($FLG[$_[0]] & (START_MERGE | PAUSE_MERGE)) != 0 } # switch
 sub rate { return defined $_[0] && $_[1] ? H2S * $_[0] / $_[1] : ""; } # ascent/descent rate in m/h
 
 sub recalculate_DIS { my $i = $_[0];
-    return if $i <= 0 || $SEG[$i];
-    $DIS[$i] = distance($LAT[$i    ], $LON[$i    ], $ELE[$i    ],
-                        $LAT[$i - 1], $LON[$i - 1], $ELE[$i - 1]);
+    return if !defined PREV($i) || $SEG[$i];
+    $DIS[$i] = distance($LAT[     $i], $LON[     $i], $ELE[     $i],
+                        $LAT[PREV $i], $LON[PREV $i], $ELE[PREV $i]);
 }
 sub recalculate_SPD { my $i = $_[0];
-    return if $i <= 0 || $SEG[$i] || section($i) || !($FLG[$i] & COMPUTED_SPEED);
-    my $diff_time = diff_defined($SEC[$i], $SEC[$i - 1]);
+    return if !defined PREV($i) || $SEG[$i] || section($i) || !($FLG[$i] & COMPUTED_SPEED);
+    my $diff_time = diff_defined($SEC[$i], $SEC[PREV $i]);
     $SPD[$i] = $DIS[$i] / $diff_time if $diff_time;
 }
 sub recalculate_all {
     my $i = $_[0];
     recalculate_DIS($i);
     recalculate_SPD($i);
-}
-
-sub remove_trkpt {
-    # undo_time_gap_fill implies: do not count the previously inserted point being ignored, ignore segment start,
-    # and due to linear interpolation keep the speed but re-calculate the distance (simply by addition) and rate.
-    my ($i, $undo_time_gap_fill) = @_;
-    # indicate that previous point has been ignored, in addition to any previous ignores:
-    $IGN[$i + 1] += $IGN[$i] + ($undo_time_gap_fill ? 0 : 1); # do this also if  $i == $#TIM
-    $SEG[$i + 1] = 1 if $i == 0 || ($i < $#TIM && $SEG[$i] && !$undo_time_gap_fill); # copy over any segment start
-    my $dis_before = $DIS[$i];
-    splice @IGN, $i, 1;
-    splice @SEG, $i, 1;
-    splice @FLG, $i, 1;
-    splice @LAT, $i, 1;
-    splice @LON, $i, 1;
-    splice @ELE, $i, 1;
-    splice @TIM, $i, 1;
-    splice @SEC, $i, 1;
-    splice @DIS, $i, 1;
-    splice @SPD, $i, 1;
-    splice @CMT, $i, 1;
-    splice @SRC, $i, 1;
-    splice @FIX, $i, 1;
-    splice @EXT, $i, 1;
-    return if $i > $#TIM;
-    if ($undo_time_gap_fill) {
-        $DIS[$i] += $dis_before if $i > 0;
-    } else { # note that $#TIM has been decremented
-        recalculate_all($i);
-    }
 }
 
 #my @COS2; # approximation of cos(2phi) for efficiency
@@ -755,8 +730,8 @@ sub distance_curr { # of $lat, $lon, $ele
 sub comp_diffs {
     my $i = shift; # calculate differences relative to previous point $i -1
     # $prev_comp_spd is assumed to be average speed computed between previous points
-    my ($prev_ele, $prev_sec, $prev_dis, $prev_comp_spd) = ($ELE[$i - 1], $SEC[$i - 1], $DIS[$i - 1], $SPD[$i - 1]);
-    my (     $ele,      $sec,      $dis,           $spd) = ($ELE[$i    ], $SEC[$i    ], $DIS[$i    ], $SPD[$i    ]);
+    my ($prev_ele, $prev_sec, $prev_dis, $prev_comp_spd) = ($ELE[PREV $i], $SEC[PREV $i], $DIS[PREV $i], $SPD[PREV $i]);
+    my (     $ele,      $sec,      $dis,           $spd) = ($ELE[     $i], $SEC[     $i], $DIS[     $i], $SPD[     $i]);
     my $diff_ele = diff_nonempty($ele, $prev_ele);
 
     #http://forums.howwhatwhy.com/showflat.php?Cat=&Board=scigen&Number=-208125
@@ -770,41 +745,41 @@ sub comp_diffs {
 
 sub approx_slope {
     my $i = $_[0];
-    return undef if $SEG[$i] || section($i) || $ELE[$i - 1] eq ""
-        ||  $LAT[$i] == $LAT[$i - 1] && $LON[$i] == $LON[$i - 1]; # not returning infinite here
-    return ($ELE[$i]  - $ELE[$i - 1]) / $DIS[$i]; # is approximate because $DIS[$i] includes elevation diff
+    return undef if $SEG[$i] || section($i) || $ELE[PREV $i] eq ""
+        ||  $LAT[$i] == $LAT[PREV $i] && $LON[$i] == $LON[PREV $i]; # not returning infinite here
+    return ($ELE[$i]  - $ELE[PREV $i]) / $DIS[$i]; # is approximate because $DIS[$i] includes elevation diff
     # it is not relly worth caching these results
 }
 sub actual_slope {
     my $i = $_[0];
-    return undef if $SEG[$i] || section($i) || $ELE[$i - 1] eq "";
-    my $ele_avg = ($ELE[$i] + $ELE[$i - 1]) / 2; # simply 0 would also be fine
-    my $ele_diff = $ELE[$i] - $ELE[$i - 1];
-    my $dis = distance($LAT[$i    ], $LON[$i    ], $ele_avg,
-                       $LAT[$i - 1], $LON[$i - 1], $ele_avg);
+    return undef if $SEG[$i] || section($i) || $ELE[PREV $i] eq "";
+    my $ele_avg = ($ELE[$i] + $ELE[PREV $i]) / 2; # simply 0 would also be fine
+    my $ele_diff = $ELE[$i] - $ELE[PREV $i];
+    my $dis = distance($LAT[     $i], $LON[     $i], $ele_avg,
+                       $LAT[PREV $i], $LON[PREV $i], $ele_avg);
     return $dis == 0 ? ($ele_diff >= 0 ? 90 : -90) : atan2($ele_diff , $dis) * RAD2DEG;
 }
 
 use constant N_AVG_SLOPE => 4;
 sub avg_approx_slope {
-    my $i = $_[0];
-    my $end = $i - N_AVG_SLOPE;
     my $sum = 0;
-    while ($i > $end) {
-        my $slope = approx_slope($i--);
+    my $i = $_[0];
+    for (my $n = 0; $n < N_AVG_SLOPE; $n++) {
+        my $slope = approx_slope($i);
         return 0 if !defined $slope;
         $sum += $slope;
+        $i = PREV $i;
     }
     return $sum / N_AVG_SLOPE;
 }
 sub avg_actual_slope {
-    my $i = $_[0];
-    my $end = $i - N_AVG_SLOPE;
     my $sum = 0;
-    while ($i > $end) {
-        my $slope = actual_slope($i--);
+    my $i = $_[0];
+    for (my $n = 0; $n < N_AVG_SLOPE; $n++) {
+        my $slope = actual_slope($i);
         return 0 if !defined $slope;
         $sum += $slope;
+        $i = PREV $i;
     }
     return $sum / N_AVG_SLOPE;
 }
@@ -815,18 +790,18 @@ sub comp_angle { # calculate horizontal direction change (i.e., turning angle)
     my ($i, $lat, $lon, $timediff, $dis) = @_;
     my ($theta_diff, $spd2) = (0, "");
 
-    if ($i < $#TIM && !$SEG[$i + 1] && !section($i) && !section($i + 1)) { # next point exists and is not at segment start and not at merge start/pause
-        my $next_dis      =              $DIS[$i + 1];
-        my $next_timediff = diff_defined($SEC[$i + 1], $SEC[$i]);
+    if (defined NEXT($i) && !$SEG[NEXT $i] && !section($i) && !section(NEXT $i)) { # next point exists and is not at segment start and not at merge start/pause
+        my $next_dis      =              $DIS[NEXT $i];
+        my $next_timediff = diff_defined($SEC[NEXT $i], $SEC[$i]);
         my $timediff2 = $timediff eq "" || !defined $next_timediff  ? 0 : $timediff + $next_timediff;
         my      $dis2 = $dis      eq "" ||          $next_dis eq "" ? 0 : $dis      + $next_dis;
         $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed
         if ($spd2 ne "" && MPS2KMPH * $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
             my $resolution = .00001; # corresponds to at most 1.11 m
-            my $curr_lat_diff = nearest($resolution, $lat - $LAT[$i - 1]);
-            my $curr_lon_diff = nearest($resolution, $lon - $LON[$i - 1]);
-            my $next_lat_diff = nearest($resolution, $LAT[$i + 1] - $lat);
-            my $next_lon_diff = nearest($resolution, $LON[$i + 1] - $lon);
+            my $curr_lat_diff = nearest($resolution, $lat - $LAT[PREV $i]);
+            my $curr_lon_diff = nearest($resolution, $lon - $LON[PREV $i]);
+            my $next_lat_diff = nearest($resolution, $LAT[NEXT $i] - $lat);
+            my $next_lon_diff = nearest($resolution, $LON[NEXT $i] - $lon);
             if ($curr_lat_diff && $curr_lon_diff && $next_lat_diff && $next_lon_diff)
             {
                 my $theta1 = atan2($curr_lon_diff, $curr_lat_diff);
@@ -974,6 +949,10 @@ if ($prune_exts) {
     warning("-max_ext option has little effect since -prune_exts is given") if $max_ext;
 }
 abort "cannot smoothen tracks without sanitizing" if $smoothing && !$sanitize; # TODO maybe fix this limitation
+
+$part_start  = 1 unless defined $part_start;
+$part_offset = 0 unless defined $part_offset;
+my $all = $part_start - 1;
 
 
 if ($activity eq "-swim") {
@@ -1326,6 +1305,9 @@ sub read_tracks
             }
             my $seg = $state < 3;
             unless ($merge) {
+                push @PREV, $#TIM;
+                push @NEXT, $#TIM + 2;
+                push @TXT, undef;
                 push @IGN, 0;
                 push @SEG, $seg;
                 push @FLG, $flags;
@@ -1428,13 +1410,53 @@ sub read_tracks
                "was unable to interpolate missing time by end of last segment") if $tim_miss_start;
 }
 
+sub check_PREV_NEXT {
+    my $i = $_[0];
+    if (defined $i && defined PREV $i) {
+        stacktrace() unless defined NEXT(PREV($i)) &&  $i == NEXT(PREV($i));
+        abort_trkpt($i, "internal inconsistency: NEXT(PREV($i)) not defined")                if !defined NEXT(PREV($i));
+        abort_trkpt($i, "internal inconsistency: NEXT(PREV($i)) = ".NEXT(PREV($i))." != $i") if    $i != NEXT(PREV($i));
+    }
+    if (defined $i && defined NEXT $i) {
+        stacktrace() unless defined PREV(NEXT($i)) &&  $i == PREV(NEXT($i));
+        abort_trkpt($i, "internal inconsistency: PREV(NEXT($i)) not defined")                if !defined PREV(NEXT($i));
+        abort_trkpt($i, "internal inconsistency: PREV(NEXT($i)) = ".PREV(NEXT($i))." != $i") if    $i != PREV(NEXT($i));
+    }
+}
+
+sub remove_trkpt {
+    # undo_time_gap_fill implies: do not count the previously inserted point being ignored, ignore segment start,
+    # and due to linear interpolation keep the speed but re-calculate the distance (simply by addition) and rate.
+    my ($i, $count_ignored, $undo_time_gap_fill) = @_;
+    $count_ignored //= 0;
+    $PREV[NEXT $i] = $PREV[$i] if defined NEXT $i;
+    $NEXT[PREV $i] = $NEXT[$i] if defined PREV $i;
+    $PART_START_INDEX[$all] = NEXT $i unless defined PREV $i;
+    $PART_END_INDEX  [$all] = PREV $i unless defined NEXT $i;
+    # check_PREV_NEXT(PREV $i);
+    # check_PREV_NEXT(NEXT $i);
+
+    # optionally indicate that previous point has been ignored, in addition to any points ignored before the removed point:
+    # debug "IGN[".(NEXT($i) // 0)."]==".($IGN[NEXT($i) // 0])." +=  IGN[".$i."]==$IGN[$i] + $count_ignored";
+    $IGN[NEXT($i) // 0] += $IGN[$i] + $count_ignored; # do this also past end (wrapping around in array)
+    return unless defined NEXT $i;
+
+    $TXT [NEXT $i] = defined $TXT[$i] ? $TXT[$i] . ($TXT[NEXT $i] // "") : $TXT[NEXT $i]; # not actually needed before points get inserted on time gaps
+    $SEG[NEXT $i]  = 1 if !defined PREV($i) || ($SEG[$i] && !$undo_time_gap_fill); # copy over any segment start
+    if ($undo_time_gap_fill) {
+        $DIS[NEXT $i] += $DIS[$i] if defined PREV $i;
+    } else {
+        recalculate_all(NEXT $i);
+    }
+}
+
 sub merge_tracks
 {
     my $in_merge = 0; # 1 means using trkpt from $merge, < 0: EOF in $merge, -1: should report its EOF
-    my $infile_EOF = 0;
+    my $infile_EOF = 0; # how often infile EOF has been hit
     my $skip_point = 0;
     my $prev_input_sec;
-    (my $i = -1, my $j = 0);
+    (my $i = 0, my $j = 0);
     abort("FATAL: no trkpt found in alternative input $merge") if $j > $#TIM2;
 
     sub warn_skipped_merged_ratio
@@ -1446,29 +1468,46 @@ sub merge_tracks
             if $skipped > $merged;
     }
 
-    sub merge_point {
+    sub insert_trkpt { # insert $j virtually before $i
         my ($i, $j) = @_;
-        splice @IGN, $i, 0, $IGN2[$j];
-        splice @SEG, $i, 0, $i == 0; # ignore segments of alternative input
-        splice @FLG, $i, 0, $FLG2[$j];
-        splice @LAT, $i, 0, $LAT2[$j];
-        splice @LON, $i, 0, $LON2[$j];
-        splice @ELE, $i, 0, $ELE2[$j];
-        splice @TIM, $i, 0, $TIM2[$j];
-        splice @SEC, $i, 0, $SEC2[$j];
-        splice @DIS, $i, 0, $DIS2[$j];
-        splice @SPD, $i, 0, $SPD2[$j];
-        splice @CMT, $i, 0, $CMT2[$j];
-        splice @SRC, $i, 0, $SRC2[$j];
-        splice @FIX, $i, 0, $FIX2[$j];
-        splice @EXT, $i, 0, $EXT2[$j];
-        recalculate_all($i);
+        my $before_i = defined $i ? PREV $i : $PART_END_INDEX[$all];
+        push @PREV, $before_i;
+        push @NEXT, $i;
+        push @TXT, undef;
+        push @IGN, $IGN2[$j];
+        push @SEG, defined $i ? $SEG[$i] : 0; # ignore segments of alternative input
+        $SEG[$i] = 0 if defined $i; # has been moved over to inserted point just before
+        push @FLG, $FLG2[$j];
+        push @LAT, $LAT2[$j];
+        push @LON, $LON2[$j];
+        push @ELE, $ELE2[$j];
+        push @TIM, $TIM2[$j];
+        push @SEC, $SEC2[$j];
+        push @DIS, undef;
+        push @SPD, $SPD2[$j];
+        push @CMT, $CMT2[$j];
+        push @SRC, $SRC2[$j];
+        push @FIX, $FIX2[$j];
+        push @EXT, $EXT2[$j];
+        $NEXT[$before_i] = $#TIM if defined $before_i;
+        if (defined $i) {
+            $PREV[$i] = $#TIM;
+            if ($PART_START_INDEX[$all] == $i) {
+                $PART_START_INDEX[$all]  = $#TIM;
+            }
+        } else {
+            $PART_END_INDEX[$all] = $#TIM;
+        }
+        # check_PREV_NEXT($i);
+        # check_PREV_NEXT($#TIM);
+        recalculate_all($#TIM);
     }
 
-    sub replace_point { # more efficient than calling remove_trkpt() and then merge_point))
+    sub replace_point { # was more efficient than calling remove_trkpt() and then insert_trkpt(); TODO remove
         my ($i, $j) = @_;
+        # keep $PREV[$i], $NEXT[$i], and any $TXT[$i]
         # $IGN[$i] = $IGN2[$j]; # keep any info in points ignored before
-        $SEG[$i] = $i == 0; # ignore segments of alternative input
+        $SEG[$i] = !defined PREV $i; # ignore segments of alternative input
         $FLG[$i] = $FLG2[$j];
         $LAT[$i] = $LAT2[$j];
         $LON[$i] = $LON2[$j];
@@ -1481,31 +1520,26 @@ sub merge_tracks
         $SRC[$i] = $SRC2[$j];
         $FIX[$i] = $FIX2[$j];
         $EXT[$i] = $EXT2[$j];
-        recalculate_all($i    ) if $i > 0;
-        recalculate_all($i + 1) if $i < $#TIM;
+        recalculate_all(     $i) if defined PREV $i;
+        recalculate_all(NEXT $i) if defined NEXT $i;
     }
 
-    $SEG[0] = 0; # for the case that alternative points get merged before
-    while ($in_merge == 1 ? (++$j <= $#TIM2 ||
-                             ($in_merge = -1, !$infile_EOF)) # EOF in $merge
-                          : (++$i <= $#TIM ||
-                             ($in_merge == 0 && ($infile_EOF = $in_merge = 1))) # EOF in infile(s)
-           ) {
-        my ($lat, $lon, $ele) = ($LAT[$i], $LON[$i], $ELE[$i]);
-        my ($tim , $sec ) = ($TIM [$i], $SEC [$i]);
+    while (1) {
+        my ($lat, $lon, $ele) = ($LAT[$i], $LON[$i], $ELE[$i]) if defined $i;
+        my ($tim , $sec ) = ($TIM [$i], $SEC [$i])             if defined $i;
         my ($tim2, $sec2) = ($TIM2[$j], $SEC2[$j]);
 
-        if (!$skip_point && $i > 0 && defined $SEC[$i - 1] && defined $sec) {
-            my $diff_time = $sec - $SEC[$i - 1]; # difference from previous, possibly merged point
+        if (!$skip_point && defined PREV($i) && defined $SEC[PREV $i] && defined $sec) {
+            my $diff_time = $sec - $SEC[PREV $i]; # difference from previous, possibly merged point
             abort_trkpt($i, "before", "negative time difference (-".timediff_string(-$diff_time).")")
                 if $diff_time < 0;
-            if ($tim eq $TIM[$i - 1]) { # really equal (before rounding seconds)
+            if ($tim eq $TIM[PREV $i]) { # really equal (before rounding seconds)
                 abort_trkpt($i, "point before",
-                            "has same time but different position: $LAT[$i - 1], $LON[$i - 1] at")
-                    if $lat != $LAT[$i - 1] || $lon != $LON[$i - 1];
+                            "has same time but different position: $LAT[PREV $i], $LON[PREV $i] at")
+                    if $lat != $LAT[PREV $i] || $lon != $LON[PREV $i];
                 warn_trkpt_i($i, "point before      ",
-                             "has same time but different altitude: $ELE[$i - 1] m")
-                    if $ele != $ELE[$i - 1];
+                             "has same time but different altitude: $ELE[PREV $i] m")
+                    if $ele != $ELE[PREV $i];
             }
         }
 
@@ -1514,8 +1548,8 @@ sub merge_tracks
            my ($i, $j) = @_;
             # number of extra alternative points before next regular point if exists, else all remaining points
             my $next_j = $#TIM2;
-            if ($i < $#TIM) { # not already at last regular input point
-                my $next_sec = $SEC[$i + 1];
+            if (defined NEXT($i)) { # not already at last regular input point
+                my $next_sec = $SEC[NEXT $i];
                 $next_j = $j;
                 if (defined $next_sec) {
                     $next_sec -= $MIN_TIMEDIFF; # do not count points too close to next regular point
@@ -1527,7 +1561,7 @@ sub merge_tracks
             return $next_j - $j - 1;
         }
         my $num_points_more;
-        my $next_sec = $i < $#TIM && defined $SEC[$i + 1] ? $SEC[$i + 1] : $sec;
+        my $next_sec = defined NEXT($i) && defined $SEC[NEXT $i] ? $SEC[NEXT $i] : $sec;
 
         my $old_compat = 0;
         my $infiles = $old_compat ? "infile(s)" : "regular input";
@@ -1541,54 +1575,58 @@ sub merge_tracks
             if ($in_merge == 0 && $skip_point && !($timediff_merge < 0)) {
                 warn_trkpt_i($i, "due to time diff ".timediff_string($timediff_merge).
                              ", skipping further regular");
-                remove_trkpt($i--); $IGN[$i + 1] = 0;
+                remove_trkpt($i);
                 $num_skip_points++;
-                next;
+                goto continuation;
             }
 
             my $gap_time = diff_defined($sec, $prev_input_sec) // 0; # difference from previous point from infile(s);
             if ($skip_point ||
                 ($timediff_merge <= -$MIN_TIMEDIFF # regular input went sufficiently past current alternative input
-                 && ($i == 0 # alternative input started before regular one
+                 && (!defined PREV($i) # alternative input started before regular one
                      || ($gap_time >= MERGE_MIN_GAP &&
                          ($num_points_more = num_points_more($i, $j)) >= MERGE_MIN_MORE)))) {
                 # (re-)start merge
                 $in_merge = 1;
                 $num_merges++ unless $skip_point;
                 $num_merged_points++;
-                if ($i == 0) {
+                if (!defined PREV $i) {
                     info("$start_merge before $infiles");
                     # debug "$tim2: switched to merge before $infiles";
-                    merge_point($i, $j);
-                    $FLG[$i++] |= START_MERGE;
+                    insert_trkpt($i, $j);
+                    $FLG[PREV $i] |= START_MERGE;
                 } elsif ($skip_point) {
                     # debug "$tim2: continue merge";
-                    merge_point($i++, $j);
+                    insert_trkpt($i, $j);
                     $skip_point = 0;
-                } else { # certainly $i > 0
+                } else { # certainly defined PREV($i)
                     # difference of next point from previous point from regular input:
                     my $gap_time2 = timediff_string(diff_defined($next_sec, $prev_input_sec) // 0);
                     $old_compat
-                        ? info_trkpt_i($i - 1, "$start_merge on ".timediff_string($gap_time)." gap after")
+                        ? info_trkpt_i(PREV($i), "$start_merge on ".timediff_string($gap_time)." gap after")
                         : info_trkpt_i($i, "$start_merge due to $num_points_more more points during $gap_time2 around");
-                    my ($prev_lat , $prev_lon , $prev_ele ) = ($LAT [$i - 1], $LON [$i - 1], $ELE [$i - 1]);
-                    my (     $lat2,      $lon2,      $ele2) = ($LAT2[$j    ], $LON2[$j    ], $ELE2[$j    ]);
+                    my ($prev_lat , $prev_lon , $prev_ele ) = ($LAT [PREV $i], $LON [PREV $i], $ELE [PREV $i]);
+                    my (     $lat2,      $lon2,      $ele2) = ($LAT2[     $j], $LON2[     $j], $ELE2[     $j]);
                     my $dis1_from_merge = distance($lat2, $lon2, $ele2, $prev_lat, $prev_lon, $prev_ele);
                     my $dis2_from_merge = distance($lat2, $lon2, $ele2,      $lat,      $lon,      $ele);
                     my $dis_from_merge = ($dis1_from_merge + $dis2_from_merge) / 2;
                     # debug "$tim: skipping regular point while switching to merging $tim2";
-                    replace_point($i, $j);
-                    $FLG[$i++] |= START_MERGE;
-                    warn_trkpt_i($i - 1, "points on regular track are ".dis_string($dis_from_merge)." away from first point being merged:  ")
+                    # replace_point($i, $j); TODO remove
+                    insert_trkpt($i, $j);
+                    $FLG[PREV $i] |= START_MERGE;
+                    warn_trkpt_i(PREV($i), "points on regular track are ".dis_string($dis_from_merge)." away from first point being merged:  ")
                         if !$old_compat && $dis_from_merge > MERGE_WARN_DIST;
+                    remove_trkpt($i);
                     $num_skip_points++;
-                    next;
+                    $i = NEXT $i;
+                    $infile_EOF++ unless defined $i;
+                    goto continuation;
                 }
             } else {
                 # debug "$tim: using regular input";
-                if (defined $sec) {
+                if ($in_merge == 0 && defined $sec) {
                     my $past_sec = $sec + $MIN_TIMEDIFF; # advance until next point no more too close to regular point
-                    while ($in_merge >= 0 && (!defined $sec2 || $sec2 < $past_sec)) {
+                    while ($in_merge != -2 && (!defined $sec2 || $sec2 < $past_sec)) {
                         # advance $merge as far as possible to get past regular input
                         # debug "$tim2: skipping merge";
                         $in_merge = -2 if ++$j > $#TIM2;
@@ -1597,8 +1635,8 @@ sub merge_tracks
                 }
             }
         } else { # currently merging from alternative input $merge or just reached its EOF
-            if ($in_merge == -1 # EOF in merge, implies !$infile_EOF
-                || (!$infile_EOF && defined $sec && defined $sec2 &&
+            if ($in_merge == -1 # EOF in merge, implies defined $i (not at infile EOF)
+                || (defined $i && defined $sec && defined $sec2 &&
                     $sec2 + $MIN_TIMEDIFF > $sec) # alternative input from $merge is no more at sufficiently earlier time than regular input
                ) {
                 # return to next point from regular input unless current regular point to be skipped
@@ -1616,15 +1654,15 @@ sub merge_tracks
                         info_trkpt_i($i, "alternative input is $Dis away$extra, skipping regular");
                         # debug "$tim: skipping regular input";
                         $skip_point = 1;
-                        remove_trkpt($i--); $IGN[$i + 1] = 0;
+                        remove_trkpt($i);
                         $num_skip_points++;
-                        next; # skip current point from regular input
+                        goto continuation; # skip current point from regular input
                     }
-                    warn_trkpt_i($i - 1, "next point on regular track is ".dis_string($dis1_from_infile)." away from the most recently merged")
+                    warn_trkpt_i(PREV($i), "next point on regular track is ".dis_string($dis1_from_infile)." away from the most recently merged")
                         if !$old_compat && $dis1_from_infile > MERGE_WARN_DIST;
                 }
-                my $end_diff = timediff_string(diff_defined($sec, $SEC[$i - 1 ]) // 0);
-                info_trkpt_i($i - 1, ($in_merge == 0 ? "pause using" : "     end of").
+                my $end_diff = timediff_string(diff_defined($sec, $SEC[PREV $i]) // 0);
+                info_trkpt_i(PREV($i), ($in_merge == 0 ? "pause using" : "     end of").
                              ($old_compat ? " alternative input after                 "
                                           : " alternative input                              $end_diff after"));
                 $in_merge = -2 if $in_merge == -1;
@@ -1635,13 +1673,14 @@ sub merge_tracks
                 ($num_merged_points_last, $num_skip_points_last) =
                 ($num_merged_points     , $num_skip_points     );
             } else {
-                merge_point($i++, $j);
+                insert_trkpt($i, $j);
                 $num_merged_points++;
                 if ($infile_EOF == 1) {
                     $infile_EOF = 2;
                     $num_merges++;
-                    info_trkpt_i($i - 1, "$start_merge after end of $infiles;   first point at", "") unless $skip_point;
-                    $FLG[$i - 1] |= START_MERGE unless $skip_point;
+                    my $inserted = $PART_END_INDEX[$all];
+                    info_trkpt_i($inserted, "$start_merge after end of $infiles;   first point at", "") unless $skip_point;
+                    $FLG[$inserted] |= START_MERGE unless $skip_point;
                     # debug "$tim2: switched to merge after $infiles";
                 } else {
                     # debug "$tim2: continued from merge";
@@ -1649,17 +1688,33 @@ sub merge_tracks
             }
         }
 
-        $prev_input_sec = $SEC[$i] if defined $SEC[$i];
+        $prev_input_sec = $SEC[$i] if defined $i && defined $SEC[$i];
+      continuation:
+        if ($in_merge == 1) {
+            if (++$j > $#TIM2) { # EOF in $merge
+                $in_merge = -1;
+                last unless defined $i;
+            }
+        } else {
+            unless (defined (($i = NEXT $i))) {
+                $infile_EOF++;
+                last if $in_merge < 0; # EOF in $merge
+                $in_merge = 1;
+            }
+      }
     }
-    $SEG[0] = 1; # for the case that no alternative points got merged before
-    warn_skipped_merged_ratio($i);
-    info_trkpt_i($i - 1, "     end of alternative input                                        after")
+    warn_skipped_merged_ratio($PART_END_INDEX[$all]);
+    info_trkpt_i($PART_END_INDEX[$all], "     end of alternative input                                        after")
         if $in_merge == -1;
 }
 
 sub read_all
 {
     read_tracks(); # regular input file(s)
+    $PART_START_INDEX[$all] = 0;
+    $PART_END_INDEX  [$all] = $#TIM;
+    $PREV[$PART_START_INDEX[$all]] = undef;
+    $NEXT[$PART_END_INDEX[  $all]] = undef;
     if ($merge) {
         read_tracks($merge); # alternative input
         merge_tracks();
@@ -1686,12 +1741,13 @@ sub sanitize
     my $num_removals_in_row = 0;
     my $sum_timediff_mov0 = 0;
     my $num_pts_mov       = 0;
-    for (my $i = 0; $i <= $#TIM; $i++) {
+    for (my $i = $PART_START_INDEX[$all]; defined $i; $i = NEXT $i) {
+        # check_PREV_NEXT($i);
 
     # silently ignore any point inserted or duplicated by a previous run of this tool
         if ($SRC[$i] =~ m#^^($bride_gap_insert_txt|$bride_gap_duplicate_txt(after|before))$# &&
             $FIX[$i] eq "none") {
-            remove_trkpt($i--, 1);
+            remove_trkpt($i, 0, 1);
             next;
         }
         ($lat    , $lon    , $ele    , $tim    , $sec    , $spd    ) =
@@ -1715,17 +1771,17 @@ sub sanitize
 
             # correct implausible elevation gain/loss after somewhat long gap, typically on exit of tunnel or building
             if (!section($i) && # not at merge start/pause
-                !$SEG[$i - 1] && !section($i - 1)) {
-                my $prev_timediff = diff_defined($SEC[$i - 1], $SEC[$i - 2]);
-                my $rate = rate(diff_nonempty($ele, $ELE[$i - 1]), diff_defined($sec, $SEC[$i - 1]));
+                !$SEG[PREV $i] && !section(PREV $i)) {
+                my $prev_timediff = diff_defined($SEC[PREV $i], $SEC[PREV (PREV $i)]);
+                my $rate = rate(diff_nonempty($ele, $ELE[PREV $i]), diff_defined($sec, $SEC[PREV $i]));
                 if (defined $prev_timediff && $prev_timediff >= MIN_TUNNEL_GAP &&
                     $rate ne "" && ($rate > $MAX_PLAUSIBLE_ELE_GAIN / 4 || $rate < -$MAX_PLAUSIBLE_ELE_LOSS / 4)) {
-                    warn_trkpt_i($i - 1, "      at",
-                                 "correcting elevation from ".ele_string(0, $ELE[$i - 1])." to ".ele_string(0, $ELE[$i])
-                                 ." m after gap of ".timediff_string($prev_timediff)." and ".dis_string($DIS[$i - 1]));
-                    $ELE[$i - 1] = $ELE[$i];
-                    $FLG[$i - 1] |= CORRECTED_ELE;
-                    recalculate_all($i - 1);
+                    warn_trkpt_i(PREV($i), "      at",
+                                 "correcting elevation from ".ele_string(0, $ELE[PREV $i])." to ".ele_string(0, $ELE[$i])
+                                 ." m after gap of ".timediff_string($prev_timediff)." and ".dis_string($DIS[PREV $i]));
+                    $ELE[PREV $i]  = $ELE[$i];
+                    $FLG[PREV $i] |= CORRECTED_ELE;
+                    recalculate_all(PREV $i);
                     recalculate_all($i);
                 }
             }
@@ -1771,11 +1827,11 @@ sub sanitize
                 $num_removals_spd++;
                 ignore_trkpt($Spd, "speed is higher than ".$MAX_PLAUSIBLE_SPEED);
             } elsif (!section($i) && $acc ne "" &&  $acc > $MAX_PLAUSIBLE_ACCEL &&
-                     ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
+                     ($FLG[PREV $i] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
                 $num_removals_acc++;
                 ignore_trkpt($Comp_spd, "acceleration = $Acc m/s/s (more than $MAX_PLAUSIBLE_ACCEL)");
             } elsif (!section($i) && $acc ne "" && -$acc > $MAX_PLAUSIBLE_DECEL &&
-                     ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
+                     ($FLG[PREV $i] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
                 $num_removals_dec++;
                 ignore_trkpt($Comp_spd, "deceleration = $Dec m/s/s (more than $MAX_PLAUSIBLE_DECEL)");
             } elsif (!section($i) && $rate ne "" && $rate > $MAX_PLAUSIBLE_ELE_GAIN) {
@@ -1785,7 +1841,7 @@ sub sanitize
                 $num_removals_loss++;
                 ignore_trkpt($Spd, "descent rate = $Rate m/h (less than -$MAX_PLAUSIBLE_ELE_LOSS)");
             } elsif ($timediff ne "" && $timediff < $MIN_TIMEDIFF &&
-                     ($FLG[$i - 1] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM))
+                     ($FLG[PREV $i] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM))
             {
                 my $inter = $FLG[$i] & INTERPOLATED_TIM ? "interpolated " : "";
                 $num_removals_diff++;
@@ -1803,12 +1859,12 @@ sub sanitize
 
         if ($ignore) {
             $num_removals_in_row++;
-            remove_trkpt($i--); # also recalculates speed etc. of former point $i + 1 relative to its new previous point
+            remove_trkpt($i, 1); # also recalculates speed etc. of former point NEXT $i relative to its new previous point
         }
 
-        # debug "$i $tim $num_removals_in_row vs. $IGN[$i] $IGN[$i + 1]";
+        # debug "$i $tim $num_removals_in_row vs. $IGN[$i] $IGN[NEXT $i]";
         my $num_removals_in_row2 = $IGN[$i];
-        my $curr_not_ignored = ($IGN[$i + 1] // 0) == 0;
+        my $curr_not_ignored = ($IGN[NEXT($i) // 0] // 0) == 0; # also past end (wrapping around in array)
         # warning("ignored $num_removals_in_row2 points in a row") if $num_removals_in_row2 > 1 && $curr_not_ignored;
         if (!$ignore) {
             abort_trkpt($i, "$tim internal inconsistency on number of most recent removals in a row: ".
@@ -1820,9 +1876,9 @@ sub sanitize
             abort_trkpt($i, "internal inconsistency on condition for reporting number of most recent removals in a row at");
         }
     }
-    my $num_removals_in_row_final = $IGN[$#TIM + 1] // 0;
+    my $num_removals_in_row_final = $IGN[$PART_START_INDEX[$all]]; # past end, wrapping around in array
     # warning("ignored $num_removals_in_row_final points in a row") if $num_removals_in_row_final > 1;
-    abort_trkpt($#TIM, "internal inconsistency on reporting number of final removals in a row: ".
+    abort_trkpt($PART_END_INDEX[$all], "internal inconsistency on reporting number of final removals in a row: ".
                 "$num_removals_in_row vs. $num_removals_in_row_final at")
         if $num_removals_in_row != $num_removals_in_row_final;
     warning("ignored $num_removals_in_row points in a row") if $num_removals_in_row > 1;
@@ -1856,23 +1912,22 @@ sub check_waypoints {
         # find trackpoint $i2 at or just after wpt
         my $i2 = 0; # would be more efficient to do this just before the wpt loop, but then cannot deal with wpts not in time order
         my $i1; # most recent trackpoint having time info, otherwise undefined; ulimately becomes same as $i2 if no such trackpoint exists
-        while ($i2 <= $#TIM && (!defined $SEC[$i2] || $SEC[$i2] < $sec))
+        while (defined NEXT($i2) && (!defined $SEC[$i2] || $SEC[$i2] < $sec))
         {
             $i1 = $i2 if defined $SEC[$i2];
-            $i2++;
+            $i2 = NEXT $i2;
         }
-        $i2 = $#TIM if $i2 > $#TIM;
         $i1 = $i2 unless defined $i1;
 
         my ($wlat, $wlon, $wele) = ($WLAT[$j], $WLON[$j], $WELE[$j]);
         next if $LAT[$i1] == $wlat && $LON[$i1] == $wlon && $ELE[$i1] eq $wele; # late finishing point
         next if $LAT[$i2] == $wlat && $LON[$i2] == $wlon && $ELE[$i2] eq $wele; # early starting point
         # due to time possibly carried over across segement end and start of next segment, wpt may match next trkpt:
-        next if $i2 < $#TIM && $SEC[$i2] == $sec && defined $SEC[$i2 + 1] && $SEC[$i2 + 1] == $sec
-            && $LAT[$i2 + 1] == $wlat && $LON[$i2 + 1] == $wlon && $ELE[$i2 + 1] eq $wele;
+        next if defined NEXT($i2) && $SEC[$i2] == $sec && defined $SEC[NEXT $i2] && $SEC[NEXT $i2] == $sec
+            && $LAT[NEXT $i2] == $wlat && $LON[NEXT $i2] == $wlon && $ELE[NEXT $i2] eq $wele;
         warning("no trackpoint found at same time or later than waypoint $id; will ".
                 ($i1 < $i2 ? "extrapolate distance from the one before" : "take the difference from the last one"))
-            if $i2 == $#TIM;
+            unless defined NEXT($i2);
 
         # calculate and report distance to nearest trackpoint
         my $diff_sec_i2_i1 = diff_defined($SEC[$i2], $SEC[$i1]);
@@ -1917,15 +1972,17 @@ sub average {
 if ($smoothing) {
     my $pending_recalculation = 0;
     my $i;
-    for ($i = 1; $i < $#TIM; $i++) {
+    for ($i = NEXT ($PART_START_INDEX[$all]); defined $i && defined(NEXT $i); $i = NEXT $i) {
+        # check_PREV_NEXT($i);
+
         my $sec = $SEC[$i];
-        my $diff_time1 = diff_defined($sec, $SEC[$i - 1]);
-        my $diff_time2 = diff_defined($SEC[$i + 1], $sec);
-        if (defined $diff_time1 && defined $diff_time2 && !$SEG[$i] && !$SEG[$i + 1] # && $section($i) && !section($i + 1)
+        my $diff_time1 = diff_defined($sec, $SEC[PREV $i]);
+        my $diff_time2 = diff_defined($SEC[NEXT $i], $sec);
+        if (defined $diff_time1 && defined $diff_time2 && !$SEG[$i] && !$SEG[NEXT $i] # && $section($i) && !section(NEXT $i)
             && max($diff_time1, $diff_time2) <= SMOOTHING_MAX_GAP) {
-            my ($prev_ele, $ele, $next_ele) = ($ELE[$i - 1], $ELE[$i], $ELE[$i + 1]);
-            $LAT[$i] = average($LAT[$i - 1], $LAT[$i], $LAT[$i + 1], $diff_time1, $diff_time2);
-            $LON[$i] = average($LON[$i - 1], $LON[$i], $LON[$i + 1], $diff_time1, $diff_time2);
+            my ($prev_ele, $ele, $next_ele) = ($ELE[PREV $i], $ELE[$i], $ELE[NEXT $i]);
+            $LAT[$i] = average($LAT[PREV $i], $LAT[$i], $LAT[NEXT $i], $diff_time1, $diff_time2);
+            $LON[$i] = average($LON[PREV $i], $LON[$i], $LON[NEXT $i], $diff_time1, $diff_time2);
             $ELE[$i] = average($prev_ele   , $ele    , $next_ele   , $diff_time1, $diff_time2)
                 if $prev_ele ne "" && $ele ne "" && $next_ele ne "";
             recalculate_all($i);
@@ -2012,11 +2069,12 @@ sub push_phase {
     my $max__spd       = 0;
     my $max__spd_index;
 
-    for (my $i = $start_index + 1; $i <= $end_index; $i++) {
+    for (my $i = NEXT $start_index; $i <= $end_index; $i = NEXT $i) {
+        # check_PREV_NEXT($i);
         $dist += $DIS[$i];
         next if section($i);
 
-        $rate = rate(diff_nonempty($ELE[$i], $ELE[$i - 1]), diff_defined($SEC[$i], $SEC[$i - 1]));
+        $rate = rate(diff_nonempty($ELE[$i], $ELE[PREV $i]), diff_defined($SEC[$i], $SEC[PREV $i]));
         $spd_ = $SPD[$i];
         ($max_rate, $max_rate_index) = ($rate, $i) if $rate ne "" && ($diff_ele >= 0 ? $rate > $max_rate : $rate < $max_rate);
         ($max__spd, $max__spd_index) = ($spd_, $i) if $spd_ ne "" && $spd_ > $max__spd;
@@ -2034,11 +2092,7 @@ sub push_phase {
     push @PHASE_END_INDEX,      $end_index;
 }
 
-# prepare optional statistics for parts (segements or days)
-$part_start  = 1 unless defined $part_start;
-$part_offset = 0 unless defined $part_offset;
 my $part;
-my $all = $part_start - 1;
 sub next_part {
     my $day_or_seg = $_[0];
     $part = $day_or_seg if $day_or_seg >= $part_start;
@@ -2054,11 +2108,13 @@ for (my $direction, my $prev_sec, my $timediff,
      my $local_max_index = 0, my $local_min_index = 0,
      my $local_max_sec, my $local_min_sec,
      my $local_max_ele = "", my $local_min_ele = "",
-     my $i = 0; $i <= $#TIM; $i++) {
+     my $i = $PART_START_INDEX[$all]; defined $i; $i = NEXT $i) {
+    # check_PREV_NEXT($i);
+
     ($lat    , $lon    , $ele    , $tim    , $sec , my $dis , my $spd    ) =
     ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $DIS[$i], $SPD[$i]);
     if (!$SEG[$i]) {
-        $prev_sec = $SEC[$i - 1];
+        $prev_sec = $SEC[PREV $i];
         $timediff = diff_defined($sec, $prev_sec) // "";
     }
 
@@ -2075,14 +2131,14 @@ for (my $direction, my $prev_sec, my $timediff,
         }
         $date = defined $sec ? join("-", (localtime(defined $sec_offset ? $sec + $sec_offset : $sec))[3,4,5]) : undef;
         $new_part = 1
-            if $i == 0
+            if !defined PREV($i)
             # assuming that dates, as far as available, are ascending:
             || (defined $date && defined $prev_date && $date ne $prev_date);
         $prev_date = $date if $days;
     }
     $new_part = 1 if $segs && $SEG[$i];
     $DURATION[$part] = diff_defined($part_end_sec, $part_start_sec)
-        if defined $part && ($new_part || $i == $#TIM); # implies $i != 0
+        if defined $part && ($new_part || !defined NEXT($i)); # implies $i != 0
     if ($new_part) {
         next_part(++$day) if $days;
         next_part(++$seg) if $segs;
@@ -2097,7 +2153,7 @@ for (my $direction, my $prev_sec, my $timediff,
     $part_end_sec = $SEC[$i] if defined $SEC[$i];
     $PART_END_INDEX[$part] = $i if defined $part;
 
-    if ($SEG[$i]) { # track segment start (which includes the start: $i == 0)
+    if ($SEG[$i]) { # track segment start (which includes the start: !defined PREV($i))
         # (re-)start climb phase recognition
         $direction       = 0;
         $prev_turn_ele   = $local_max_ele   = $local_min_ele = "";
@@ -2114,7 +2170,7 @@ for (my $direction, my $prev_sec, my $timediff,
         $prev_turn_sec = $SEC[$prev_turn_index];
         $local_max_sec = $SEC[$local_max_index];
         $local_min_sec = $SEC[$local_min_index];
-        my $at_end = $i == $#TIM || $SEG[$i + 1] || $ELE[$i + 1] eq ""; # at track or segment end or just before missing altitude data
+        my $at_end = !defined NEXT($i) || $SEG[NEXT $i] || $ELE[NEXT $i] eq ""; # at track or segment end or just before missing altitude data
         if ($direction >= 0 && $local_max_index > $prev_turn_index
              && ($at_end || $ele ne "" && $ele <= $local_max_ele - ELE_THRESHOLD))
         {    # at end or when actually starting going down
@@ -2193,16 +2249,16 @@ for (my $direction, my $prev_sec, my $timediff,
             } else {
                 my $start_sec = $SEC[0] // 0; # used just for smaller time arguments to sub energy()
                 $sum_energy += energy($i, $prev_sec - $start_sec, $sec - $start_sec,
-                                      $dis, $ELE[$i - 1], $ele, $SPD[$i - 1], $spd);
+                                      $dis, $ELE[PREV $i], $ele, $SPD[PREV $i], $spd);
             }
         }
     }
 
     # perform general statistics, optionally also for parts (segments or days)
-    $min_lat = $lat if $i == 0 || $min_lat > $lat;
-    $max_lat = $lat if $i == 0 || $max_lat < $lat;
-    $min_lon = $lon if $i == 0 || $min_lon > $lon;
-    $max_lon = $lon if $i == 0 || $max_lon < $lon;
+    $min_lat = $lat if !defined PREV($i) || $min_lat > $lat;
+    $max_lat = $lat if !defined PREV($i) || $max_lat < $lat;
+    $min_lon = $lon if !defined PREV($i) || $min_lon > $lon;
+    $max_lon = $lon if !defined PREV($i) || $max_lon < $lon;
     # calculate min and max tim/sec values rather efficiently asumming ascending order:
     $min_tim = $tim if $min_tim eq ""   ; # || defined $sec && $sec < $min_sec;
     $min_sec = $sec if !defined $min_sec; # || defined $sec && $sec < $min_sec;
@@ -2237,15 +2293,13 @@ for (my $direction, my $prev_sec, my $timediff,
             set_max(\@MAX__ASC, \@MAX__ASC_INDEX, $slope, $i, $all, $part) if $slope >= 0;
             set_min(\@MAX_DESC, \@MAX_DESC_INDEX, $slope, $i, $all, $part) if $slope <= 0;
         }
-        my $rate = rate(diff_nonempty($ele, $ELE[$i - 1]), $timediff);
+        my $rate = rate(diff_nonempty($ele, $ELE[PREV $i]), $timediff);
         if ($rate ne "" && !section($i)) {
             set_max(\@MAX_GAIN, \@MAX_GAIN_INDEX, $rate, $i, $all, $part) if $rate >= 0;
             set_min(\@MAX_LOSS, \@MAX_LOSS_INDEX, $rate, $i, $all, $part) if $rate <= 0;
         }
     }
 }
-$PART_START_INDEX[$all] = 0;
-$PART_END_INDEX  [$all] = $#TIM;
 $lat_prec_len = max(length(lat_str($max_lat)), length(lat_str($min_lat)));
 $lon_prec_len = max(length(lon_str($max_lon)), length(lon_str($min_lon)));
 
@@ -2306,7 +2360,7 @@ sub correct_ele { # may update $ele_corr; uses $ele_corr
       ? ($WLAT[$j], $WLON[$j], $WELE[$j], $WSEC[$j])
       : ( $LAT[$i],  $LON[$i],  $ELE[$i],  $SEC[$i]);
     return "" if $ele eq "";
-    $ele_corr = neg_geoid_height($lat, $lon) if ($j >= 0 || $i == 0 || defined $SEC[$i - 1]) ;
+    $ele_corr = neg_geoid_height($lat, $lon) if ($j >= 0 || !defined PREV($i) || defined $SEC[PREV $i]) ;
     # do expensive operation only at specific points or beginning of track segment
 
     return corrected_ele($ele, $sec);
@@ -2356,7 +2410,7 @@ $HEAD =~ s/ *$//;
 # statistics must be generated before interpolating, which may shift indexes
 
 my @STAT; # collecting texts for all statistics points
-add_stat_point(0, "start", "", "emoji-▶️");
+add_stat_point($PART_START_INDEX[$all], "start", "", "emoji-▶️");
 
 sub wpt {
     my $j = $_[0]; # index of waypoint
@@ -2532,11 +2586,11 @@ for (my $overall_stat, my $p = $all; $p <= $part_last; $p++) {
     add_stat_point($MAX_DESC_INDEX [$p], $Part.$max_desc_text, undef, "emoji-↘️", $p);
     add_stat_point($MAX_GAIN_INDEX [$p], $Part.$max_gain_text, undef, "emoji-⏫", $p);
     add_stat_point($MAX_LOSS_INDEX [$p], $Part.$max_loss_text, undef, "emoji-⏬", $p);
-    $LAT[$#TIM] += 0.00001 if $p != $all && $p == $part_last; # make sure that last "part end" wpt is placed separately
+    $LAT[$PART_END_INDEX[$all]] += 0.00001 if $p != $all && $p == $part_last; # make sure that last "part end" wpt is placed separately
     add_stat_point($PART_END_INDEX [$p], $part_end_text,
                    $lean_stat_wpts ? ("; $max_spd_text; $min_ele_text; $max_ele_text") =~ s/\s+/ /gr : "",
                    "emoji-" . ($p == $all ? "⏹️" : $days ? "-🛌" : "🎬"), $p);
-    $LAT[$#TIM] -= 0.00001 if $p != $all && $p == $part_last; # make sure that last "part end" wpt is placed separately
+    $LAT[$PART_END_INDEX[$all]] -= 0.00001 if $p != $all && $p == $part_last; # make sure that last "part end" wpt is placed separately
     $overall_stat = $STAT[$all] if $p == $all;
 }
 #average ".($avg_gain >= 0 ?  "ascent rate between lowest and highest"
@@ -2586,11 +2640,13 @@ for (my $p = 0; $p <= $#PHASE_END_INDEX; $p++) {
 
 my ($num_inserted_trkpts, $num_duplicated_trkpts) = (0, 0);
 sub insert_points_in_gaps { # only done virtually, as string to be printed before the respective points
-    for (my $i = 0; $i <= $#TIM; $i++) {
+    for (my $i = NEXT ($PART_START_INDEX[$all]); defined $i; $i = NEXT $i) {
+        # check_PREV_NEXT($i);
+
         ($lat    , $lon    , $ele    , $tim    ) =
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]); # needed also for {warn,info}_trkpt()
         my $dis = $DIS[$i];
-        my $diff_time = diff_defined($SEC[$i], $SEC[$i - 1]) // 0;
+        my $diff_time = diff_defined($SEC[$i], $SEC[PREV $i]) // 0;
         my $dis_text = dis_str(DIS_PRECISION2, $dis);
         ## debug_log "at ".point_str($i).", considering gap of $diff_time seconds and $dis_text";
         if (int($diff_time) > INSERTION_MAX_GAP) {
@@ -2653,7 +2709,7 @@ sub insert_points_in_gaps { # only done virtually, as string to be printed befor
                     my $src = "";
                     $src = $flags & INSERTED_POINT
                         ? $bride_gap_insert_txt
-                        : $bride_gap_duplicate_txt .($i > 0 && $FLG[$i - 1] & INSERTED_POINT ? "after" : "before")
+                        : $bride_gap_duplicate_txt .(defined PREV($i) && $FLG[PREV $i] & INSERTED_POINT ? "after" : "before")
                         if !DISABLE_TRKPT_SRC;
                     print_point($str_fh, $n == 0, $lat, $lon, corrected_ele($ele, $sec),
                                 $tim, $cmt, $src, DISABLE_TRKPT_FIX ? "" : "none", "");
@@ -2720,14 +2776,16 @@ my $stats_end = "elevation ". (!GEOID_ELE_CORRECTION ? "not corrected" :
     . "GPXConv statistics end";
 
 ## expand metadata in trackpoints and optionally add waypoints for matching 'cmt' and 'src' elements
-for (my $i = 0; $i <= $#TIM; $i++) {
+for (my $i = $PART_START_INDEX[$all]; defined $i; $i = NEXT $i) {
+    # check_PREV_NEXT($i);
+
     sub append_unless_present { my ($str, $msg) = @_; return $str =~ m/$msg/ ? "" : ($str eq "" ? "" : "; ") . $msg; }
 
     if (!DISABLE_TRKPT_CMT) {
         my $cmt = $CMT[$i];
         if ($IGN[$i]) {
-            my $old_count = ($cmt =~ s#(\d+) previous points? ignored(; )?##s ? $1 : 0); # remove and previous instance of our comment
-            my $ign_str = plural(($ARGV =~ m/^(test.*?\.out)\d$/ ? 0 : $old_count) + $IGN[$i], "previous point")." ignored";
+            my $old_count = ($cmt =~ s#(\d+) (previous|final) points? ignored(; )?##s ? $1 : 0); # remove and previous instance of our comment
+            my $ign_str = plural(($ARGV =~ m/^(test.*?\.out)\d$/ ? 0 : $old_count) + $IGN[$i], ($i ? "previous" : "final")." point")." ignored";
             $cmt = $cmt eq "" ? $ign_str : "$ign_str; $cmt";
         }
         $cmt .= append_unless_present($cmt, "start alternative"    ) if $FLG[$i] & START_MERGE;
@@ -2788,10 +2846,14 @@ sub print_part {
     $head =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
     print $out ($head =~ s/(<trk>)/$wpts$1/sr); # prepend collected and computed waypoints to track
 
-    for (my $i = $PART_START_INDEX[$p]; $i <= $PART_END_INDEX[$p]; $i++) {
+    my $safetynet_count = $#TIM;
+    for (my $i = $PART_START_INDEX[$p]; ; $i = NEXT $i) {
+        # check_PREV_NEXT($i);
+        abort "internal error: non-terminating loop on printing trackpoints of part $p (all == $all)" if $safetynet_count-- < 0;
         print $out $TXT[$i] if $TXT[$i];
-        print_point($out, $p == $all && $i > 0 && $SEG[$i], $LAT[$i], $LON[$i],
+        print_point($out, $p == $all && defined PREV($i) && $SEG[$i], $LAT[$i], $LON[$i],
                     correct_ele(-1, $i), $TIM[$i], $CMT[$i], $SRC[$i], $FIX[$i],$EXT[$i]);
+        last if $i == $PART_END_INDEX[$p];
     }
     print $out "</trkseg>\n</trk>\n</gpx>\n";
     close $out;
@@ -2802,10 +2864,19 @@ if ($split) {
     my $j = 0; # index for waypoints, which are assumed to be in same (time-wise) order as trackpoints and parts
     for (my $p = $all + 1; $p <= $part_last; $p++) {
         my $part_wpts = "";
-        while ($j <= $#WTIM && $WIDX[$j] < $PART_START_INDEX[$p]) {
+        my $p_start_sec = $SEC[$PART_START_INDEX[$p]];
+        while ($j <= $#WTIM && (!defined $WSEC[$j] || !defined $p_start_sec || $WSEC[$j] < $p_start_sec)) {
+            last if $WIDX[$j] == $PART_START_INDEX[$p]; # fallback independent of availability of time info
             $j++;
         }
-        while ($j <= $#WTIM && $WIDX[$j] <= $PART_END_INDEX[$p]) {
+        my $p_end_sec = $SEC[$PART_END_INDEX[$p]];
+        my $found_same_idx = 0;
+        while ($j <= $#WTIM && (!defined $WSEC[$j] || !defined $p_end_sec || $WSEC[$j] <= $p_end_sec)) {
+            if ($WIDX[$j] == $PART_END_INDEX[$p]) { # fallback independent of availability of time info
+                $found_same_idx = 1;
+            } else {
+                last if $found_same_idx;
+            }
             my $wpt_str = wpt($j);
             $all_wpts  .= $wpt_str; # assuming that the parts cover all data
             $part_wpts .= $wpt_str if $WIDX[$j] != -1;
