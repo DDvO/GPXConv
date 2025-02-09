@@ -498,6 +498,9 @@ sub lon_string {
 }
 
 
+my $bride_gap_insert_txt    = "bridging time gap: inserted point";
+my $bride_gap_duplicate_txt = "bridging time gap: duplicated point ";
+
 sub parse_point {
     my $str = $_[0];
     my $is_trkpt = $str =~ m/^<trkpt /;
@@ -593,7 +596,9 @@ sub parse_point {
         (diff_defined($sec, $begin_sec) // 0) < 0 && ++$num_ignored_before ||
         (diff_defined($sec,   $end_sec) // 0) > 0 && ++$num_ignored_after  ||
          $max_elem  && $_[0] =~ m#<$max_elem>\s*(-?[\.\d]+)\s*</$max_elem>#s && $1 > $max_elem_limit && ++$num_elem_above ||
-         $min_elem  && $_[0] =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below;
+         $min_elem  && $_[0] =~ m#<$min_elem>\s*(-?[\.\d]+)\s*</$min_elem>#s && $1 < $min_elem_limit && ++$num_elem_below ||
+        # silently ignore any point inserted or duplicated by earlier run of this tool:
+        ($src =~ m#^^($bride_gap_insert_txt|$bride_gap_duplicate_txt(after|before))$# && $fix eq "none");
 
     return ($lat, $lon, $ele, $tim, $sec, $spd, $rest, $cmt, $src, $fix, $ext, $ignore);
 }
@@ -1123,7 +1128,7 @@ sub read_tracks
             my $trkpt = $1;
             abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt;
             ($lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $src, $fix, $exts, my $ignore) = parse_point("<trkpt $trkpt");
-            next if $ignore
+            goto continuation if $ignore
                 || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/)
                    && (diff_defined($sec, $prev_sec) // $min_timediff_parsing) < $min_timediff_parsing && ++$num_ignored_diff;
             ## debug_log "read non-ignored point $i from with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
@@ -1389,6 +1394,7 @@ sub read_tracks
 
             $state = 3; # ready to process further trkpt(s) in trkseg (or new trkseg or new track)
         }
+      continuation:
         if (m#</trkseg>.*<trkseg>#s) {
             info_trkpt_i($i - 1, "end of  segment at") if $i > 0;
             $state = 2; # starting new trkseg
@@ -1429,9 +1435,7 @@ sub check_PREV_NEXT {
 }
 
 sub remove_trkpt {
-    # undo_time_gap_fill implies: do not count the previously inserted point being ignored, ignore segment start,
-    # and due to linear interpolation keep the speed but re-calculate the distance (simply by addition) and rate.
-    my ($i, $count_ignored, $undo_time_gap_fill) = @_;
+    my ($i, $count_ignored) = @_;
     $count_ignored //= 0;
     $PREV[NEXT $i] = $PREV[$i] if defined NEXT $i;
     $NEXT[PREV $i] = $NEXT[$i] if defined PREV $i;
@@ -1446,12 +1450,8 @@ sub remove_trkpt {
     return unless defined NEXT $i;
 
     $TXT [NEXT $i] = defined $TXT[$i] ? $TXT[$i] . ($TXT[NEXT $i] // "") : $TXT[NEXT $i]; # not actually needed before points get inserted on time gaps
-    $SEG[NEXT $i]  = 1 if !defined PREV($i) || ($SEG[$i] && !$undo_time_gap_fill); # copy over any segment start
-    if ($undo_time_gap_fill) {
-        $DIS[NEXT $i] += $DIS[$i] if defined PREV $i;
-    } else {
-        recalculate_all(NEXT $i);
-    }
+    $SEG[NEXT $i]  = 1 if !defined PREV($i) || $SEG[$i]; # copy over any segment start
+    recalculate_all(NEXT $i);
 }
 
 sub merge_tracks
@@ -1727,12 +1727,10 @@ sub ignore_trkpt {
     warn_trkpt_i(-1, "ignoring", $Spd_txt."as $reason");
 }
 
-## sanitize trackpoints with implausible data, silently ignoring previously inserted or duplicated points
+## sanitize trackpoints with implausible data
 
 my $avg_timediff if $smoothing;
 
-my $bride_gap_insert_txt    = "bridging time gap: inserted point";
-my $bride_gap_duplicate_txt = "bridging time gap: duplicated point ";
 my ($num_removals_ele, $num_removals_dir, $num_removals_spd, $num_removals_acc, $num_removals_dec,
     $num_removals_gain, $num_removals_loss, $num_removals_diff) = (0, 0, 0, 0, 0, 0, 0, 0);
 sub sanitize
@@ -1743,12 +1741,6 @@ sub sanitize
     for (my $i = $PART_START_INDEX[$all]; defined $i; $i = NEXT $i) {
         # check_PREV_NEXT($i);
 
-        # silently ignore any point inserted or duplicated by a previous run of this tool
-        if ($SRC[$i] =~ m#^^($bride_gap_insert_txt|$bride_gap_duplicate_txt(after|before))$# &&
-            $FIX[$i] eq "none") {
-            remove_trkpt($i, 0, 1);
-            next;
-        }
         ($lat    , $lon    , $ele    , $tim    , $sec    , $spd    ) =
         ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i], $SEC[$i], $SPD[$i]);
 
