@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-
 ################################################################################
 # GPX track converter: post-process routes and tracks produced by GPS loggers etc.
 #
@@ -249,6 +248,7 @@ my @LON;
 my @ELE; # or "" if not available
 my @TIM; # or "" if not available
 my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
+my @DIS2;# square sum of the LAT and COS(LAT)*LON differences from point before, 0 for first point
 my @DIS; # derived from LAT and LON, and ELE if available, also from point before, 0 for first point
 my @SPD; # as recorded or computed (average from previous point if FLG contains COMPUTED_SPEED), or "" if not available
 my @CMT; # as given in input but without <cmt> and </cmt> tags, or "" if not available
@@ -673,10 +673,12 @@ sub section { return ($FLG[$_[0]] & (START_MERGE | PAUSE_MERGE)) != 0 } # switch
 
 sub rate { return defined $_[0] && $_[1] ? H2S * $_[0] / $_[1] : ""; } # ascent/descent rate in m/h
 
-sub recalculate_DIS { my $i = $_[0];
+sub recalculate_DIS {
+    my ($i, $const_2d) = @_;
     return if !defined PREV($i) || $SEG[$i];
-    $DIS[$i] = distance($LAT[     $i], $LON[     $i], $ELE[     $i],
-                        $LAT[PREV $i], $LON[PREV $i], $ELE[PREV $i]);
+    $DIS2[$i] = sq_distance2d($LAT[     $i], $LON[     $i],
+                              $LAT[PREV $i], $LON[PREV $i]) unless $const_2d;
+    $DIS[$i] = distance2d_3d($DIS2[$i], $ELE[$i], $ELE[PREV $i]);
 }
 sub recalculate_SPD { my $i = $_[0];
     return if !defined PREV($i) || $SEG[$i] || section($i) || !($FLG[$i] & COMPUTED_SPEED);
@@ -684,8 +686,10 @@ sub recalculate_SPD { my $i = $_[0];
     $SPD[$i] = $DIS[$i] / $diff_time if $diff_time;
 }
 sub recalculate_all {
-    my $i = $_[0];
-    recalculate_DIS($i);
+    my ($i, $old_i) = @_;
+    my $const_2d = defined $old_i &&
+        ($old_i == $i || $LAT[$old_i] == $LAT[$i] && $LON[$old_i] == $LON[$i]);
+    recalculate_DIS($i, $const_2d);
     recalculate_SPD($i);
 }
 
@@ -697,23 +701,34 @@ sub recalculate_all {
 #    # max relative error is < 0.027  for latitudes below North Cape
 #}
 my @COS;
-my @SQR;
-sub distance {
-    stacktrace() if !defined $_[0] || !defined $_[1] || !defined $_[2] || !defined $_[3] || !defined $_[4] || !defined $_[5];
-    my ($lat, $lon, $ele, $lat2, $lon2, $ele2) = @_;
+sub sq_distance2d {
+    my ($lat, $lon, $lat2, $lon2) = @_;
+    my $diff_lat = ($lat - $lat2) * METERS_PER_DEGREE_LAT;
+    return $diff_lat * $diff_lat if $lon == $lon2; # optimization in special case, no need to use cos()
     # with the following two approximations, cache hit rate is around 90% and resulting error is rarely more than a meter:
     my $approx_mean_lat = $lat2; # ($lat + $lat2) / 2;
     my $rounded_mean_lat = $approx_mean_lat * 1000;
-    my $diff_lat = ($lat - $lat2) * METERS_PER_DEGREE_LAT;
     my $diff_lon = ($lon - $lon2) * METERS_PER_DEGREE_LAT *
         # $COS2[$lat + $lat2]; # optimization would provide almost no efficiency advantage
         ($COS[$rounded_mean_lat] // ($COS[$rounded_mean_lat] = cos(deg2rad($approx_mean_lat))));
     # my $diff_lon = ($lon * cos(deg2rad($lat)) - $prev_lon * cos(deg2rad($prev_lat))) * METERS_PER_DEGREE_LAT;
+    return $diff_lat * $diff_lat + $diff_lon * $diff_lon;
+}
+my @SQR;
+sub distance2d_3d {
+    my ($sq_dis2d, $ele, $ele2) = @_;
     my $diff_ele = diff_nonempty($ele, $ele2) // 0; # assuming no altitude change if no altitude available
-    my $sq_dis = $diff_lat * $diff_lat + $diff_lon * $diff_lon + $diff_ele * $diff_ele;
+    my $sq_dis = $sq_dis2d+ $diff_ele * $diff_ele;
     # with the following, cache hit rate is around 98% and resulting error is rarely more than a meter:
     return sqrt($sq_dis) if $sq_dis >= 10000; #  do not cache for distances >= 100 m
     return $SQR[$sq_dis] // ($SQR[$sq_dis] = sqrt($sq_dis));
+}
+sub distance {
+    my ($lat, $lon, $ele, $lat2, $lon2, $ele2) = @_;
+    stacktrace()
+        if !defined $lat  || !defined $lon  || !defined $ele
+        || !defined $lat2 || !defined $lon2 || !defined $ele2;
+    return distance2d_3d(sq_distance2d($lat, $lon, $lat2, $lon2), $ele, $ele2);
 #
 #$distance = Math::Trig::great_circle_distance( #does not account for $diff_ele!
 #						  deg2rad($lon) , deg2rad(90 - $lat ),
@@ -1004,7 +1019,10 @@ sub read_tracks
     sub info_trkpt_curr  { info_trkpt (-1, $_[0], $_[1], $lat, $lon, $ele, $tim, $sec); }
     sub warn_trkpt_curr  { warn_trkpt (-1, $_[0], $_[1], $lat, $lon, $ele, $tim, $sec); }
     sub print_trkpt_curr { print_trkpt(-1, $_[0], $_[1], $lat, $lon, $ele, $tim, $sec); }
-    sub distance_curr { return distance($lat, $lon, $ele, $_[0], $_[1], $_[2]); }
+    sub distance_curr {
+        my $sq_dis2d = sq_distance2d($lat, $lon, $_[0], $_[1]);
+        return ($sq_dis2d, distance2d_3d($sq_dis2d, $ele, $_[2]));
+    }
 
     my $merge = $_[0];
     my $ele_miss_start  = 0; # first index of recent stretch with missing ele ; TODO restrict scope
@@ -1140,7 +1158,7 @@ sub read_tracks
             my $flags = 0;
             $flags |= START_MERGE if $cmt =~ m/start alternative/;
             $flags |= PAUSE_MERGE if $cmt =~ m/pause alternative/;
-            my $dis = $i == 0 || $state == 1 ? 0 : distance_curr($prev_lat, $prev_lon, $prev_ele);
+            my ($sq_dis2d, $dis) = $i == 0 || $state == 1 ? (0, 0) : distance_curr($prev_lat, $prev_lon, $prev_ele);
             if ($state < 3) { # at the first point in trkseg, first handle last point of segment before
                 $prev_avail_ele = "";
                 if (CARRY_OVER_ELE && $ele ne "") {
@@ -1148,8 +1166,8 @@ sub read_tracks
                         # fill in altitude in last point of segment before
                         $FLG[$i - 1] |= SUBSTITUTED_ELE;
                         $ELE[$i - 1]  = $prev_ele = $ele;
-                        recalculate_all($i - 1);
-                        $dis = distance_curr($prev_lat, $prev_lon, $prev_ele); # recalculation
+                        recalculate_all($i - 1, $i - 1); # 2d part did not change
+                        $dis = distance2d_3d($sq_dis2d, $ele, $prev_ele); # recalculation of 3d part
                         $ele_miss_length += $DIS[$i - 1] if $ele_miss_start;
                         warn_trkpt($i - 1, "at segment end    ",
                                    "no altitude was given; using value from begin of next segment");
@@ -1251,20 +1269,20 @@ sub read_tracks
                 # $ele_miss_length == 0 is special case of missing altitude over a stretch with all same lat/lon
                 my $ele_gradient = $ele_miss_length > 0 ? $ele_diff / $ele_miss_length : $ele_diff / ($i - $ele_miss_start + 1);
                 if ($ele_gradient != 0) {
-                    my $j;
+                    my $j; # used also after the loop
                     for ($j = $ele_miss_start; $j < $i_end; $j++) {
                         $ele_curr += ($ele_miss_length > 0 ? $DIS[$j] : 1) * $ele_gradient;
                         $ELE[$j]  = sprintf ELE_PRECISION3, $ele_curr;
                         $FLG[$j] |= INTERPOLATED_ELE;
                         $ele_full_len = max($ele_full_len, length($ELE[$j]));
-                        recalculate_all($j);
+                        recalculate_all($j, $j); # 2d part did not change
                         # not changing $ele nor $prev_ele such that below time interpolation is not affected
                         ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE[$j] dis=$DIS[$j]";
                     }
                     if ($i_end < $i) {
-                        recalculate_all($j);
+                        recalculate_all($j, $j); # 2d part did not change
                     } else {
-                        $dis = distance_curr($LAT[$j - 1], $LON[$j - 1], $ELE[$j - 1]); # recalculation
+                        $dis = distance2d_3d($sq_dis2d, $ele, $ELE[$j - 1]); # recalculation of 3d part
                     }
                 }
                 $ele_miss_start = 0;
@@ -1310,6 +1328,7 @@ sub read_tracks
             push @ELE, $ele;
             push @TIM, $tim;
             push @SEC, $sec;
+            push @DIS2,$sq_dis2d;
             push @DIS, $dis;
             push @SPD, $spd; # initially as recorded, "" if not available
             push @CMT, $cmt;
@@ -1420,7 +1439,7 @@ sub remove_trkpt {
 
     $TXT[NEXT $i] = defined $TXT[$i] ? $TXT[$i] . ($TXT[NEXT $i] // "") : $TXT[NEXT $i]; # not actually needed before points get inserted on time gaps
     $SEG[NEXT $i] = 1 if !defined PREV($i) || $SEG[$i]; # copy over any segment start
-    recalculate_all(NEXT $i);
+    recalculate_all(NEXT $i, $i);
 }
 
 sub merge_tracks
@@ -1460,7 +1479,7 @@ sub merge_tracks
         }
         # check_PREV_NEXT($i);
         # check_PREV_NEXT($j);
-        recalculate_all($j);
+        recalculate_all($j, $i);
     }
 
     while (1) {
@@ -1600,7 +1619,7 @@ sub merge_tracks
                 info_trkpt(PREV($i), ($in_merge == 0 ? "pause using" : "     end of").
                            " alternative input                              $end_diff after");
                 $in_merge = -2 if $in_merge == -1;
-                recalculate_all($i);
+                recalculate_all($i, PREV($i));
                 $FLG[$i] |= PAUSE_MERGE;
                 debug_log "$tim: switched back to base input";
                 warn_skipped_merged_ratio($i);
@@ -1706,8 +1725,8 @@ sub sanitize
                                ." m after gap of ".timediff_string($prev_timediff)." and ".dis_string($DIS[PREV $i]));
                     $ELE[PREV $i]  = $ELE[$i];
                     $FLG[PREV $i] |= CORRECTED_ELE;
-                    recalculate_all(PREV $i);
-                    recalculate_all($i);
+                    recalculate_all(PREV($i), PREV($i)); # 2d part did not change
+                    recalculate_all($i, $i); # 2d part did not change
                 }
             }
 
@@ -1906,11 +1925,12 @@ if ($smoothing) {
         if (defined $diff_time1 && defined $diff_time2 && !$SEG[$i] && !$SEG[NEXT $i] # && $section($i) && !section(NEXT $i)
             && max($diff_time1, $diff_time2) <= SMOOTHING_MAX_GAP) {
             my ($prev_ele, $ele, $next_ele) = ($ELE[PREV $i], $ELE[$i], $ELE[NEXT $i]);
+            my ($old_lat, $old_lon) = ($LAT[$i], $LON[$i]);
             $LAT[$i] = average($LAT[PREV $i], $LAT[$i], $LAT[NEXT $i], $diff_time1, $diff_time2);
             $LON[$i] = average($LON[PREV $i], $LON[$i], $LON[NEXT $i], $diff_time1, $diff_time2);
-            $ELE[$i] = average($prev_ele   , $ele    , $next_ele   , $diff_time1, $diff_time2)
+            $ELE[$i] = average($prev_ele, $ele, $next_ele , $diff_time1, $diff_time2)
                 if $prev_ele ne "" && $ele ne "" && $next_ele ne "";
-            recalculate_all($i);
+            recalculate_all($i, $old_lat == $LAT[$i] && $old_lon == $LON[$i] ? $i : undef);
             $pending_recalculation = 1;
             # individiual points are not marked as smoothened; this is done globally
             $num_smoothened++;
@@ -2570,6 +2590,7 @@ sub insert_points_in_gaps { # only done virtually, as string to be printed befor
         my ( $lat    , $lon    , $ele    , $tim    ) =
             ($LAT[$i], $LON[$i], $ELE[$i], $TIM[$i]);
         # do also across segments:
+        # my $sq_dis2d = $DIS2[$i];
         my $dis = $DIS[$i];
         my $diff_time = diff_defined($SEC[$i], $SEC[PREV $i]) // 0;
         my $dis_text = defined $dis ? dis_str(DIS_PRECISION2, $dis) : "with no distance available";
@@ -2593,7 +2614,8 @@ sub insert_points_in_gaps { # only done virtually, as string to be printed befor
             my $p = $i - 1;
             my $flags_before = $FLG[$p];
             my $flags_after  = $FLG[$i];
-            my $dis_delta  = $dis / $n_spans;
+            # my $sq_dis2d_delta  = $sq_dis2d / $n_spans / $n_spans;
+            # my      $dis_delta  =    $dis   / $n_spans;
             my $lat_delta = ($lat - $LAT[$p]) / $n_spans;
             my $lon_delta = ($lon - $LON[$p]) / $n_spans;
             my $sec_delta = $diff_time / $n_spans; # 0 < $sec_delta <= INSERTION_MAX_GAP
@@ -2606,7 +2628,7 @@ sub insert_points_in_gaps { # only done virtually, as string to be printed befor
             my $ign = $IGN[$i];
             # for the point that will be the one past the insertion:
             $IGN[$i] = 0;
-            $DIS[$i] = $seg ? 0 : $dis_delta; # recalculate distance
+            # ($DIS2[$i], $DIS[$i]) = $seg ? (0, 0) : ($sq_dis2d_delta, $dis_delta); # recalculate distance
             # ascent/decent rate as well as speed stays the same, due to linear interpolation
 
             # https://www.informit.com/articles/article.aspx?p=1582932&seqNum=4
