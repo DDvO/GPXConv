@@ -762,23 +762,27 @@ sub comp_diffs {
     return ($diff_ele // "", $timediff // "", $rate, $dis, $comp_spd, $acc);
 }
 
-sub approx_slope {
+my @SLO;
+sub approx_slope { # quick approximation sufficient for detecting a rather clear ascent or descent
     my $i = $_[0];
+    my $value = $SLO[$i];
+    return $value if defined $value;
     my $prev_i = PREV($i);
-    return undef if $SEG[$i] || section($i) || $ELE[$prev_i] eq ""
-        ||  $LAT[$i] == $LAT[$prev_i] && $LON[$i] == $LON[$prev_i]; # not returning infinite here
-    return ($ELE[$i]  - $ELE[$prev_i]) / $DIS[$i]; # is approximate because $DIS[$i] includes elevation diff
-    # it is not really worth caching these results
+    return undef if $SEG[$i] || section($i) || $ELE[$i] eq "" || $ELE[$prev_i] eq "";
+    my $ele_diff = $ELE[$i] - $ELE[$prev_i];
+    $value = $ele_diff == 0 ? 0
+        : $DIS2[$i] == 0 ? 1 : $ele_diff / $DIS[$i]; # is approximate as using the 3d distance
+    return ($SLO[$i] = $value);
 }
 sub actual_slope {
     my $i = $_[0];
     my $prev_i = PREV($i);
-    return undef if $SEG[$i] || section($i) || $ELE[$prev_i] eq "";
-    my $ele_avg = ($ELE[$i] + $ELE[$prev_i]) / 2; # simply 0 would also be fine
+    return undef if $SEG[$i] || section($i) || $ELE[$i] eq "" || $ELE[$prev_i] eq "";
     my $ele_diff = $ELE[$i] - $ELE[$prev_i];
-    my $dis = distance($LAT[     $i], $LON[     $i], $ele_avg,
-                       $LAT[$prev_i], $LON[$prev_i], $ele_avg);
-    return $dis == 0 ? ($ele_diff >= 0 ? 90 : -90) : atan2($ele_diff , $dis) * RAD2DEG;
+    return 0 if $ele_diff == 0;
+    my $sq_dis_2d = $DIS2[$i]; # not taking into account: $ele_avg = ($ELE[$i] + $ELE[$prev_i]) / 2
+    return $sq_dis_2d == 0 ? ($ele_diff < 0 ? -90 : 90)
+        : atan2($ele_diff, sqrt_with_cache($sq_dis_2d)) * RAD2DEG;
 }
 
 use constant N_AVG_SLOPE => 4;
