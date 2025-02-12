@@ -709,10 +709,11 @@ sub sq_distance2d {
     return $diff_lat * $diff_lat if $lon == $lon2; # optimization in special case, no need to use cos()
     # with the following two approximations, cache hit rate is around 90% and resulting error is rarely more than a meter:
     my $mean_lat = ($lat + $lat2) / 2;
-    my $rounded_scaled_mean_lat = $mean_lat * 10000 + 0.5; # cosine cache input resolution 0.0001 deg corresponding to < 10 meters
+    # cosine cache input resolution 0.0001 deg corresponding to < 10 meters:
+    my $rounded_scaled_abs_mean_lat = ($mean_lat < 0 ? -$mean_lat : $mean_lat) * 10000 + 0.5;
     my $diff_lon = ($lon - $lon2) * METERS_PER_DEGREE_LAT *
         # $COS2[$lat + $lat2]; # optimization would provide almost no efficiency advantage
-        ($COS[$rounded_scaled_mean_lat] // ($COS[$rounded_scaled_mean_lat] = cos(deg2rad($mean_lat))));
+        ($COS[$rounded_scaled_abs_mean_lat] // ($COS[$rounded_scaled_abs_mean_lat] = cos(deg2rad($mean_lat))));
     # my $diff_lon = ($lon * cos(deg2rad($lat)) - $prev_lon * cos(deg2rad($prev_lat))) * METERS_PER_DEGREE_LAT;
     return $diff_lat * $diff_lat + $diff_lon * $diff_lon;
 }
