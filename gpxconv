@@ -677,11 +677,12 @@ sub recalculate_DIS {
     my ($i, $const_2d) = @_;
     my $prev_i = PREV($i);
     return if !defined $prev_i || $SEG[$i];
-    $DIS2[$i] = sq_distance2d($LAT[     $i], $LON[     $i],
-                              $LAT[$prev_i], $LON[$prev_i]) unless $const_2d;
-    $DIS[$i] = distance2d_3d($DIS2[$i], $ELE[$i], $ELE[$prev_i]);
+    $DIS2[$i] = sq_distance_2d($LAT[     $i], $LON[     $i],
+                               $LAT[$prev_i], $LON[$prev_i]) unless $const_2d;
+    $DIS[$i] = distance_3d($DIS2[$i], $ELE[$i], $ELE[$prev_i]);
 }
-sub recalculate_SPD { my $i = $_[0];
+sub recalculate_SPD {
+    my $i = $_[0];
     return if !defined PREV($i) || $SEG[$i] || section($i) || !($FLG[$i] & COMPUTED_SPEED);
     my $diff_time = diff_defined($SEC[$i], $SEC[PREV($i)]);
     $SPD[$i] = $DIS[$i] / $diff_time if $diff_time;
@@ -703,7 +704,7 @@ sub recalculate_all {
 #}
 # https://stackoverflow.com/questions/639695/how-to-convert-latitude-or-longitude-to-meters
 my @COS;
-sub sq_distance2d {
+sub sq_distance_2d {
     my ($lat, $lon, $lat2, $lon2) = @_;
     my $diff_lat = ($lat - $lat2) * METERS_PER_DEGREE_LAT;
     return $diff_lat * $diff_lat if $lon == $lon2; # optimization in special case, no need to use cos()
@@ -718,21 +719,24 @@ sub sq_distance2d {
     return $diff_lat * $diff_lat + $diff_lon * $diff_lon;
 }
 my @SQR;
-sub distance2d_3d {
-    my ($sq_dis2d, $ele, $ele2) = @_;
-    my $diff_ele = diff_nonempty($ele, $ele2) // 0; # assuming no altitude change if no altitude available
-    my $sq_dis = $sq_dis2d + $diff_ele * $diff_ele;
+sub sqrt_with_cache {
+    my $sq_dis = $_[0];
     # with the following, cache hit rate is around 98% and resulting error is rarely more than a meter:
     return sqrt($sq_dis) if $sq_dis >= 10000; #  do not cache for distances >= 100 m
     my $rounded_sq_dis = $sq_dis + 0.5;
     return $SQR[$rounded_sq_dis] // ($SQR[$rounded_sq_dis] = sqrt($sq_dis));
+}
+sub distance_3d {
+    my ($sq_dis2d, $ele, $ele2) = @_;
+    my $diff_ele = diff_nonempty($ele, $ele2) // 0; # assuming no altitude change if no altitude available
+    return sqrt_with_cache($sq_dis2d + $diff_ele * $diff_ele);
 }
 sub distance {
     my ($lat, $lon, $ele, $lat2, $lon2, $ele2) = @_;
     stacktrace()
         if !defined $lat  || !defined $lon  || !defined $ele
         || !defined $lat2 || !defined $lon2 || !defined $ele2;
-    return distance2d_3d(sq_distance2d($lat, $lon, $lat2, $lon2), $ele, $ele2);
+    return distance_3d(sq_distance_2d($lat, $lon, $lat2, $lon2), $ele, $ele2);
 #
 #$distance = Math::Trig::great_circle_distance( #does not account for $diff_ele!
 #						  deg2rad($lon) , deg2rad(90 - $lat ),
@@ -1028,8 +1032,8 @@ sub read_tracks
     sub warn_trkpt_curr  { warn_trkpt (-1, $_[0], $_[1], $lat, $lon, $ele, $tim, $sec); }
     sub print_trkpt_curr { print_trkpt(-1, $_[0], $_[1], $lat, $lon, $ele, $tim, $sec); }
     sub distance_curr {
-        my $sq_dis2d = sq_distance2d($lat, $lon, $_[0], $_[1]);
-        return ($sq_dis2d, distance2d_3d($sq_dis2d, $ele, $_[2]));
+        my $sq_dis2d = sq_distance_2d($lat, $lon, $_[0], $_[1]);
+        return ($sq_dis2d, distance_3d($sq_dis2d, $ele, $_[2]));
     }
 
     my $merge = $_[0];
@@ -1175,7 +1179,7 @@ sub read_tracks
                         $FLG[$i - 1] |= SUBSTITUTED_ELE;
                         $ELE[$i - 1]  = $prev_ele = $ele;
                         recalculate_all($i - 1, $i - 1); # 2d part did not change
-                        $dis = distance2d_3d($sq_dis2d, $ele, $prev_ele); # recalculation of 3d part
+                        $dis = distance_3d($sq_dis2d, $ele, $prev_ele); # recalculation of 3d part
                         $ele_miss_length += $DIS[$i - 1] if $ele_miss_start;
                         warn_trkpt($i - 1, "at segment end    ",
                                    "no altitude was given; using value from begin of next segment");
@@ -1290,7 +1294,7 @@ sub read_tracks
                     if ($i_end < $i) {
                         recalculate_all($j, $j); # 2d part did not change
                     } else {
-                        $dis = distance2d_3d($sq_dis2d, $ele, $ELE[$j - 1]); # recalculation of 3d part
+                        $dis = distance_3d($sq_dis2d, $ele, $ELE[$j - 1]); # recalculation of 3d part
                     }
                 }
                 $ele_miss_start = 0;
