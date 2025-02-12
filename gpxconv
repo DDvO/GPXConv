@@ -701,17 +701,18 @@ sub recalculate_all {
 #    # max absolute error is < 0.0088
 #    # max relative error is < 0.027  for latitudes below North Cape
 #}
+# https://stackoverflow.com/questions/639695/how-to-convert-latitude-or-longitude-to-meters
 my @COS;
 sub sq_distance2d {
     my ($lat, $lon, $lat2, $lon2) = @_;
     my $diff_lat = ($lat - $lat2) * METERS_PER_DEGREE_LAT;
     return $diff_lat * $diff_lat if $lon == $lon2; # optimization in special case, no need to use cos()
     # with the following two approximations, cache hit rate is around 90% and resulting error is rarely more than a meter:
-    my $approx_mean_lat = $lat2; # ($lat + $lat2) / 2;
-    my $rounded_mean_lat = $approx_mean_lat * 1000;
+    my $mean_lat = ($lat + $lat2) / 2;
+    my $rounded_scaled_mean_lat = $mean_lat * 10000 + 0.5; # cosine cache input resolution 0.0001 deg corresponding to < 10 meters
     my $diff_lon = ($lon - $lon2) * METERS_PER_DEGREE_LAT *
         # $COS2[$lat + $lat2]; # optimization would provide almost no efficiency advantage
-        ($COS[$rounded_mean_lat] // ($COS[$rounded_mean_lat] = cos(deg2rad($approx_mean_lat))));
+        ($COS[$rounded_scaled_mean_lat] // ($COS[$rounded_scaled_mean_lat] = cos(deg2rad($mean_lat))));
     # my $diff_lon = ($lon * cos(deg2rad($lat)) - $prev_lon * cos(deg2rad($prev_lat))) * METERS_PER_DEGREE_LAT;
     return $diff_lat * $diff_lat + $diff_lon * $diff_lon;
 }
@@ -719,10 +720,11 @@ my @SQR;
 sub distance2d_3d {
     my ($sq_dis2d, $ele, $ele2) = @_;
     my $diff_ele = diff_nonempty($ele, $ele2) // 0; # assuming no altitude change if no altitude available
-    my $sq_dis = $sq_dis2d+ $diff_ele * $diff_ele;
+    my $sq_dis = $sq_dis2d + $diff_ele * $diff_ele;
     # with the following, cache hit rate is around 98% and resulting error is rarely more than a meter:
     return sqrt($sq_dis) if $sq_dis >= 10000; #  do not cache for distances >= 100 m
-    return $SQR[$sq_dis] // ($SQR[$sq_dis] = sqrt($sq_dis));
+    my $rounded_sq_dis = $sq_dis + 0.5;
+    return $SQR[$rounded_sq_dis] // ($SQR[$rounded_sq_dis] = sqrt($sq_dis));
 }
 sub distance {
     my ($lat, $lon, $ele, $lat2, $lon2, $ele2) = @_;
@@ -1311,8 +1313,8 @@ sub read_tracks
                     ## debug_log "interpolating missing time over ".dis_string($tim_miss_length).", sec_diff = $sec_diff";
                     for ($j = $tim_miss_start; $j < $i_end; $j++) {
                         $sec_curr += ($tim_miss_length > 0 ? $DIS[$j] : 1) * $sec_gradient;
-                        $SEC[$j]  = $sec_curr;
-                        $TIM[$j]  = epoch_to_str($sec_curr);
+                        $SEC[$j]  = int($sec_curr);
+                        $TIM[$j]  = epoch_to_str(int($sec_curr));
                         $FLG[$j] |= INTERPOLATED_TIM;
                         recalculate_SPD($j);
                         ## debug_log "interpolating missing time at point $j with ele=$ELE[$j] new  time=$TIM[$j] dis=$DIS[$j]";

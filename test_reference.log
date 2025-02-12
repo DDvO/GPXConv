@@ -18,7 +18,7 @@ INFO   : end of  segment at <trkpt lat="44"        lon="2.00000"  <ele>  NONE NO
 INFO   : further track, again from file test.gpx
 WARNING: at segment end     <trkpt lat="44"        lon="2.00000"  <ele> -10   NO_TIME              no altitude was given; using value from begin of next segment
 WARNING: at segment end     <trkpt lat="44"        lon="2.00000"  <ele> -10   2001-01-01T12:00:00Z no time     was given; using value from begin of next segment
-INFO   : further segment at <trkpt lat="45.50"     lon="3.50"     <ele> -10   2001-01-01T12:00:00Z after a time gap of 0:30:00 h and 205.348 km
+INFO   : further segment at <trkpt lat="45.50"     lon="3.50"     <ele> -10   2001-01-01T12:00:00Z after a time gap of 0:30:00 h and 204.461 km
 WARNING: no altitude  up to <trkpt lat="44"        lon="2.00000"  <ele> -10   2001-01-01T12:00:00Z for 1 point over a distance of 0.067 km
 WARNING: no time      up to <trkpt lat="44"        lon="2.00000"  <ele> -10   2001-01-01T12:00:00Z for 2 points over a distance of 0.112 km
 WARNING: no altitude     at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE NO_TIME             ; trying to interpolate altitude
@@ -26,14 +26,14 @@ WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE NO
 INFO   : end of  segment at <trkpt lat="45.60"     lon="3.52"     <ele>  NONE NO_TIME
 WARNING: at segment end     <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME              no altitude was given; using value from begin of next segment
 WARNING:              up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME              was unable to interpolate missing time within segment
-INFO   : further segment at <trkpt lat="45.70"     lon="4.10"     <ele> -10   NO_TIME              after a time gap of 0:00:00 h and 46.447 km
+INFO   : further segment at <trkpt lat="45.70"     lon="4.10"     <ele> -10   NO_TIME              after a time gap of 0:00:00 h and 46.408 km
 WARNING: at segment start   <trkpt lat="45.70"     lon="4.10"     <ele> -10   NO_TIME              no time     given and no previous value available
 WARNING: no altitude  up to <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME              for 1 point over a distance of 11.222 km
 WARNING: no altitude     at <trkpt lat="45.799956" lon="4.20"     <ele>  NONE NO_TIME             ; trying to interpolate altitude
-WARNING: no altitude  up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME              for 1 point over a distance of 13.551 km
-WARNING: no time      up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME              for 3 points over a distance of 71.221 km
+WARNING: no altitude  up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME              for 1 point over a distance of 13.547 km
+WARNING: no time      up to <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME              for 3 points over a distance of 71.178 km
 INFO   : end of  segment at <trkpt lat="45.90"     lon="4.30"     <ele>  90   2001-01-02T15:00:00Z
-INFO   : further segment at <trkpt lat="-0.081"    lon="0"        <ele> 500   2001-01-02T16:00:00Z after a time gap of 1:00:00 h and 5120.816 km
+INFO   : further segment at <trkpt lat="-0.081"    lon="0"        <ele> 500   2001-01-02T16:00:00Z after a time gap of 1:00:00 h and 5128.930 km
 INFO   : end of  segment at <trkpt lat="-0.081"    lon="0"        <ele> 500   2001-01-02T16:00:00Z
 INFO   : further segment at <trkpt lat="-0.009"    lon="0"        <ele> 500   2001-01-02T18:00:00Z after a time gap of 2:00:00 h and 8.002 km
 WARNING: no altitude     at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME             ; trying to interpolate altitude
@@ -43,8 +43,8 @@ WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO
 WARNING:                 at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME              was unable to interpolate missing time by end of last segment
 WARNING: before   <trkpt lat="44.00002"  lon="2.0003"   <ele> 74.49 NO_TIME              distance between points = 22.361 km (more than 2)
 WARNING: before   <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO_TIME              distance between points = 11.222 km (more than 2)
-WARNING: before   <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME              distance between points = 13.552 km (more than 2)
-WARNING: before   <trkpt lat="45.90"     lon="4.30"     <ele>  90   2001-01-02T15:00:00Z distance between points = 13.552 km (more than 2)
+WARNING: before   <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME              distance between points = 13.548 km (more than 2)
+WARNING: before   <trkpt lat="45.90"     lon="4.30"     <ele>  90   2001-01-02T15:00:00Z distance between points = 13.548 km (more than 2)
 WARNING: according to its time information, waypoint '
   <wpt lat="45.90" lon="4.30"><ele>490</ele><time>2001-01-02T15Z</time>
   <name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type>
@@ -58,7 +58,7 @@ WARNING: no time         at <trkpt lat="45.60"     lon="3.52"     <ele> -10   NO
 WARNING: no time         at <trkpt lat="45.799956" lon="4.20"     <ele>40.000 NO_TIME             ; cannot calculate energy here
 WARNING: no time     before <trkpt lat="45.90"     lon="4.30"     <ele>  90   2001-01-02T15:00:00Z; cannot calculate energy here
 WARNING: no time         at <trkpt lat="0.009"     lon="0"        <ele>  NONE NO_TIME             ; cannot calculate energy here
-WARNING: before <trkpt lat="-0.081"    lon="0"        <ele> 500   2001-01-02T16:00:00Z gap =  1:00:00 h over 5120.816 km; not inserting points because linear speed would be 5121 km/h, higher than 10
+WARNING: before <trkpt lat="-0.081"    lon="0"        <ele> 500   2001-01-02T16:00:00Z gap =  1:00:00 h over 5128.930 km; not inserting points because linear speed would be 5129 km/h, higher than 10
 INFO   : before <trkpt lat="-0.009"    lon="0"        <ele> 500   2001-01-02T18:00:00Z gap =  2:00:00 h over  8.002 km; inserting 3 points each 0:30:00 h
 INFO   : before <trkpt lat="0.000"     lon="0"        <ele> 525   2001-01-02T18:30:01Z gap =  0:30:01 h over  1.001 km; inserting 1 point each 0:15:01 h
 
@@ -74,7 +74,7 @@ At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: max descent 
 At lat,lon,ele = 44.00060,2.00000,  50 time = 2001-01-01T11:40:00Z: max  ascent rate =  +180 m/h at 0 km/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: max descent rate =  -180 m/h at 0 km/h
 At lat,lon,ele =  0.00900,0.00000,NONE time = NONE                : end
-total length               = 63.163 km
+total length               = 63.155 km
 gross duration             = 32:30:01 h
 total moving time          = 0:30:01 h
 total average moving speed = 2.0 km/h
@@ -99,7 +99,7 @@ At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 
 At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 total  ascent    =  +100 m; avg rate unknown due to missing time
 At lat,lon,ele = 45.79996,4.20000,  40 time = NONE                : segment 104 max  ascent (slope) =  0 degrees
 At lat,lon,ele = 45.79996,4.20000,  40 time = NONE                : segment 104 max descent (slope) =  0 degrees
-At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 end; length      = 27.103 km
+At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: segment 104 end; length      = 27.095 km
 At lat,lon,ele = 44.00030,2.00000,  20 time = 2001-01-01T11:30:00Z: 1st descent   =   -30  m;   distance   = 0.045 km; duration = 1:30:00 h
 At lat,lon,ele = 44.00010,2.00000,  40 time = 2001-01-01T10:30:00Z: 1st max speed =     0 km/h; avg speed  =    0 km/h
 At lat,lon,ele = 44.00010,2.00000,  40 time = 2001-01-01T10:30:00Z: 1st max rate  =   -20  m/h; avg rate   =  -20  m/h
@@ -109,7 +109,7 @@ At lat,lon,ele = 44.00060,2.00000,  50 time = 2001-01-01T11:40:00Z: 2nd max rate
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: 3rd descent   =   -60  m;   distance   = 0.090 km; duration = 0:20:00 h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: 3rd max speed =     0 km/h; avg speed  =    0 km/h
 At lat,lon,ele = 44.00000,2.00000, -10 time = 2001-01-01T12:00:00Z: 3rd max rate  =  -180  m/h; avg rate   = -180  m/h
-At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: 4th ascent    =  +100  m;   distance   =27.103 km
+At lat,lon,ele = 45.90000,4.30000,  90 time = 2001-01-02T15:00:00Z: 4th ascent    =  +100  m;   distance   =27.095 km
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th ascent    =   +25  m;   distance   = 1.001 km; duration = 0:30:01 h
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max speed =     2 km/h; avg speed  =    2 km/h
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max rate  =   +50  m/h; avg rate   =  +50  m/h
