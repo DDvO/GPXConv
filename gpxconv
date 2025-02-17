@@ -1113,14 +1113,14 @@ sub read_tracks
             }
         }
 
-        sub warn_smmoothing { warning("smoothing has already been done on input") if $_[0] =~ m#(\d+) points .*?smoothened($|\W)# && $1 > 0; }
+        sub warn_smoothing {
+            warning("smoothing has already been done on input")
+                if $smoothing && $_[0] =~ m#(\d+) points .*?smoothened($|\W)# && $1 > 0;
+        }
         if ($state == 0) {
             # processing first header (of first input file)
 
-            if (s#\r?\nGPXConv statistics (.*?)GPXConv statistics end\r?\n##s) # remove any earlier statistics section
-            {
-                warn_smmoothing($1) if $smoothing;
-            }
+            warn_smoothing($1) if s#\r?\nGPXConv statistics (.*?)GPXConv statistics end\r?\n##s; # remove any earlier statistics section
             if (m#$/#s) {
                 s#$/##s;    #remove trailing "<trkpt "
             } else {
@@ -1132,10 +1132,7 @@ sub read_tracks
             $state = 1; # expecting the very first trkpt
         } elsif (m#(<gpx[ >])#s) { # processing further GPX header, typically from next file
             ++$num_ignored_hdrs;
-            if ($smoothing && m#\r?\nGPXConv statistics (.*?smoothened)(.*?)GPXConv statistics end\r?\n#)
-            {
-                warn_smmooting($1);
-            }
+            warn_smoothing($1) if m#\r?\nGPXConv statistics (.*?smoothened)(.*?)GPXConv statistics end\r?\n#;
             if ($#TIM >= 0) { # typically, new file
                 info_trkpt($i - 1, "end of segment at") if $i > 0;
                 info("further track, from file $ARGV");
