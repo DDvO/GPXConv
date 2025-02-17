@@ -1041,8 +1041,9 @@ sub read_tracks
     }
 
     my $merge = $_[0];
-    my $ele_miss_start  = 0; # first index of recent stretch with missing ele ; TODO restrict scope
-    my $tim_miss_start  = 0; # first index of recent stretch with missing time; TODO restrict scope
+    my $i_start = $#TIM + 1;
+    my $ele_miss_start  = $i_start; # first index of recent stretch with missing ele ; TODO restrict scope
+    my $tim_miss_start  = $i_start; # first index of recent stretch with missing time; TODO restrict scope
     my $num_no_ele      = 0;
     my $ele_gap_length  = 0;
     my $num_no_time     = 0;
@@ -1057,7 +1058,7 @@ sub read_tracks
     my ($prev_avail_tim, $prev_avail_sec);
     my $prev_avail_ele = "";
     (my $ele_miss_length = 0, my $tim_miss_length = 0);
-    my $i = 0;
+    my $i = $i_start;
 
     { local $SIG{"__WARN__"} = sub { abort $_[0] }; # https://www.perlmonks.org/?node_id=11149744 Diamond errors
     while ($_ = ($merge ? <M> : <>)) {
@@ -1133,8 +1134,8 @@ sub read_tracks
         } elsif (m#(<gpx[ >])#s) { # processing further GPX header, typically from next file
             ++$num_ignored_hdrs;
             warn_smoothing($1) if m#\r?\nGPXConv statistics (.*?smoothened)(.*?)GPXConv statistics end\r?\n#;
-            if ($#TIM >= 0) { # typically, new file
-                info_trkpt($i - 1, "end of segment at") if $i > 0;
+            if (!$merge && $#TIM >= 0) { # typically, new file
+                info_trkpt($i - 1, "end of  segment at") if $i != $i_start;
                 info("further track, from file $ARGV");
             }
             $state = 2 if $state > 2; # expecting new trkseg
@@ -1171,40 +1172,40 @@ sub read_tracks
             my $flags = 0;
             $flags |= START_MERGE if $cmt =~ m/start alternative/;
             $flags |= PAUSE_MERGE if $cmt =~ m/pause alternative/;
-            my ($sq_dis2d, $dis) = $i == 0 || $state == 1 ? (0, 0) : distance_curr($prev_lat, $prev_lon, $prev_ele);
+            my ($sq_dis2d, $dis) = $i == $i_start || $state == 1 ? (0, 0) : distance_curr($prev_lat, $prev_lon, $prev_ele);
             if ($state < 3) { # at the first point in trkseg, first handle last point of segment before
                 $prev_avail_ele = "";
                 if (CARRY_OVER_ELE && $ele ne "") {
-                    if ($i > 0 && $ELE[$i - 1] eq "") {
+                    if ($i != $i_start && $ELE[$i - 1] eq "") {
                         # fill in altitude in last point of segment before
                         $FLG[$i - 1] |= SUBSTITUTED_ELE;
                         $ELE[$i - 1]  = $prev_ele = $ele;
                         recalculate_all($i - 1, $i - 1); # 2d part did not change
                         $dis = distance_3d($sq_dis2d, $ele, $prev_ele); # recalculation of 3d part
-                        $ele_miss_length += $DIS[$i - 1] if $ele_miss_start;
+                        $ele_miss_length += $DIS[$i - 1] if $ele_miss_start != $i_start;
                         warn_trkpt($i - 1, "at segment end    ",
                                    "no altitude was given; using value from begin of next segment");
                     }
-                } elsif ($ele_miss_start) {
+                } elsif ($ele_miss_start != $i_start) {
                     warn_trkpt($i - 1, "             up to",
                                "was unable to interpolate missing altitude within segment");
-                    $ele_miss_start = 0;
+                    $ele_miss_start = $i_start;
                 }
                 if (CARRY_OVER_TIME && $tim ne "") {
-                    if ($i > 0 && $TIM[$i - 1] eq "") {
+                    if ($i != $i_start && $TIM[$i - 1] eq "") {
                         # fill in time in last point of segment before
                         $FLG[$i - 1] |= SUBSTITUTED_TIM;
                         $TIM[$i - 1]  = $tim;
                         $SEC[$i - 1]  = $sec;
                         recalculate_SPD($i - 1);
-                        $tim_miss_length += $DIS[$i - 1] - $prev_dis if $tim_miss_start;
+                        $tim_miss_length += $DIS[$i - 1] - $prev_dis if $tim_miss_start != $i_start;
                         warn_trkpt($i - 1, "at segment end    ",
                                    "no time     was given; using value from begin of next segment");
                     }
-                } elsif ($tim_miss_start) {
+                } elsif ($tim_miss_start != $i_start) {
                     warn_trkpt($i - 1, "             up to",
                                "was unable to interpolate missing time within segment");
-                    $tim_miss_start = 0;
+                    $tim_miss_start = $i_start;
                 }
             }
 
@@ -1219,7 +1220,7 @@ sub read_tracks
             if ($state < 3) { # now handle first point in trkseg
                 my $resolution;
                 if ($ele eq "") {
-                    if ($i == 0 || $prev_ele eq "") { # $prev_avail_ele
+                    if ($i == $i_start || $prev_ele eq "") { # $prev_avail_ele
                         $resolution = " and no previous value available";
                     } elsif (CARRY_OVER_ELE) {
                         $ele = $prev_ele; # $prev_avail_ele; # will become $ELE[$i]
@@ -1246,9 +1247,9 @@ sub read_tracks
                                     "no time     ".($resolution =~ / using / ? "was " : "")."given$resolution");
                 }
             } else { # state == 3, further (i.e., not the first) point in trkseg
-                if ($ele eq "" && FILL_MISSING_ELE && ($ele_miss_start || $prev_ele ne "")) { # $prev_avail_ele
+                if ($ele eq "" && FILL_MISSING_ELE && ($ele_miss_start != $i_start || $prev_ele ne "")) { # $prev_avail_ele
                     ($ele_miss_start, $ele_miss_length) = ($i, 0)
-                      if !$ele_miss_start; # $i is > 0
+                      if $ele_miss_start == $i_start; # $i is != $i_start
                     $ele_miss_length += $dis;
                 }
 
@@ -1262,14 +1263,14 @@ sub read_tracks
                     $FLG[$i] |= SUBSTITUTED_TIM;
                 } # any inconsistency where either $dis is (nearly) 0 or $spd is (nearly) 0 are covered by warning w.r.t. MAX_SPEED_DEVIATION
 
-                if ($tim eq "" && FILL_MISSING_TIME && ($tim_miss_start ||
+                if ($tim eq "" && FILL_MISSING_TIME && ($tim_miss_start != $i_start ||
                                                         $prev_tim ne "")) # not $prev_avail_tim, which may be an earlier time
                 {
-                    ($tim_miss_start, $tim_miss_length) = ($i, 0) if $tim_miss_start == 0; # $i is > 0
+                    ($tim_miss_start, $tim_miss_length) = ($i, 0) if $tim_miss_start == $i_start; # $i is != $i_start
                     $tim_miss_length += $dis;
                 }
             }
-            if ($ele ne "" && $ele_miss_start) { # fill in missing altitude
+            if ($ele ne "" && $ele_miss_start != $i_start) { # fill in missing altitude
                 my $i_end = $i;
                 if ($state < 3)
                 { # have been carrying over ele to end of last section
@@ -1298,10 +1299,10 @@ sub read_tracks
                         $dis = distance_3d($sq_dis2d, $ele, $ELE[$j - 1]); # recalculation of 3d part
                     }
                 }
-                $ele_miss_start = 0;
+                $ele_miss_start = $i_start;
             }
             # note: cannot interpolate missing time within stretch of missing altitude with all same lat/lon; would need another pass
-            if ($tim ne "" && $tim_miss_start) { # fill in missing time by interpolation
+            if ($tim ne "" && $tim_miss_start != $i_start) { # fill in missing time by interpolation
                 my $i_end = $i;
                 if ($state < 3)
                 { # have been carrying over time to end of last section
@@ -1327,7 +1328,7 @@ sub read_tracks
                     }
                     recalculate_SPD($j) if $i_end < $i;
                 }
-                $tim_miss_start = 0;
+                $tim_miss_start = $i_start;
             }
             my $seg = $state < 3;
             push @PREV, $#TIM;
@@ -1351,7 +1352,7 @@ sub read_tracks
 
             # detect and report missing altitude
             my $ele_solution  = "cannot calculate ascent/descent";
-            $ele_solution  = "trying to interpolate altitude" if $ele_miss_start;
+            $ele_solution  = "trying to interpolate altitude" if $ele_miss_start != $i_start;
             if ($ele eq "") {
                 $num_no_ele++;
                 $ele_gap_length += $dis; # using $dis == 0 for first point
@@ -1366,7 +1367,7 @@ sub read_tracks
 
             # detect and report missing time
             my $time_solution = "cannot calculate speed and acceleration";
-            $time_solution = "trying to interpolate time" if $tim_miss_start;
+            $time_solution = "trying to interpolate time" if $tim_miss_start != $i_start;
             unless (defined $sec) {
                 $num_no_time++;
                 $time_gap_length += $dis; # using $dis == 0 for first point
@@ -1397,11 +1398,11 @@ sub read_tracks
         }
       continuation:
         if (m#</trkseg>.*<trkseg>#s) {
-            info_trkpt($i - 1, "end of  segment at") if $i > 0;
+            info_trkpt($i - 1, "end of  segment at") if $i != $i_start;
             $state = 2; # starting new trkseg
             # reset intra-segment values
         }
-        if ($i > 0 && m#<trk>#) { # further track
+        if ($i != $i_start && m#<trk>#) { # further track
             info("further track, again from file $ARGV") unless m#<gpx[ >]#s;
         }
     }
@@ -1414,11 +1415,11 @@ sub read_tracks
     $Len = dis_string($time_gap_length);
     warn_trkpt($#TIM, "no time      up to",
                "for " . $num_no_time . " points over a distance of $Len") if $num_no_time > 1;
-    info_trkpt($#TIM, "last   segment end") if $#TIM >= 0;
+    info_trkpt($#TIM, "last   segment end") if $#TIM >= $i_start;
     warn_trkpt($#TIM, "                at",
-               "was unable to interpolate missing altitude by end of last segment") if $ele_miss_start;
+               "was unable to interpolate missing altitude by end of last segment") if $ele_miss_start != $i_start;
     warn_trkpt($#TIM, "                at",
-               "was unable to interpolate missing time by end of last segment") if $tim_miss_start;
+               "was unable to interpolate missing time by end of last segment") if $tim_miss_start != $i_start;
 }
 
 sub check_PREV_NEXT {
