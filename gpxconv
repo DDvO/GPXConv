@@ -2076,7 +2076,7 @@ my $seg = 0 if $segs;
 my $day = 0, my $prev_date, my $date if $days;
 my ($part_start_sec, $part_end_sec);
 
-# this loop ignores merge start/pause
+# phase analysis ignores merge start/pause
 for (my $direction, my $prev_sec, my $timediff,
      my $prev_turn_index, my $prev_turn_ele, my $prev_turn_sec,
      my $local_max_index = 0, my $local_min_index = 0,
@@ -2141,7 +2141,7 @@ for (my $direction, my $prev_sec, my $timediff,
         ($local_min_ele, $local_min_index) = ($ele, $i) if $direction <= 0
             && ($local_min_ele eq "" || $ele < $local_min_ele);
     }
-    if (!$SEG[$i]) { # not at segment start
+    if (!$SEG[$i] && defined $prev_turn_index) { # not at segment start
       check_next:
         $prev_turn_sec = $SEC[$prev_turn_index];
         $local_max_sec = $SEC[$local_max_index];
@@ -2205,7 +2205,7 @@ for (my $direction, my $prev_sec, my $timediff,
             goto check_next;
         }
     }
-    if (!$SEG[$i]) { # not at segment start, implies $i >= 1, but ignoring merge start/pause
+    if (!$SEG[$i]) { # not at segment start, implies defined $prev_i, but ignoring merge start/pause
         if ($debug) {
             (my $diff_ele_unused, my $td, my $rate, my $dis, my $comp_spd_unused, my $acc_unused) = comp_diffs($i);
             my $rate_str = $rate eq "" ? "" : sprintf "%.3f", $rate;
