@@ -668,6 +668,8 @@ sub print_trkpt {
 sub diff_defined  { return defined $_[0] && defined $_[1] ? $_[0] - $_[1] : undef; }
 sub diff_nonempty { stacktrace() unless defined $_[0] && defined $_[1];
                     return $_[0] ne ""   && $_[1] ne ""   ? $_[0] - $_[1] : undef; }
+sub eq_nonempty   { return $_[0] eq "" ? $_[1] eq ""
+                        :  $_[1] eq "" ? $_[0] eq "" : $_[0] == $_[1] }
 
 sub section { return ($FLG[$_[0]] & (START_MERGE | PAUSE_MERGE)) != 0 } # switched between regular and merged track
 
@@ -1503,9 +1505,10 @@ sub merge_tracks
     }
 
     while (1) {
-        my ($lat, $lon, $ele) = ($LAT[$i], $LON[$i], $ELE[$i]) if defined $i;
-        my ($tim , $sec ) = ($TIM[$i], $SEC[$i])               if defined $i;
-        my ($tim2, $sec2) = ($TIM[$j], $SEC[$j]);
+        my ($lat , $lon , $ele ) = ($LAT[$i], $LON[$i], $ELE[$i]) if defined $i;
+        my ($lat2, $lon2, $ele2) = ($LAT[$j], $LON[$j], $ELE[$j]) if $in_merge != -2;
+        my ($tim , $sec ) = ($TIM[$i], $SEC[$i])                  if defined $i;
+        my ($tim2, $sec2) = ($TIM[$j], $SEC[$j])                  if $in_merge != -2;
         debug_log "at ".(defined $i ? point_str($i) : "infile EOF")." vs. ".($in_merge < 0 ? "alternative EOF" : point_str($j));
 
         our ($prev_i, $next_i) = (PREV($i), NEXT($i));
@@ -1582,7 +1585,6 @@ sub merge_tracks
                     my $gap_time2 = timediff_string(diff_defined($next_sec, $prev_input_sec) // 0);
                     info_trkpt($i, "$start_merge due to $num_points_more more points during $gap_time2 around");
                     my ($prev_lat , $prev_lon , $prev_ele ) = ($LAT[$prev_i], $LON[$prev_i], $ELE[$prev_i]);
-                    my (     $lat2,      $lon2,      $ele2) = ($LAT[     $j], $LON[     $j], $ELE[     $j]);
                     my $dis1_from_merge = distance($lat2, $lon2, $ele2, $prev_lat, $prev_lon, $prev_ele);
                     my $dis2_from_merge = distance($lat2, $lon2, $ele2,      $lat,      $lon,      $ele);
                     my $dis_from_merge = ($dis1_from_merge + $dis2_from_merge) / 2;
@@ -1600,9 +1602,12 @@ sub merge_tracks
                 }
             } else {
                 debug_log point_str($i).": using regular input";
-                if ($in_merge == 0 && defined $sec) {
-                    my $past_sec = $sec + $MIN_TIMEDIFF; # advance until next point no more too close to regular point
-                    while ($in_merge != -2 && (!defined $sec2 || $sec2 < $past_sec)) {
+                if ($in_merge == 0) {
+                    # advance alternative input until next point no more too close to regular point
+                    while ($in_merge != -2 &&
+                           (((!defined $sec || !defined $sec2) &&
+                             $lat == $lat2 && $lon == $lon2 && eq_nonempty($ele, $ele2))
+                            || $sec2 < $sec + $MIN_TIMEDIFF)) {
                         # advance $merge as far as possible to get past regular input
                         debug_log point_str($j).": skipping merge";
                         $in_merge = -2 if ++$j > $#TIM;
@@ -2436,8 +2441,6 @@ sub add_stat_wpt {
     $lon = lon_str($lon);
     $ele = ele_string($ele_prec_len, $ele) if $ele ne "";
     $tim = round_tim($tim) if $tim ne "";
-    sub eq_nonempty { return $_[0] eq "" ? $_[1] eq ""
-                          :  $_[1] eq "" ? $_[0] eq "" : $_[0] == $_[1] }
 
     # insert wpt in existing array, avoiding duplicates,
     # in ascending time order after any entries with same time, where missing time is considered infinite,
