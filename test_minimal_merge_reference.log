@@ -1,0 +1,18 @@
+INFO   : initial track, from file test_minimal.gpx
+INFO   : first   segment at <trkpt lat="0" lon="0" <ele>NONE NO_TIME
+WARNING: at segment start   <trkpt lat="0" lon="0" <ele>NONE NO_TIME              no altitude given and no previous value available
+WARNING: at segment start   <trkpt lat="0" lon="0" <ele>NONE NO_TIME              no time     given and no previous value available
+INFO   : last   segment end <trkpt lat="0" lon="0" <ele>NONE NO_TIME
+INFO   : initial track from alternative input test_minimal.gpx
+INFO   : first   segment at <trkpt lat="0" lon="0" <ele>NONE NO_TIME
+WARNING: at segment start   <trkpt lat="0" lon="0" <ele>NONE NO_TIME              no altitude given and no previous value available
+WARNING: at segment start   <trkpt lat="0" lon="0" <ele>NONE NO_TIME              no time     given and no previous value available
+INFO   : last   segment end <trkpt lat="0" lon="0" <ele>NONE NO_TIME
+
+INFO   : GPXConv statistics (not including periods between segments)
+At lat,lon,ele = 0.00000,0.00000,NONE time = NONE                : start
+At lat,lon,ele = 0.00000,0.00000,NONE time = NONE                : end
+0 merged points
+0 points inserted due to time gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end
