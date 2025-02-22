@@ -2452,6 +2452,7 @@ sub add_stat_wpt {
         $j++;
     }
     while ($j <= $#WSEC && ($WSEC[$j] // $MAX_UNDEF_TIME) == $sec_or_inf
+           && !($txt =~ m/(Z |\[)start\]/) # make sure that "start" wpt is placed first
            && ($txt =~ m/(Z |\[)end; / || !($WTXT[$j] =~ m/(Z |\[)end; /))) { # make sure that "end" wpt is placed last
         return if # do not add duplicates before point of insertion
             $WLAT[$j] == $lat && $WLON[$j] == $lon && eq_nonempty ($WELE[$j], $ele) &&
