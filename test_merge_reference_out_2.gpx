@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<gpx creator="GPXConv v2.9.2" version="1.1">
+<gpx creator="GPXConv v2.9.3" version="1.1">
 <metadata><time>2000-01-01T23:00:00Z</time><bounds minlat="0.00000" minlon="1.00000" maxlat="0.00104" maxlon="1.00000"/></metadata>
 <wpt lat="0.00001" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[day 2 end; length = 0.003 km; duration = 0:02:00 h; max speed = 0 km/h; min altitude = 5 m; max altitude = 8 m]</name><sym>emoji--🛌</sym></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[INFO: after end of base input; start alternative]</name></wpt>

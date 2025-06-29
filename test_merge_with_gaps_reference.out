@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<gpx creator="GPXConv v2.9.2" version="1.1">
+<gpx creator="GPXConv v2.9.3" version="1.1">
 <metadata><time>2001-01-01T10:00:00Z</time><bounds minlat="0.11000" minlon="0.00000" maxlat="0.19000" maxlon="0.00000"/></metadata>
 <wpt lat="0.19000" lon="0.00000"><ele>1</ele><time>2001-01-01T10:00:00Z</time><name>[start]</name><sym>emoji-▶️</sym></wpt>
 <wpt lat="0.11000" lon="0.00000"><ele>9</ele><time>2001-01-01T12:10:00Z</time><name>[end; total length = 8.891 km; gross duration = 2:10:00 h; total moving time = 0:06:00 h; total average moving speed = 66.7 km/h; max speed = 67 km/h; min altitude = 1 m; max altitude = 9 m]</name><sym>emoji-⏹️</sym></wpt>
