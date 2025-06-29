@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<gpx>
+<trk>
+<name>test_merge_gap</name>
+<trkseg>
+<trkpt lat="0.19" lon="0"><ele> 1</ele><time>2001-01-01T10:00:00Z</time></trkpt>
+<trkpt lat="0.11" lon="0"><ele> 9</ele><time>2001-01-01T12:10:00Z</time></trkpt>
+</trkseg>
+</trk>
+</gpx>

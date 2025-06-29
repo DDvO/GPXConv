@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<gpx creator="GPXConv v2.9.2" version="1.1">
+<metadata><time>2001-01-01T10:00:00Z</time><bounds minlat="0.11000" minlon="0.00000" maxlat="0.19000" maxlon="0.00000"/></metadata>
+<wpt lat="0.19000" lon="0.00000"><ele>1</ele><time>2001-01-01T10:00:00Z</time><name>[start]</name><sym>emoji-▶️</sym></wpt>
+<wpt lat="0.11000" lon="0.00000"><ele>9</ele><time>2001-01-01T12:10:00Z</time><name>[end; total length = 8.891 km; gross duration = 2:10:00 h; total moving time = 0:06:00 h; total average moving speed = 66.7 km/h; max speed = 67 km/h; min altitude = 1 m; max altitude = 9 m]</name><sym>emoji-⏹️</sym></wpt>
+<trk>
+<name>test_merge_gap</name>
+<cmt>
+GPXConv statistics (not including periods between segments)
+At lat,lon,ele = 0.19000,0.00000,1 time = 2001-01-01T10:00:00Z: start
+At lat,lon,ele = 0.16000,0.00000,4 time = 2001-01-01T11:02:00Z: max speed        =    67 km/h
+At lat,lon,ele = 0.19000,0.00000,1 time = 2001-01-01T10:00:00Z: min altitude     =     1 m
+At lat,lon,ele = 0.11000,0.00000,9 time = 2001-01-01T12:10:00Z: max altitude     =     9 m
+At lat,lon,ele = 0.14000,0.00000,6 time = 2001-01-01T11:04:00Z: max  ascent (slope) =  0 degrees
+At lat,lon,ele = 0.18000,0.00000,2 time = 2001-01-01T11:00:00Z: max descent (slope) =  0 degrees
+At lat,lon,ele = 0.17000,0.00000,3 time = 2001-01-01T11:01:00Z: max  ascent rate =   +60 m/h at 67 km/h
+At lat,lon,ele = 0.11000,0.00000,9 time = 2001-01-01T12:10:00Z: max descent rate =     0 m/h
+At lat,lon,ele = 0.11000,0.00000,9 time = 2001-01-01T12:10:00Z: end
+total length               = 8.891 km
+gross duration             = 2:10:00 h
+total moving time          = 0:06:00 h
+total average moving speed = 66.7 km/h
+1 section merged from alternative input
+7 merged points
+3 points inserted due to time gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end
+</cmt>
+<trkseg>
+<trkpt lat="0.19000" lon="0.00000"><ele>1</ele><time>2001-01-01T10:00:00Z</time></trkpt>
+<trkpt lat="0.18500" lon="0.00000"><ele>2</ele><time>2001-01-01T10:30:00Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
+<trkpt lat="0.18000" lon="0.00000"><ele>2</ele><time>2001-01-01T11:00:00Z</time><cmt>start alternative</cmt></trkpt>
+<trkpt lat="0.17000" lon="0.00000"><ele>3</ele><time>2001-01-01T11:01:00Z</time><src>computed speed</src><extensions><speed>67</speed></extensions></trkpt>
+<trkpt lat="0.16000" lon="0.00000"><ele>4</ele><time>2001-01-01T11:02:00Z</time><src>computed speed</src><extensions><speed>67</speed></extensions></trkpt>
+<trkpt lat="0.15000" lon="0.00000"><ele>5</ele><time>2001-01-01T11:03:00Z</time><src>computed speed</src><extensions><speed>67</speed></extensions></trkpt>
+<trkpt lat="0.14000" lon="0.00000"><ele>6</ele><time>2001-01-01T11:04:00Z</time><src>computed speed</src><extensions><speed>67</speed></extensions></trkpt>
+<trkpt lat="0.13000" lon="0.00000"><ele>7</ele><time>2001-01-01T11:05:00Z</time><src>computed speed</src><extensions><speed>67</speed></extensions></trkpt>
+<trkpt lat="0.12000" lon="0.00000"><ele>8</ele><time>2001-01-01T11:06:00Z</time><src>computed speed</src><extensions><speed>67</speed></extensions></trkpt>
+<trkpt lat="0.11667" lon="0.00000"><ele>8</ele><time>2001-01-01T11:27:20Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
+<trkpt lat="0.11333" lon="0.00000"><ele>9</ele><time>2001-01-01T11:48:40Z</time><src>bridging time gap: inserted point</src><fix>none</fix></trkpt>
+<trkpt lat="0.11000" lon="0.00000"><ele>9</ele><time>2001-01-01T12:10:00Z</time><cmt>pause alternative</cmt></trkpt>
+</trkseg>
+</trk>
+</gpx>

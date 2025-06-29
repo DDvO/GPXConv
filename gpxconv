@@ -748,7 +748,7 @@ sub distance {
 }
 
 sub comp_diffs {
-    my $i = shift; # calculate differences relative to previous point $i -1
+    my $i = shift; # calculate differences relative to previous point PREV($i)
     # $prev_comp_spd is assumed to be average speed computed between previous points
     my $prev_i = PREV($i);
     my ($prev_ele, $prev_sec, $prev_dis, $prev_comp_spd) = ($ELE[$prev_i], $SEC[$prev_i], $DIS[$prev_i], $SPD[$prev_i]);
@@ -2652,7 +2652,7 @@ sub insert_points_in_gaps { # only done virtually, as string to be printed befor
             my $start = $seg ? 0 : 1;
             my $n_end = $n_spans - ($seg ? 0 : 1);
 
-            my $p = $i - 1;
+            my $p = $prev_i;
             my $flags_before = $FLG[$p];
             my $flags_after  = $FLG[$i];
             # my $sq_dis2d_delta  = $sq_dis2d / $n_spans / $n_spans;

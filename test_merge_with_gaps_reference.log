@@ -1,0 +1,31 @@
+INFO   : initial track, from file test_merge_with_gaps1.gpx
+INFO   : first   segment at <trkpt lat="0.19" lon="0" <ele>1 2001-01-01T10:00:00Z
+INFO   : last   segment end <trkpt lat="0.11" lon="0" <ele>9 2001-01-01T12:10:00Z
+INFO   : initial track from alternative input test_merge_with_gaps2.gpx
+INFO   : first   segment at <trkpt lat="0.18" lon="0" <ele>2 2001-01-01T11:00:00Z
+INFO   : last   segment end <trkpt lat="0.12" lon="0" <ele>8 2001-01-01T11:06:00Z
+INFO   : start using alternative input due to 7 more points during 2:10:00 h around <trkpt lat="0.11" lon="0" <ele>9 2001-01-01T12:10:00Z
+WARNING: points on regular track are 4.445 km away from first point being merged:   <trkpt lat="0.18" lon="0" <ele>2 2001-01-01T11:00:00Z
+INFO   :      end of alternative input,          next regular point 1:04:00 h after <trkpt lat="0.12" lon="0" <ele>8 2001-01-01T11:06:00Z
+INFO   : before <trkpt lat="0.18" lon="0" <ele>2 2001-01-01T11:00:00Z gap =  1:00:00 h over  1.111 km; inserting 1 point each 0:30:00 h
+INFO   : before <trkpt lat="0.11" lon="0" <ele>9 2001-01-01T12:10:00Z gap =  1:04:00 h over  1.111 km; inserting 2 points each 0:21:20 h
+
+INFO   : GPXConv statistics (not including periods between segments)
+At lat,lon,ele = 0.19000,0.00000,1 time = 2001-01-01T10:00:00Z: start
+At lat,lon,ele = 0.16000,0.00000,4 time = 2001-01-01T11:02:00Z: max speed        =    67 km/h
+At lat,lon,ele = 0.19000,0.00000,1 time = 2001-01-01T10:00:00Z: min altitude     =     1 m
+At lat,lon,ele = 0.11000,0.00000,9 time = 2001-01-01T12:10:00Z: max altitude     =     9 m
+At lat,lon,ele = 0.14000,0.00000,6 time = 2001-01-01T11:04:00Z: max  ascent (slope) =  0 degrees
+At lat,lon,ele = 0.18000,0.00000,2 time = 2001-01-01T11:00:00Z: max descent (slope) =  0 degrees
+At lat,lon,ele = 0.17000,0.00000,3 time = 2001-01-01T11:01:00Z: max  ascent rate =   +60 m/h at 67 km/h
+At lat,lon,ele = 0.11000,0.00000,9 time = 2001-01-01T12:10:00Z: max descent rate =     0 m/h
+At lat,lon,ele = 0.11000,0.00000,9 time = 2001-01-01T12:10:00Z: end
+total length               = 8.891 km
+gross duration             = 2:10:00 h
+total moving time          = 0:06:00 h
+total average moving speed = 66.7 km/h
+1 section merged from alternative input
+7 merged points
+3 points inserted due to time gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end

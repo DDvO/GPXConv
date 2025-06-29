@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<gpx>
+<trk>
+<trkseg>
+<trkpt lat="0.18" lon="0"><ele> 2</ele><time>2001-01-01T11:00:00Z</time></trkpt>
+<trkpt lat="0.17" lon="0"><ele> 3</ele><time>2001-01-01T11:01:00Z</time></trkpt>
+<trkpt lat="0.16" lon="0"><ele> 4</ele><time>2001-01-01T11:02:00Z</time></trkpt>
+<trkpt lat="0.15" lon="0"><ele> 5</ele><time>2001-01-01T11:03:00Z</time></trkpt>
+<trkpt lat="0.14" lon="0"><ele> 6</ele><time>2001-01-01T11:04:00Z</time></trkpt>
+<trkpt lat="0.13" lon="0"><ele> 7</ele><time>2001-01-01T11:05:00Z</time></trkpt>
+<trkpt lat="0.12" lon="0"><ele> 8</ele><time>2001-01-01T11:06:00Z</time></trkpt>
+</trkseg>
+</trk>
+</gpx>

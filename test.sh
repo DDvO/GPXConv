@@ -39,3 +39,8 @@ gpxconv -cmt_wpts alternative test_merge1.gpx -merge test_merge2.gpx -days -tz 0
     diff test_merge{_reference,}.log;
     diff test_merge{_reference,}_out_1.gpx;
     diff test_merge{_reference,}_out_2.gpx
+
+echo -e "\n### test_merge_with_gaps ###########################################"
+gpxconv  test_merge_with_gaps1.gpx -merge test_merge_with_gaps2.gpx -o test_merge_with_gaps.out -lean_stat_wpts >test_merge_with_gaps.out 2>test_merge_with_gaps.log;
+    diff test_merge_with_gaps{_reference,}.out;
+    diff test_merge_with_gaps{_reference,}.log
