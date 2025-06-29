@@ -112,7 +112,7 @@ my $PHASES_REPORT_THRESHOLD = ELE_THRESHOLD; # default
 
 # merge control
 use constant MERGE_MIN_GAP    =>  20; # minimum gap duration in seconds for starting to switch to alternative input
-use constant MERGE_MIN_MORE   =>   6; # minimum number of more points on alternative input to allow switching to it
+use constant MERGE_MIN_MORE   =>   7; # minimum number of more points on alternative input to allow switching to it
 use constant MERGE_WARN_DIST  => 100; # warn if first point of merged portion is more than given number of meters away from regular track
 
 # smoothing control
@@ -1469,8 +1469,8 @@ sub merge_tracks
     my $infile_EOF = 0; # how often infile EOF has been hit
     my $skip_point = 0;
     my $prev_input_sec;
-    our $i = 0;
-    our $j = $PART_END_INDEX[$all] + 1;
+    our $i = 0; # current regular point
+    our $j = $PART_END_INDEX[$all] + 1; # current alternative point
     abort("FATAL: no trkpt found in alternative input $merge") if $j > $#TIM;
 
     sub warn_skipped_merged_ratio
@@ -1527,21 +1527,20 @@ sub merge_tracks
         }
 
         # main strategy : use alternative input when it has more points during same period
-        sub num_points_more {
-           # my ($i, $j) = @_;
-            # number of extra alternative points before next regular point if exists, else all remaining points
-            my $k = $#TIM;
+        sub num_points_more { # number of extra alternative points before next regular point if exists,
+            # otherwise all remaining points or 0 if time information (seconds) not available for current points
+            my $k = $#TIM + 1;
             if (defined $next_i) { # not already at last regular input point
-                my $next_sec = $SEC[$next_i];
-                $k = $j;
+                $k = $j; # the current alternative point
+                my $next_sec = $SEC[$next_i]; # time of next regular point
                 if (defined $next_sec) {
                     $next_sec -= $MIN_TIMEDIFF; # do not count points too close to next regular point
-                    while ($k < $#TIM && defined $SEC[$k] && $SEC[$k] < $next_sec) {
+                    while ($k <= $#TIM && defined $SEC[$k] && $SEC[$k] < $next_sec) {
                         $k++;
                     }
                 }
             }
-            return $k - $j - 1;
+            return $k - $j;
         }
         my $num_points_more;
         my $next_sec = defined $next_i && defined $SEC[$next_i] ? $SEC[$next_i] : $sec;
