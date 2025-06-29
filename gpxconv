@@ -1505,8 +1505,8 @@ sub merge_tracks
     }
 
     while (1) {
-        my ($lat , $lon , $ele ) = ($LAT[$i], $LON[$i], $ELE[$i]) if defined $i;
-        my ($lat2, $lon2, $ele2) = ($LAT[$j], $LON[$j], $ELE[$j]) if $in_merge != -2;
+        my ($lat , $lon , $ele ) = ($LAT[$i], $LON[$i], $ELE[$i]) if defined $i;      # of current point from regular input
+        my ($lat2, $lon2, $ele2) = ($LAT[$j], $LON[$j], $ELE[$j]) if $in_merge != -2; # of current point from alternative input
         my ($tim , $sec ) = ($TIM[$i], $SEC[$i])                  if defined $i;
         my ($tim2, $sec2) = ($TIM[$j], $SEC[$j])                  if $in_merge != -2;
         debug_log "at ".(defined $i ? point_str($i) : "infile EOF")." vs. ".($in_merge < 0 ? "alternative EOF" : point_str($j));
@@ -1547,7 +1547,7 @@ sub merge_tracks
 
         my $start_merge = "start using alternative input";
         if ($in_merge == 0 || $in_merge == -2) {
-            # skipping regular input, or currently not merging from alternative input, which is not just reached its EOF
+            # skipping regular input, or currently not merging from alternative input, which not just reached its EOF
             my $timediff_merge = diff_defined($sec2, $sec) // 0;
             debug_log "timediff_merge $timediff_merge";
 
@@ -1580,7 +1580,7 @@ sub merge_tracks
                     insert_trkpt();
                     $skip_point = 0;
                 } else { # certainly defined $prev_i
-                    # difference of next point from previous point from regular input:
+                    # difference of next point from previous point (both from regular input):
                     my $gap_time2 = timediff_string(diff_defined($next_sec, $prev_input_sec) // 0);
                     info_trkpt($i, "$start_merge due to $num_points_more more points during $gap_time2 around");
                     my ($prev_lat , $prev_lon , $prev_ele ) = ($LAT[$prev_i], $LON[$prev_i], $ELE[$prev_i]);
@@ -1591,7 +1591,7 @@ sub merge_tracks
                     $FLG[$j] |= START_MERGE;
                     warn_trkpt($j, "points on regular track are ".dis_string($dis_from_merge)." away from first point being merged:  ")
 
-                    if $dis_from_merge > MERGE_WARN_DIST;
+                        if $dis_from_merge > MERGE_WARN_DIST;
                     if ($skip_point) {
                         debug_log point_str($i).": skipping regular point while switching to merging $tim2";
                         remove_trkpt($i);
