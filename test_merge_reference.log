@@ -7,12 +7,12 @@ INFO   : end of  segment at <trkpt lat="0.00101" lon="1" <ele>2.1 2000-01-01T23:
 INFO   : further segment at <trkpt lat="0.00102" lon="1" <ele>2.2 2000-01-01T23:10:00Z after a time gap of 0:01:00 h and 0.001 km
 INFO   : last   segment end <trkpt lat="0"       lon="1" <ele>8   2000-01-02T00:25:00Z
 INFO   : start using alternative input before regular input
-INFO   : pause using alternative input                              0:01:00 h after <trkpt lat="0"       lon="1" <ele>0   2000-01-01T23:00:00Z
+INFO   : pause using alternative input,          next regular point 0:01:00 h after <trkpt lat="0"       lon="1" <ele>0   2000-01-01T23:00:00Z
 INFO   : start using alternative input due to 7 more points during 0:20:00 h around <trkpt lat="0"       lon="1" <ele>3   2000-01-01T23:11:00Z
 WARNING: points on regular track are 0.112 km away from first point being merged:   <trkpt lat="0.00101" lon="1" <ele>2.1 2000-01-01T23:09:00Z
 INFO   : alternative input is 0.114 km away and has 2 more points, skipping regular <trkpt lat="0"       lon="1" <ele>3   2000-01-01T23:11:00Z
 WARNING: next point on regular track is 0.116 km away from the most recently merged <trkpt lat="0.00104" lon="1" <ele>4.2 2000-01-01T23:20:02Z
-INFO   : pause using alternative input                              0:01:58 h after <trkpt lat="0.00104" lon="1" <ele>4.2 2000-01-01T23:20:02Z
+INFO   : pause using alternative input,          next regular point 0:01:58 h after <trkpt lat="0.00104" lon="1" <ele>4.2 2000-01-01T23:20:02Z
 INFO   : start using alternative input after end of regular input;   first point at <trkpt lat="0"       lon="1" <ele>8   2000-01-02T00:25:00Z
 INFO   :      end of alternative input                                        after <trkpt lat="0"       lon="1" <ele>8   2000-01-02T00:25:00Z
 INFO   : before <trkpt lat="0"       lon="1" <ele>5.3 2000-01-02T00:22:00Z gap =  1:00:00 h over  0.000 km; inserting 1 point each 0:30:00 h

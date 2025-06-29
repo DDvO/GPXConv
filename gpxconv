@@ -1645,7 +1645,7 @@ sub merge_tracks
                 }
                 my $end_diff = timediff_string(diff_defined($sec, $SEC[$prev_i]) // 0);
                 info_trkpt($prev_i, ($in_merge == 0 ? "pause using" : "     end of").
-                           " alternative input                              $end_diff after");
+                           " alternative input,          next regular point $end_diff after");
                 $in_merge = -2 if $in_merge == -1;
                 recalculate_all($i, $prev_i);
                 $FLG[$i] |= PAUSE_MERGE;
