@@ -35,7 +35,7 @@ newlines are kept</extensions>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 total descent = -90 m; avg rate = -49 m/h]</name><sym>⬇️</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 max descent (slope) = -21 degrees]</name><sym>↘️</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 max descent rate = -180 m/h at 0 km/h]</name><sym>⏬</sym></wpt>
-<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 end; length = 0.179 km; duration = 2:00:00 h]</name><sym>🎬</sym></wpt>
+<wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 102 end; length = 0.179 km; duration = 2:00:00 h]</name><sym>🈁</sym></wpt>
 <wpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 103 min altitude = -10 m]</name><sym>🔽</sym></wpt>
 <wpt lat="45.50000" lon="3.50000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z segment 103 max altitude = -10 m]</name><sym>🔼</sym></wpt>
 <wpt lat="44.00000" lon="2.00000"><ele> -10</ele><time>2001-01-01T12:00:00Z</time><name>[2001-01-01T12:00:00Z 3rd descent = -60 m; distance = 0.090 km; duration = 0:20:00 h]</name></wpt>
@@ -45,7 +45,7 @@ newlines are kept</extensions>
 <wpt lat="45.90000" lon="4.30000"><ele> 490</ele><time>2001-01-02T15:00:00Z</time><name><![CDATA[non-auto]]></name><cmt>wpt comment</cmt><link>wpt link</link><sym>Waypoint</sym><type>Test Point</type><extensions><om:oruxmapsextensions xmlns:om="http://www.oruxmaps.com/oruxmapsextensions/1/0"><om:ext type="ICON" subtype="0">15</om:ext></om:oruxmapsextensions></extensions></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 max altitude = 90 m]</name><sym>🔼</sym></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 total ascent = +100 m; avg rate unknown due to missing time]</name><sym>⬆️</sym></wpt>
-<wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 end; length = 27.095 km]</name><sym>🎬</sym></wpt>
+<wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z segment 104 end; length = 27.095 km]</name><sym>🈁</sym></wpt>
 <wpt lat="45.90000" lon="4.30000"><ele>  90</ele><time>2001-01-02T15:00:00Z</time><name>[2001-01-02T15:00:00Z 4th ascent = +100 m; distance =27.095 km]</name></wpt>
 <wpt lat="-0.06300" lon="0.00000"><ele> 500</ele><time>2001-01-02T16:30:00Z</time><name>[2001-01-02T16:30:00Z WARNING: bridging time gap: inserted point]</name></wpt>
 <wpt lat="-0.04500" lon="0.00000"><ele> 500</ele><time>2001-01-02T17:00:00Z</time><name>[2001-01-02T17:00:00Z WARNING: bridging time gap: inserted point]</name></wpt>
@@ -61,7 +61,7 @@ newlines are kept</extensions>
 <wpt lat="44.00002" lon="2.00030"><ele>  74</ele>                                 <name>[max ascent (slope) = 0 degrees]</name><sym>↗️</sym></wpt>
 <wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 max ascent (slope) = 0 degrees]</name><sym>↗️</sym></wpt>
 <wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 max descent (slope) = 0 degrees]</name><sym>↘️</sym></wpt>
-<wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 end; length = 11.222 km]</name><sym>🎬</sym></wpt>
+<wpt lat="45.60000" lon="3.52000"><ele> -10</ele>                                 <name>[segment 103 end; length = 11.222 km]</name><sym>🈁</sym></wpt>
 <wpt lat="45.70000" lon="4.10000"><ele> -10</ele>                                 <name>[segment 104 min altitude = -10 m]</name><sym>🔽</sym></wpt>
 <wpt lat="45.79996" lon="4.20000"><ele>  40</ele>                                 <name>[segment 104 max ascent (slope) = 0 degrees]</name><sym>↗️</sym></wpt>
 <wpt lat="45.79996" lon="4.20000"><ele>  40</ele>                                 <name>[segment 104 max descent (slope) = 0 degrees]</name><sym>↘️</sym></wpt>
