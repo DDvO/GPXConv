@@ -1153,15 +1153,16 @@ sub read_tracks
             my $trkpt = $1;
             abort("FATAL: cannot find end of trackpoint: <trkpt $_") unless $trkpt;
             ($lat, $lon, $ele, $tim, $sec, $spd, my $rest_unused, $cmt, $src, $fix, $exts, my $ignore) = parse_point("<trkpt $trkpt");
+            my $seg = $state < 3; # first trkpt of a segment
             goto continuation if $ignore
-                || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/)
+                || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/) && !$seg
                    && (diff_defined($sec, $prev_sec) // $min_timediff_parsing) < $min_timediff_parsing && ++$num_ignored_diff;
             ## debug_log "read non-ignored point $i from with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
 
             my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
 
             if ($state > 1) {
-                my $severity = $state < 3 ? "WARNING" : "FATAL"; # at segment start, just warn
+                my $severity = $seg ? "WARNING" : "FATAL"; # at segment start, just warn
                 print_trkpt_curr("$severity: before", "negative time difference (-".timediff_string(-$diff_time).")")
                     if $diff_time < 0; # this implies defined $sec && defined $prev_avail_sec
                 if (defined $sec && defined $prev_avail_sec && $tim eq $prev_avail_tim) { # really equal (before rounding seconds)
@@ -1178,7 +1179,7 @@ sub read_tracks
             $flags |= START_MERGE if $cmt =~ m/start alternative/;
             $flags |= PAUSE_MERGE if $cmt =~ m/pause alternative/;
             my ($sq_dis2d, $dis) = $i == $i_start || $state == 1 ? (0, 0) : distance_curr($prev_lat, $prev_lon, $prev_ele);
-            if ($state < 3) { # at the first point in trkseg, first handle last point of segment before
+            if ($seg) { # at the first point in trkseg, first handle last point of segment before
                 $prev_avail_ele = "";
                 if (CARRY_OVER_ELE && $ele ne "") {
                     if ($i != $i_start && $ELE[$i - 1] eq "") {
@@ -1222,7 +1223,7 @@ sub read_tracks
                 info_trkpt_curr("further segment at", "after a time gap of ".timediff_string($diff_time)." and ".dis_string($dis));
             }
 
-            if ($state < 3) { # now handle first point in trkseg
+            if ($seg) { # now handle first point in trkseg
                 my $resolution;
                 if ($ele eq "") {
                     if ($i == $i_start || $prev_ele eq "") { # $prev_avail_ele
@@ -1277,7 +1278,7 @@ sub read_tracks
             }
             if ($ele ne "" && $ele_miss_start != $i_start) { # fill in missing altitude
                 my $i_end = $i;
-                if ($state < 3)
+                if ($seg)
                 { # have been carrying over ele to end of last section
                     $i_end--;
                 } else {   # state == 3, further (i.e., not the first) point in trkseg
@@ -1309,7 +1310,7 @@ sub read_tracks
             # note: cannot interpolate missing time within stretch of missing altitude with all same lat/lon; would need another pass
             if ($tim ne "" && $tim_miss_start != $i_start) { # fill in missing time by interpolation
                 my $i_end = $i;
-                if ($state < 3)
+                if ($seg)
                 { # have been carrying over time to end of last section
                     $i_end--;
                 } else {   # state == 3, further (i.e., not the first) point in trkseg
@@ -1335,7 +1336,6 @@ sub read_tracks
                 }
                 $tim_miss_start = $i_start;
             }
-            my $seg = $state < 3;
             push @PREV, $#TIM;
             push @NEXT, $#TIM + 2;
             push @TXT, undef;
