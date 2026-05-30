@@ -1880,7 +1880,7 @@ sub check_waypoints {
                 unless $id =~ m/\[(INFO|WARNING): /;
             next;
         }
-        if ($j > 0 && (diff_defined($sec, $WSEC[$j - 1]) // 0) < 0) {
+        if ($j > 0 && !($WSTR[$j] =~ m|<src>GPXConv</src>|) && (diff_defined($sec, $WSEC[$j - 1]) // 0) < 0) {
             warning("waypoint $id has earlier time than the waypoint found before: $WSTR[$j - 1]");
         }
         if ($#TIM < 0) { # can not happen due to above check
@@ -2440,6 +2440,7 @@ sub add_stat_wpt {
     $txt =~ s/\s+/ /g;
     $txt = "$tim $txt" if !$lean_stat_wpts && $tim ne "";
     $txt = "<name>[$txt]</name>" if $txt ne "";
+    $txt .= "<src>".TOOL_NAME."</src>";
     $txt .= "<sym>$sym</sym>" if defined $sym;
 
     # adapt to avoid rouding issues on comparison
@@ -2766,10 +2767,10 @@ $final_text .= points($num_inserted_trkpts)." inserted ".(INSERT_SEGMENT ? "and 
 my $num_sanitized = $num_removals_ele + $num_removals_dir + $num_removals_spd + $num_removals_acc
     + $num_removals_dec + $num_removals_gain + $num_removals_loss + $num_removals_diff;
 my $sanitized_text = $num_sanitized ? plural($num_sanitized, "sanitized trackpoint")." nor " : "";
-my $stats_start = "GPXConv statistics (not including $sanitized_text"."periods between segments)\n";
+my $stats_start = TOOL_NAME." statistics (not including $sanitized_text"."periods between segments)\n";
 my $stats_end = "elevation ". (!GEOID_ELE_CORRECTION ? "not corrected" :
                                "corrected by " . ($found_corr ? "last retrieved" : "assumed") . " geoid height = $ele_corr m") . "\n"
-    . "GPXConv statistics end";
+    . TOOL_NAME." statistics end";
 
 ## expand metadata in trackpoints and optionally add waypoints for matching 'cmt' and 'src' elements
 for (my $i = $PART_START_INDEX[$all]; defined $i; $i = NEXT($i)) {
