@@ -383,7 +383,7 @@ sub stacktrace {
 # str_to_epoch("1970-01-01T00:00:00Z") = 0; returns undef on error
 # due to parsedate(), allows for weird values, e.g., 2000-01-01T00:00:63Z is taken as 2000-01-01T00:01:03Z
 sub str_to_epoch {
-    stacktrace() unless $_[0];
+    stacktrace() unless $_[0] eq '' || $_[0];
     my $s = $_[0];
     return undef unless $s =~ m/^\d{2,4}-\d{1,2}-\d{1,2}(T(\d{1,2}(:\d{1,2}(:\d{1,2}(\.\d{1,})?)?)?)?)?\s*([A-Z]+|[+-]\d+)$/; # pre-parse because parsedate() is not very strict
 
@@ -533,9 +533,10 @@ sub parse_point {
         $tim = my $orig_tim = $2;
         $tim =~ s/\.0+Z/Z/;
         $tim_len = max($tim_len, length($tim));
-        $sec = str_to_epoch($tim); # may be 0
+        $sec = str_to_epoch($tim);
+        $sec = 0 if $orig_tim eq "NO" || $orig_tim eq "NO_TIME" || $orig_tim =~ m/^\s*$/;
         abort("FATAL: error parsing time value '$orig_tim' in point: $_[0]")
-            unless $orig_tim eq "NO" || defined $sec;
+            unless defined $sec;
         $sec += 0.001 if $tim =~ m/\.999Z/; # for some reason, at least OruxMaps on Android often reports 0.001 seconds less than a full second
         if (TIME_CORRECTION) {
             $sec += TIME_CORRECTION;
