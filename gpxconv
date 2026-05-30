@@ -1111,7 +1111,7 @@ sub read_tracks
                 push @WLON, $lon;
                 push @WELE, $ele;
                 push @WTIM, $tim;
-                push @WSEC, $sec;
+                push @WSEC, $sec; # may be 0
                 push @WTXT, $rest . ($exts ? "<extensions>$exts</extensions>" : "");
                 $wpt =~ s/(^|\n)/\n  /sg; # indent waypoint lines, just for better readability of diagnostics
                 push @WSTR, "'$wpt\n'";
@@ -1875,7 +1875,7 @@ sub check_waypoints {
         my $id = $WSTR[$j];
         next unless defined $id; # just info/warning wpt
         my $sec = $WSEC[$j];
-        unless (defined $sec) {
+        unless (defined $sec && $sec) {
             warning("waypoint $id does not have time information; skipping proximity check")
                 unless $id =~ m/\[(INFO|WARNING): /;
             next;
