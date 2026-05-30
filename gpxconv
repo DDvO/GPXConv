@@ -1156,7 +1156,9 @@ sub read_tracks
             my $seg = $state < 3; # first trkpt of a segment
             goto continuation if $ignore
                 || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/) && !$seg
-                   && (diff_defined($sec, $prev_sec) // $min_timediff_parsing) < $min_timediff_parsing && ++$num_ignored_diff;
+                && ((diff_defined($sec, $prev_sec) // $min_timediff_parsing) < $min_timediff_parsing
+                    || $lat == $prev_lat && $lon == $prev_lon && $ele eq $prev_ele && $tim eq $prev_tim)
+                && ++$num_ignored_diff;
             ## debug_log "read non-ignored point $i from with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
 
             my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
