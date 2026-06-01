@@ -1830,10 +1830,9 @@ sub sanitize
             } elsif ($timediff ne "" && $timediff < $MIN_TIMEDIFF &&
                      ($FLG[$prev_i] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM))
             {
-                my $inter = $FLG[$i] & INTERPOLATED_TIM ? "interpolated " : "";
                 $num_removals_diff++;
-                ignore_trkpt($i, $Spd, $inter."time difference = $timediff sec (less than $MIN_TIMEDIFF)");
-                #" over a distance of $Dis" if $timediff > 1.001
+                my $inter = $FLG[$i] & INTERPOLATED_TIM ? "interpolated " : "";
+                ignore_trkpt($i, $Spd, $inter."time difference = $timediff sec (less than $MIN_TIMEDIFF)"); # " over a distance of $Dis"
             } else {
                 $ignore = 0;
                 if ($timediff ne "" && $spd ne "" && $spd >= MIN_SPEED_MOVING / MPS2KMPH)
