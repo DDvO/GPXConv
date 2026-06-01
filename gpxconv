@@ -31,6 +31,7 @@
 use constant TOOL_NAME    => "GPXConv";
 use constant TOOL_VERSION => "2.9.3";
 my $TOOL_ID = TOOL_NAME." v".TOOL_VERSION;
+use constant MIN_INPUT_TIMEDIFF => 2;
 
 my $usage =
 "Usage:  gpxconv <option(s) and infile(s)> [> <outfile>] [2> <logfile>]
@@ -56,7 +57,7 @@ Command-line options:
   -weight <value>              - calculate biking energy for given weight in kg
   -begin <time>                - ignore points before given time
   -end <time>                  - ignore points after given time
-  -resolution <seconds>        - minimum time difference between trackpoints (on input)
+  -resolution <seconds>        - minimum time difference between trackpoints on input, default: ".MIN_INPUT_TIMEDIFF."
   -min <name> <limit>          - filter out points with element value below limit
   -max <name> <limit>          - filter out points with element value above limit
   -min_ext <name> <limit>      - prune extension elements with value below limit
@@ -140,7 +141,6 @@ use constant MAX_SPEED_DEVIATION => 0.25; # threshold for speed measuring deviat
 # sanitization control
 use constant   SANITIZE_TRKPTS   =>    1; # whether trackpoint sanitization is enabled by default
 my $sanitize = SANITIZE_TRKPTS;
-use constant   MIN_TIMEDIFF_PARSING => 2;
 my $MIN_TIMEDIFF          ; # in seconds
 my $MAX_PLAUSIBLE_SPEED   ; # maximal speed in km/h
 my $MAX_PLAUSIBLE_ACCEL   ; # maximal acceleration m/s/s
@@ -202,11 +202,11 @@ use constant PAUSE_MERGE        => 1 << 9;
 my $debug = 0;
 my $merge;
 my $num_ignored_diff = 0;
-my $num_ignored_hdrs   = 0;
+my $num_ignored_hdrs = 0;
 my $begin_sec;
 my $num_ignored_before = 0;
 my $end_sec;
-my $min_timediff_parsing = MIN_TIMEDIFF_PARSING;
+my $min_input_timediff = MIN_INPUT_TIMEDIFF;
 my $num_ignored_after  = 0;
 my $max_elem;
 my $max_elem_limit;
@@ -933,7 +933,7 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
     } elsif ($opt eq "-resolution") {
         abort("missing number of seconds argument for $opt option") if $#ARGV - $i < 1;
         abort("illegal natural number argument in '$opt $arg1'") unless $arg1 =~ m/^\d+$/;
-        $min_timediff_parsing = $arg1 + 0;
+        $min_input_timediff = $arg1 + 0;
         splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-max" || $opt eq "-min") {
         abort("missing element name argument for $opt option") if $#ARGV - $i < 1;
@@ -1156,9 +1156,9 @@ sub read_tracks
             my $seg = $state < 3; # first trkpt of a segment
             goto continuation if $ignore
                 || !($ARGV =~ m/test(\.out\d?|_sanitization\.gpx)$/) && !$seg
-                && ((diff_defined($sec, $prev_sec) // $min_timediff_parsing) < $min_timediff_parsing
+                && ((diff_defined($sec, $prev_sec) // $min_input_timediff) < $min_input_timediff
                     || $lat == $prev_lat && $lon == $prev_lon && $ele eq $prev_ele && $tim eq $prev_tim)
-                && ++$num_ignored_diff;
+                && ++$num_ignored_diff; # silently ignore
             ## debug_log "read non-ignored point $i from with lat=$lat lon=$lon ele=$ele tim=$tim sec=".($sec // "none")." spd=".spd_or_none($spd)."; state = $state";
 
             my $diff_time = diff_defined($sec, $prev_avail_sec) // 0;
@@ -1318,7 +1318,7 @@ sub read_tracks
                 } else {   # state == 3, further (i.e., not the first) point in trkseg
                     $tim_miss_length += $dis;
                 }
-                my $sec_curr = $SEC[$tim_miss_start - 1]; # corresponds to $prev_tim
+                my $sec_curr = my $sec_prev = $SEC[$tim_miss_start - 1]; # corresponds to $prev_tim
                 my $sec_diff = $sec - $sec_curr;
                 # $tim_miss_length == 0 is special case of missing time over a stretch with all same position;
                 # since altitude is interpolated in same iteration, a stretch with all same lat/lon looks like all same position
@@ -1328,11 +1328,18 @@ sub read_tracks
                     ## debug_log "interpolating missing time over ".dis_string($tim_miss_length).", sec_diff = $sec_diff";
                     for ($j = $tim_miss_start; $j < $i_end; $j++) {
                         $sec_curr += ($tim_miss_length > 0 ? $DIS[$j] : 1) * $sec_gradient;
+                        if (!$seg && $sec_curr - $sec_prev < $min_input_timediff) {
+                            ++$num_ignored_diff; # silently ignore
+                            cut_trkpt($j);
+                            $DIS[$j + 1] += $DIS[$j];
+                            next;
+                        }
                         $SEC[$j]  = int($sec_curr);
                         $TIM[$j]  = epoch_to_str(int($sec_curr));
                         $FLG[$j] |= INTERPOLATED_TIM;
                         recalculate_SPD($j);
                         ## debug_log "interpolating missing time at point $j with ele=$ELE[$j] new  time=$TIM[$j] dis=$DIS[$j]";
+                        $sec_prev = $sec_curr;
                     }
                     recalculate_SPD($j) if $i_end < $i;
                 }
@@ -1447,6 +1454,7 @@ sub check_PREV_NEXT {
     }
 }
 
+sub cut_trkpt { return remove_trkpt(shift, -1); }
 sub remove_trkpt {
     my ($i, $count_ignored) = @_;
     $count_ignored //= 0;
@@ -1457,6 +1465,7 @@ sub remove_trkpt {
     $PART_END_INDEX  [$all] = $prev_i unless defined $next_i;
     # check_PREV_NEXT($prev_i);
     # check_PREV_NEXT($next_i);
+    return if $count_ignored == -1;
 
     # optionally indicate that previous point has been ignored, in addition to any points ignored before the removed point:
     # debug "IGN[".($next_i // 0)."]==".($IGN[$next_i // 0])." += IGN[".$i."]==$IGN[$i] + $count_ignored";
@@ -2745,7 +2754,7 @@ $final_text .= plural($num_pruned_exts,        "extension")." pruned\n" if $num_
 $final_text .= plural($num_merges,               "section")." merged from alternative input\n" if $num_merges;
 $final_text .= plural($num_merged_points,   "merged point")."\n" if $merge;
 $final_text .= plural($num_skip_points,    "regular point")." skipped during merge\n" if $num_skip_points;
-$final_text .= points($num_ignored_diff  )." less than $min_timediff_parsing sec apart filtered out\n" if $num_ignored_diff;
+$final_text .= points($num_ignored_diff  )." less than $min_input_timediff sec apart filtered out\n" if $num_ignored_diff;
 $final_text .= points($num_ignored_before)." with time before ".epoch_to_str($begin_sec)." filtered out\n" if defined $begin_sec;
 $final_text .= points($num_ignored_after )." with time after  ".epoch_to_str($end_sec  )." filtered out\n" if defined $end_sec;
 $final_text .= points($num_elem_above    )." with $max_elem above $max_elem_limit"      ." filtered out\n" if $max_elem;

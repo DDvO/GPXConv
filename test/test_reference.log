@@ -114,6 +114,7 @@ At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th ascent  
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max speed =     2 km/h; avg speed  =    2 km/h
 At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 5th max rate  =   +50  m/h; avg rate   =  +50  m/h
 1 automatic waypoint pruned
+1 point less than 2 sec apart filtered out
 0 extension elements with name 'value' and value below 101 pruned
 2 extension elements with name 'value' and value above 101 pruned
 0 points being at most 60 seconds apart smoothened
