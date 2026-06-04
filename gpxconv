@@ -1291,8 +1291,7 @@ sub read_tracks
                 # $ele_miss_length == 0 is special case of missing altitude over a stretch with all same lat/lon
                 my $ele_gradient = $ele_miss_length > 0 ? $ele_diff / $ele_miss_length : $ele_diff / ($i - $ele_miss_start + 1);
                 if ($ele_gradient != 0) {
-                    my $j; # used also after the loop
-                    for ($j = $ele_miss_start; $j < $i_end; $j++) {
+                    for (my $j = $ele_miss_start; $j < $i_end; $j++) {
                         $ele_curr += ($ele_miss_length > 0 ? $DIS[$j] : 1) * $ele_gradient;
                         $ELE[$j]  = sprintf ELE_PRECISION3, $ele_curr;
                         $FLG[$j] |= INTERPOLATED_ELE;
@@ -1301,10 +1300,10 @@ sub read_tracks
                         # not changing $ele nor $prev_ele such that below time interpolation is not affected
                         ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE[$j] dis=$DIS[$j]";
                     }
-                    if ($i_end < $i) {
-                        recalculate_all($j, $j); # 2d part did not change
+                    if ($i_end < $i) { # have been carrying over ele to end of last section
+                        recalculate_all($i_end, $i_end); # 2d part did not change
                     } else {
-                        $dis = distance_3d($sq_dis2d, $ele, $ELE[$j - 1]); # recalculation of 3d part
+                        $dis = distance_3d($sq_dis2d, $ele, $ELE[$i_end - 1]); # recalculation of 3d part
                     }
                 }
                 $ele_miss_start = $i_start;
@@ -1324,9 +1323,8 @@ sub read_tracks
                 # since altitude is interpolated in same iteration, a stretch with all same lat/lon looks like all same position
                 my $sec_gradient = $tim_miss_length > 0 ? $sec_diff / $tim_miss_length : $sec_diff / ($i - $tim_miss_start + 1);
                 if ($sec_gradient != 0) {
-                    my $j;
                     ## debug_log "interpolating missing time over ".dis_string($tim_miss_length).", sec_diff = $sec_diff";
-                    for ($j = $tim_miss_start; $j < $i_end; $j++) {
+                    for (my $j = $tim_miss_start; $j < $i_end; $j++) {
                         $sec_curr += ($tim_miss_length > 0 ? $DIS[$j] : 1) * $sec_gradient;
                         if (!$seg && $sec_curr - $sec_prev < $min_input_timediff) {
                             ++$num_ignored_diff; # silently ignore
@@ -1341,7 +1339,7 @@ sub read_tracks
                         ## debug_log "interpolating missing time at point $j with ele=$ELE[$j] new  time=$TIM[$j] dis=$DIS[$j]";
                         $sec_prev = $sec_curr;
                     }
-                    recalculate_SPD($j) if $i_end < $i;
+                    recalculate_SPD($i_end) if $i_end < $i;
                 }
                 $tim_miss_start = $i_start;
             }
