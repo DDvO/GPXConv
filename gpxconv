@@ -1340,7 +1340,7 @@ sub read_tracks
                         }
                         $SEC[$j]  = int($sec_curr);
                         $TIM[$j]  = epoch_to_str(int($sec_curr));
-                        $FLG[$j] |= INTERPOLATED_TIM;
+                        $FLG[$j] |= INTERPOLATED_TIM | COMPUTED_SPEED;
                         $SPD[$j] = $const_spd;
                         debug_log "interpolating missing time at point $j with ele=$ELE[$j] new time=$TIM[$j] dis=$DIS[$j]";
                         $sec_prev = $sec_curr;
@@ -1779,25 +1779,25 @@ sub sanitize
 
             # handle cases that involve point(s) before and may lead to removing current point
             my ($diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
-
             my ($theta_diff, $spd2) = comp_angle($i, $lat, $lon, $timediff, $dis); # for spike detection
-            my $Comp_spd = spd_string($comp_spd) if $comp_spd ne "";
+
             if (!section($i) && # not at merge start/pause
-                $comp_spd ne "" && $spd ne "" && $timediff ne "" && $timediff <= MAX_TIMEDIFF_RECORDED_SPEED) {
-                my $spd_diff = abs($comp_spd - $spd);
-                $spd_prec_len = max($spd_prec_len, length(spd_str($spd_diff))); # used only for spd_string
-                $sum_speed_deviation += $spd_diff;
-                $sum_speed += $comp_spd + $spd; # will later divide by 2 for average;
-                warn_trkpt($i, "before  ",
-                           "speed recorded:".spd_string($spd)." computed: $Comp_spd ".
-                           "deviation: "    . spd_string($spd_diff) . " km/h" .
-                           " (more than " . $MAX_SPEED_DEVIATION . ")") if $spd_diff > ($MAX_SPEED_DEVIATION + 0.5) / MPS2KMPH;
-            }
-            # from now on, use for $spd and $SPD[$i] the computed speed (average since previous point) if recorded speed is not available or previous point is not very recent
-            if (!section($i) && # not at merge start/pause
-                ($spd eq "" || $timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED)) {
-                $SPD[$i]  = $spd = $comp_spd;
-                $FLG[$i] |= COMPUTED_SPEED if $comp_spd ne "";
+                !($FLG[$i] & COMPUTED_SPEED)) { # not already computed speed (due to interpolation of missing time)
+                if ($comp_spd ne "" && $spd ne "" && $timediff ne "" && $timediff <= MAX_TIMEDIFF_RECORDED_SPEED) {
+                    my $spd_diff = abs($comp_spd - $spd);
+                    $spd_prec_len = max($spd_prec_len, length(spd_str($spd_diff))); # used only for spd_string
+                    $sum_speed_deviation += $spd_diff;
+                    $sum_speed += $comp_spd + $spd; # will later divide by 2 for average;
+                    warn_trkpt($i, "before  ",
+                               "speed recorded: ".spd_string($spd)." computed: ".spd_string($comp_spd)." ".
+                               "deviation: "    . spd_string($spd_diff) . " km/h" .
+                               " (more than " . $MAX_SPEED_DEVIATION . ")") if $spd_diff > ($MAX_SPEED_DEVIATION + 0.5) / MPS2KMPH;
+                }
+                # from now on, use for $spd and $SPD[$i] the computed speed (average since previous point) if recorded speed is not available or previous point is not very recent
+                if (($spd eq "" || $timediff ne "" && $timediff > MAX_TIMEDIFF_RECORDED_SPEED)) {
+                    $SPD[$i]  = $spd = $comp_spd;
+                    $FLG[$i] |= COMPUTED_SPEED if $comp_spd ne "";
+                }
             }
 
             my $Spd      = $spd ne "" ? spd_string($spd) : "";
@@ -1820,11 +1820,11 @@ sub sanitize
             } elsif (!section($i) && $acc ne "" &&  $acc > $MAX_PLAUSIBLE_ACCEL &&
                      ($FLG[$prev_i] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
                 $num_removals_acc++;
-                ignore_trkpt($i, $Comp_spd, "acceleration = $Acc m/s/s (more than $MAX_PLAUSIBLE_ACCEL)");
+                ignore_trkpt($i, $Spd, "acceleration = $Acc m/s/s (more than $MAX_PLAUSIBLE_ACCEL)");
             } elsif (!section($i) && $acc ne "" && -$acc > $MAX_PLAUSIBLE_DECEL &&
                      ($FLG[$prev_i] & INTERPOLATED_TIM) == ($FLG[$i] & INTERPOLATED_TIM)) {
                 $num_removals_dec++;
-                ignore_trkpt($i, $Comp_spd, "deceleration = $Dec m/s/s (more than $MAX_PLAUSIBLE_DECEL)");
+                ignore_trkpt($i, $Spd, "deceleration = $Dec m/s/s (more than $MAX_PLAUSIBLE_DECEL)");
             } elsif (!section($i) && $rate ne "" && $rate > $MAX_PLAUSIBLE_ELE_GAIN) {
                 $num_removals_gain++;
                 ignore_trkpt($i, $Spd, " ascent rate = $Rate m/h (more than  $MAX_PLAUSIBLE_ELE_GAIN)");
