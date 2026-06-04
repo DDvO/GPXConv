@@ -39,8 +39,17 @@ newlines are kept</extensions>
     <trkpt lat="44.00002" lon="2.0003"><ele>74.49</ele>
     <extensions><value>101</value></extensions>
     <extensions><value>102</value> in trkpt second extension, which is not really allowed but supported here</extensions></trkpt>
-    <trkpt lat="44.000" lon="2.004"><ele>50.00</ele><time>2001-01-01T10Z</time><cmt>descent is not counted because it is less than 25</cmt></trkpt>
+    <trkpt lat="44.000" lon="2.004"><ele>50.00</ele><time>2001-01-01T09:59:00Z</time><cmt>descent is not counted because it is less than 25</cmt></trkpt>
     <extensions>trkseg extension gets ignored</extensions>
+  </trkseg>
+
+  <trkseg>
+    <trkpt lat="44.000" lon="2.004"><ele>90.00</ele>     <time>2001-01-01T09:59:20Z</time></trkpt>
+    <trkpt lat="44.000" lon="2.004">                     <time>2001-01-01T09:59:30Z</time></trkpt>
+    <trkpt lat="44.000" lon="2.004">                     <time>2001-01-01T09:59:40Z</time></trkpt>
+    <trkpt lat="44.000" lon="2.004"><cmt>elevation 60 and time 2001-01-01T09:59:50Z to be interpolated</cmt></trkpt>
+    <trkpt lat="44.000" lon="2.004">                                                      <cmt>should be removed as duplicate</cmt></trkpt>
+    <trkpt lat="44.000" lon="2.004"><ele>50.00</ele>     <time>2001-01-01T10:00:00Z</time><cmt>should determine max descent (slope) = -90 degrees</cmt></trkpt>
   </trkseg>
 
   <trkseg>
