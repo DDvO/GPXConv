@@ -11,7 +11,7 @@
 <wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[INFO: after end of base input; start alternative]</name><src>GPXConv</src></wpt>
 <wpt lat="0.00000" lon="1.00000"><ele>8</ele><time>2000-01-02T00:25:00Z</time><name>[end; total length = 0.236 km; gross duration = 1:25:00 h; total moving time = 0:00:02 h; total average moving speed = 2.0 km/h; max speed = 2 km/h; min altitude = 0 m; max altitude = 8 m]</name><src>GPXConv</src><sym>⏹️</sym></wpt>
 <trk>
-<name>test_merge</name>
+<name>![CDATA[GPXconv merge test data]]</name>
 <cmt>
 GPXConv statistics (not including periods between segments)
 At lat,lon,ele = 0.00000,1.00000,0 time = 2000-01-01T23:00:00Z: start

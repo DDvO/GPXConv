@@ -4,7 +4,7 @@
 <wpt lat="0.19000" lon="0.00000"><ele>1</ele><time>2001-01-01T10:00:00Z</time><name>[start]</name><src>GPXConv</src><sym>▶️</sym></wpt>
 <wpt lat="0.11000" lon="0.00000"><ele>9</ele><time>2001-01-01T12:10:00Z</time><name>[end; total length = 8.891 km; gross duration = 2:10:00 h; total moving time = 0:06:00 h; total average moving speed = 66.7 km/h; max speed = 67 km/h; min altitude = 1 m; max altitude = 9 m]</name><src>GPXConv</src><sym>⏹️</sym></wpt>
 <trk>
-<name>test_merge_gap</name>
+<name>![CDATA[GPXconv gap merge test data]]</name>
 <cmt>
 GPXConv statistics (not including periods between segments)
 At lat,lon,ele = 0.19000,0.00000,1 time = 2001-01-01T10:00:00Z: start
