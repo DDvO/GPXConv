@@ -286,6 +286,7 @@ my $descent_phases_suppressed = 0;
 # global state variables
 
 my $HEAD;
+my @NAME;
 my $found_corr = 0;
 
 my $num_merges = 0;
@@ -1068,6 +1069,7 @@ sub read_tracks
     { local $SIG{"__WARN__"} = sub { abort $_[0] }; # https://www.perlmonks.org/?node_id=11149744 Diamond errors
     while ($_ = ($merge ? <M> : <>)) {
         # anywhere (in headers, tracks, waypoints, trackpoints, ...):
+        push @NAME, $2 if m|<metadata>\s*<name>(<!\[CDATA\[)?(.*?)(\]\]>)?</name>|s;
         $num_pruned_cmts  += s#[ \t]*<cmts>.*?</cmt>\n?##sg              if $prune_cmts;
         $num_pruned_descs += s#[ \t]*<desc>.+?</desc>\n?##sg             if PRUNE_DESCS;
         $num_pruned_links += s#[ \t]*<link.*?>.+?</link>\n?##sg          if PRUNE_LINKS;
@@ -2381,6 +2383,11 @@ $HEAD =~ s|(<gpx)([ >])|$1 creator="$TOOL_ID"$2| unless $HEAD =~ m|<gpx.*? creat
 #$HEAD =~ s|(( )*</metadata>)|$2$2<extensions>$speed_extension</extensions>\n$1|s if $speed_extension ne ""; # add declaration for speed extension
 
 $HEAD =~ s|(<gpx.*?>)(\s*)|$1$2<metadata></metadata>$2|s unless $HEAD =~ m|<gpx.*?>\s*<metadata>.*?</metadata>|s;
+if ($#NAME >= 0) {
+    $HEAD =~ s|(<metadata>)(\s*)|$1$2<name></name>$2|s unless $HEAD =~ m|<metadata>\s*<name>.*?</name>.*?</metadata>|s;
+    my $names = "<![CDATA[".join("\n", @NAME)."]]>";
+    $HEAD =~ s|(<metadata>\s*<name>).*?(</name>)|$1$names$2|s;
+}
 if ($HEAD =~ m|(\r?\n?[ \t]*)</metadata>|s) { # match multiple lines with 's' option
     my $indent = $1;
 
@@ -2750,7 +2757,7 @@ $final_text .= "average deviation between recorded and computed speed (for point
     int(0.5 + 100 * $sum_speed_deviation / ($sum_speed / 2))." %\n" if $sum_speed;
 $final_text .= plural($num_pruned_wpts,         "waypoint")    . " pruned\n" if $num_pruned_wpts;
 $final_text .= plural($num_auto_wpts, "automatic waypoint")." pruned\n" if $num_auto_wpts;
-$final_text .= plural($num_ignored_hdrs,      "GPX header")." ignored (apart from any included waypoints)\n" if $num_ignored_hdrs;
+$final_text .= plural($num_ignored_hdrs,      "GPX header")." ignored (apart from any included names and waypoints)\n" if $num_ignored_hdrs;
 $final_text .= plural($num_pruned_cmts,              "cmt")." pruned\n" if $num_pruned_cmts;
 $final_text .= plural($num_pruned_descs,     "description")." pruned\n" if $num_pruned_descs;
 $final_text .= plural($num_pruned_links,            "link")." pruned\n" if $num_pruned_links;
