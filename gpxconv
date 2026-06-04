@@ -1296,9 +1296,12 @@ sub read_tracks
                         $ELE[$j]  = sprintf ELE_PRECISION3, $ele_curr;
                         $FLG[$j] |= INTERPOLATED_ELE;
                         $ele_full_len = max($ele_full_len, length($ELE[$j]));
+                        my $prev_dis = $DIS[$j];
                         recalculate_all($j, $j); # 2d part did not change
+                        $tim_miss_length += $DIS[$j] - $prev_dis if $tim_miss_start != $i_start && $TIM[$j] eq "";
                         # not changing $ele nor $prev_ele such that below time interpolation is not affected
-                        ## debug_log "interpolating missing ele at point $j $tim: new ele=$ELE[$j] dis=$DIS[$j]";
+                        my $Tim = $TIM[$j] ne "" ? $TIM[$j] : "NO_TIME";
+                        debug_log "interpolating missing ele at point $j $Tim: new ele=$ELE[$j] dis=$DIS[$j]";
                     }
                     if ($i_end < $i) { # have been carrying over ele to end of last section
                         recalculate_all($i_end, $i_end); # 2d part did not change
