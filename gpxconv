@@ -777,7 +777,7 @@ sub approx_slope { # quick approximation sufficient for detecting a rather clear
     return undef if $SEG[$i] || section($i) || $ELE[$i] eq "" || $ELE[$prev_i] eq "";
     my $ele_diff = $ELE[$i] - $ELE[$prev_i];
     $value = $ele_diff == 0 ? 0
-        : $DIS2[$i] == 0 ? ($ele_diff > 0 ? 1 : -1) : $ele_diff / $DIS[$i]; # is approximate as using the 3d distance
+        : $DIS[$i] == 0 ? ($ele_diff > 0 ? 1 : -1) : $ele_diff / $DIS[$i]; # is approximate as using the 3d distance
     return ($SLO[$i] = $value);
 }
 sub actual_slope {
