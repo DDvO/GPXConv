@@ -2867,7 +2867,10 @@ sub print_part {
     for (my $i = $PART_START_INDEX[$p]; ; $i = NEXT($i)) {
         # check_PREV_NEXT($i);
         abort "internal error: non-terminating loop on printing trackpoints of part $p (all == $all)" if $safetynet_count-- < 0;
-        print $out $TXT[$i] if $TXT[$i];
+        if ($TXT[$i] # points to be inserted virtually for bridging time gap
+            && ($p == $all || $i != $PART_START_INDEX[$p])) {
+            print $out $TXT[$i];
+        }
         print_point($out, $p == $all && defined PREV($i) && $SEG[$i], $LAT[$i], $LON[$i],
                     correct_ele(-1, $i), $TIM[$i], $CMT[$i], $SRC[$i], $FIX[$i],$EXT[$i]);
         last if $i == $PART_END_INDEX[$p];
