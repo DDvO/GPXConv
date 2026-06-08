@@ -28,6 +28,11 @@ echo -e "\n### test, after three iterations ###################################"
     diff -w test.out{2,3};
     diff -w test.log{2,3}
 
+echo -e "\n### test_minimization ##############################################"
+../gpxconv -fly -resolution 1 -min_dist 10 -min_angle 10 test_minimization.gpx >test_minimization.out 2>test_minimization.log;
+    diff test_minimization{_reference,}.out;
+    diff test_minimization{_reference,}.log
+
 echo -e "\n### test_sanitization ##############################################"
 ../gpxconv -src_wpts corrected test_sanitization.gpx >test_sanitization.out 2>test_sanitization.log;
     diff test_sanitization{_reference,}.out;

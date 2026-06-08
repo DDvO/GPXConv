@@ -1,0 +1,23 @@
+INFO   : initial track, from file test_minimization.gpx
+INFO   : first   segment at <trkpt lat="0.0000" lon="0.00000" <ele>0 1970-01-01T00:00:00Z
+INFO   : last   segment end <trkpt lat="0.00045" lon="0.00000" <ele>0 1970-01-01T00:00:07Z
+
+INFO   : GPXConv statistics (not including periods between segments)
+At lat,lon,ele = 0.00000,0.00000,0 time = 1970-01-01T00:00:00Z: start
+At lat,lon,ele = 0.00030,0.00003,4 time = 1970-01-01T00:00:03Z: max speed        =    43 km/h
+At lat,lon,ele = 0.00000,0.00000,0 time = 1970-01-01T00:00:00Z: min altitude     =     0 m
+At lat,lon,ele = 0.00030,0.00003,4 time = 1970-01-01T00:00:03Z: max altitude     =     4 m
+At lat,lon,ele = 0.00030,0.00003,4 time = 1970-01-01T00:00:03Z: max average  ascent (slope) =  7 degrees
+At lat,lon,ele = 0.00045,0.00000,0 time = 1970-01-01T00:00:07Z: max average descent (slope) = -15 degrees
+At lat,lon,ele = 0.00030,0.00003,4 time = 1970-01-01T00:00:03Z: max  ascent rate = +14400 m/h at 43 km/h
+At lat,lon,ele = 0.00033,0.00003,3 time = 1970-01-01T00:00:04Z: max descent rate = -3600 m/h at 13 km/h
+At lat,lon,ele = 0.00045,0.00000,0 time = 1970-01-01T00:00:07Z: end
+total length               = 0.052 km
+gross duration             = 0:00:07 h
+total moving time          = 0:00:07 h
+total average moving speed = 27.0 km/h
+1 point less than 1 sec apart filtered out
+0 points inserted due to time gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end
+INFO   : output 5 points, removing 2 points closer than 10 m, removing 1 point changing course less than 10°

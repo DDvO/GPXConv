@@ -134,3 +134,4 @@ At lat,lon,ele =  0.00000,0.00000, 525 time = 2001-01-02T18:30:01Z: 6th max rate
 4 points inserted due to time gaps > 1800 seconds
 elevation not corrected
 GPXConv statistics end
+INFO   : output 27 points

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<gpx>
+<metadata>
+<name><![CDATA[GPXconv minimization test data]]></name>
+<link href="https://github.com/DDvO/GPXConv">
+<text>GPXconv minimization test data</text>
+</link>
+<time>2025-06-08T20:00:00Z</time><bounds maxlat="" maxlon="" minlat="0.0" minlon="0.0"/>
+</metadata>
+
+<trk>
+ <trkseg>
+  <trkpt lat="0.0000"  lon="0.00000"><ele>0</ele><time>1970-01-01T00:00:00Z</time></trkpt>
+  <trkpt lat="0.00009" lon="0.00009"><ele>0</ele><time>1970-01-01T00:00:00.9Z</time><cmt>to ignore due to small input time difference</cmt></trkpt>
+  <trkpt lat="0.0001"  lon="0.00001"><ele>0</ele><time>1970-01-01T00:00:01Z</time><cmt>to remove due to small angle</cmt></trkpt>
+  <trkpt lat="0.0002"  lon="0.00003"><ele>0</ele><time>1970-01-01T00:00:02Z</time></trkpt>
+  <trkpt lat="0.0003"  lon="0.00003"><ele>4</ele><time>1970-01-01T00:00:03Z</time><cmt>to keep due to max altitude despite of small angle</cmt></trkpt>
+  <trkpt lat="0.00033" lon="0.00003"><ele>3</ele><time>1970-01-01T00:00:04Z</time><cmt>to keep due to max descent rate despite of small distance and small angle</cmt></trkpt>
+  <trkpt lat="0.00038" lon="0.00003"><ele>2</ele><time>1970-01-01T00:00:05Z</time><cmt>to remove due to small distance</cmt></trkpt>
+  <trkpt lat="0.0004"  lon="0.00003"><ele>1</ele><time>1970-01-01T00:00:06Z</time><cmt>to remove due to small distance</cmt></trkpt>
+  <trkpt lat="0.00045" lon="0.00000"><ele>0</ele><time>1970-01-01T00:00:07Z</time><cmt>to keep due to part end despite of small distance</cmt></trkpt>
+ </trkseg>
+</trk>
+
+</gpx>

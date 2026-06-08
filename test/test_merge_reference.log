@@ -53,3 +53,4 @@ At lat,lon,ele = 0.00001,1.00000,8 time = 2000-01-02T00:25:00Z: day 2 end; lengt
 1 point inserted due to time gaps > 1800 seconds
 elevation not corrected
 GPXConv statistics end
+INFO   : output 29 points

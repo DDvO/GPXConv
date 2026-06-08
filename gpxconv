@@ -16,6 +16,7 @@
 # Corrects implausible elevation gain/loss after gaps, typically on exit of tunnel or building
 # Optionally filters out points before or after given time limits.
 # Optionally filters out points with an element value below or above given limits.
+# Optionally reduces output size by removing points that are rather close-by or on rather straight line.
 # Optionally prunes comments, extensions, or extension elements with value below or above given limits.
 # By default carries over missing altitude and time data between segments.
 # By default fills in missing altitude and time data by interpolation within segments.
@@ -62,6 +63,8 @@ Command-line options:
   -max <name> <limit>          - filter out points with element value above limit
   -min_ext <name> <limit>      - prune extension elements with value below limit
   -max_ext <name> <limit>      - prune extension elements with value above limit
+  -min_dist <meters>           - output only points that have at least the given distance
+  -min_angle <degree>          - output only points after at least the given deviation angle
   -prune_wpts                  - remove waypoints
   -prune_cmts                  - remove comments
   -prune_exts                  - remove extensions
@@ -186,7 +189,7 @@ use constant ACC_PRECISION  =>   "%.1f"; # acceleration resolution = 0.1 m/s/s
 use constant EMOJI_PREFIX   =>       ""; # or "emoji-" for GAIA GPS
 
 # trkpt flags
-use constant DUPLICATED_POINT   => 1 << 0; # no more used
+use constant DUPLICATED_POINT   => 1 << 0; # no more actually uused
 use constant INSERTED_POINT     => 1 << 1; # its use could be removed
 use constant INTERPOLATED_ELE   => 1 << 2;
 use constant INTERPOLATED_TIM   => 1 << 3;
@@ -196,6 +199,7 @@ use constant COMPUTED_SPEED     => 1 << 6;
 use constant CORRECTED_ELE      => 1 << 7;
 use constant START_MERGE        => 1 << 8;
 use constant PAUSE_MERGE        => 1 << 9;
+use constant STATISTICS_WPT     => 1 <<10; # used to prevent removal on pruning trkpts
 
 # global option variables with related num_* state variables
 
@@ -220,6 +224,11 @@ my $num_ext_above  = 0;
 my $min_ext;
 my $min_ext_limit;
 my $num_ext_below  = 0;
+my $min_dist;
+my $num_removed_min_dist = 0;
+my $min_angle;
+my $num_removed_min_angle = 0;
+my $num_points_output = 0;
 my $ele_corr         = DEFAULT_ELE_CORRECTION;
 my $smoothing        = ENABLE_SMOOTHING;
 my $num_smoothened   = 0;
@@ -252,6 +261,7 @@ my @TIM; # or "" if not available
 my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
 my @DIS2;# square sum of the LAT and COS(LAT)*LON differences from point before, 0 for first point
 my @DIS; # derived from LAT and LON, and ELE if available, also from point before, 0 for first point
+my @ANG; # horizontal direction change (i.e., turning angle) between last, current, and next point, undef if not available
 my @SPD; # as recorded or computed (average from previous point if FLG contains COMPUTED_SPEED), or "" if not available
 my @CMT; # as given in input but without <cmt> and </cmt> tags, or "" if not available
 my @SRC; # as given in input but without <src> and </src> tags, or "" if not available
@@ -816,10 +826,10 @@ sub avg_actual_slope {
 }
 
 sub comp_angle { # calculate horizontal direction change (i.e., turning angle)
-    # between last, current, and next point, 0 if not available
+    # between last, current, and next point, or undef if not available
     # provides almost no efficiency penalty
     my ($i, $lat, $lon, $timediff, $dis) = @_;
-    my ($theta_diff, $spd2) = (0, "");
+    my ($theta_diff, $spd2) = (undef, "");
 
     my ($prev_i, $next_i) = (PREV($i), NEXT($i));
     if (defined $next_i && !$SEG[$next_i] && !section($i) && !section($next_i)) { # next point exists and is not at segment start and not at merge start/pause
@@ -949,6 +959,14 @@ for (my $i = 0; $#ARGV - $i >= 0; ) {
         ($max_ext, $max_ext_limit) = ($arg1, $arg2 + 0) if $opt eq "-max_ext";
         ($min_ext, $min_ext_limit) = ($arg1, $arg2 + 0) if $opt eq "-min_ext";
         splice @ARGV, $i + 1, 2; # remove from ARGV the option arguments
+    } elsif ($opt eq "-min_dist") {
+        abort("missing distance argument for -$opt option") if $#ARGV - $i < 1;
+        $min_dist = $arg1;
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
+    } elsif ($opt eq "-min_angle") {
+        abort("missing angle argument for -$opt option") if $#ARGV - $i < 1;
+        $min_angle = $arg1;
+        splice @ARGV, $i + 1, 1; # remove from ARGV the option argument
     } elsif ($opt eq "-prune_wpts") {
         $prune_wpts = 1;
     } elsif ($opt eq "-prune_cmts") {
@@ -1781,6 +1799,7 @@ sub sanitize
             # handle cases that involve point(s) before and may lead to removing current point
             my ($diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
             my ($theta_diff, $spd2) = comp_angle($i, $lat, $lon, $timediff, $dis); # for spike detection
+            $ANG[$i] = $theta_diff;
 
             if (!section($i) && # not at merge start/pause
                 !($FLG[$i] & COMPUTED_SPEED)) { # not already computed speed (due to interpolation of missing time)
@@ -1810,7 +1829,7 @@ sub sanitize
             warn_trkpt($i, "before  ", $Spd_txt."distance between points = $Dis (more than ".(WARNING_TPT_DIST / 1000).")") if $dis > WARNING_TPT_DIST;
 
             $ignore = 1; # tentatively indicate removal of current point
-            if (MAX_PLAUSIBLE_ANGLE_DIFF < abs($theta_diff)) { # implies !section($i) etc.
+            if (MAX_PLAUSIBLE_ANGLE_DIFF < abs($theta_diff // 0)) { # implies !section($i) etc.
                 $num_removals_dir++;
                 $spd_prec_len = max($spd_prec_len, length(spd_str($spd2))); # used only for spd_string
                 my $Theta_diff = sprintf "%+.0f", $theta_diff;
@@ -2498,6 +2517,8 @@ sub add_stat_wpt {
     splice @WTXT, $j, 0, $txt;
     splice @WSTR, $j, 0, undef;
     splice @WIDX, $j, 0, $i;
+    $FLG[$i] |= STATISTICS_WPT if $i >= 0;
+
 }
 
 # add overall statistics and for parts
@@ -2862,16 +2883,44 @@ sub print_part {
     $head =~ s/(<trk>.*?<cmt>)/$1\n$stats\n/s; # prepend stats to track comment
     print $out ($head =~ s/(<trk>)/$wpts$1/sr); # prepend collected and computed waypoints to track
 
+    my $recent_dist = 0 if defined $min_dist;
+    my $recent_angle = 0 if defined $min_angle;
     my $safetynet_count = $#TIM;
     for (my $i = $PART_START_INDEX[$p]; ; $i = NEXT($i)) {
         # check_PREV_NEXT($i);
         abort "internal error: non-terminating loop on printing trackpoints of part $p (all == $all)" if $safetynet_count-- < 0;
+        if ($i != $PART_END_INDEX[$p]) {
+            if (defined $min_dist && $i != $PART_START_INDEX[$p] && !$SEG[$i]) {
+                # debug_log "$TIM[$i] recent_dist $recent_dist += $DIS[$i]";
+                $recent_dist += $DIS[$i];
+                if ($recent_dist < $min_dist && !($FLG[$i] & STATISTICS_WPT)) {
+                    debug_log "$TIM[$i] removed due to recent_dist $recent_dist";
+                    $num_removed_min_dist++;
+                    next;
+                }
+                $recent_dist = 0;
+            }
+            if (defined $min_angle && $i != $PART_START_INDEX[$p] && !$SEG[$i]) {
+                if (defined $ANG[$i]) {
+                    # debug_log "$TIM[$i] recent_angle $recent_angle += abs($ANG[$i])";
+                    $recent_angle += abs($ANG[$i]);
+                    if ($recent_angle < $min_angle && !($FLG[$i] & STATISTICS_WPT)) {
+                        debug_log "$TIM[$i] removed due to recent_angle $recent_angle";
+                        $num_removed_min_angle++;
+                        next;
+                    }
+                }
+                $recent_angle = 0;
+            }
+        }
         if ($TXT[$i] # points to be inserted virtually for bridging time gap
             && ($p == $all || $i != $PART_START_INDEX[$p])) {
             print $out $TXT[$i];
+            $num_points_output += scalar(() = $TXT[$i] =~ /<trkpt /g);
         }
         print_point($out, $p == $all && defined PREV($i) && $SEG[$i], $LAT[$i], $LON[$i],
                     correct_ele(-1, $i), $TIM[$i], $CMT[$i], $SRC[$i], $FIX[$i],$EXT[$i]);
+        $num_points_output++;
         last if $i == $PART_END_INDEX[$p];
     }
     print $out "</trkseg>\n</trk>\n</gpx>\n";
@@ -2920,5 +2969,8 @@ if ($split) {
 my $all_head = $HEAD;
 print_line(""); # empty line before stats
 print_part($out, $all, $all_head, $all_wpts);
+info("output ".points($num_points_output)
+     .(defined $min_dist ? ", removing ".points($num_removed_min_dist)." closer than $min_dist m" : "")
+     .(defined $min_angle ? ", removing ".points($num_removed_min_angle)." changing course less than $min_angle°" : ""));
 
 exit 0;

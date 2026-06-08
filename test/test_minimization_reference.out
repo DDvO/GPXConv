@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<gpx creator="GPXConv v2.9.3" version="1.1">
+<metadata>
+<name><![CDATA[GPXconv minimization test data]]></name>
+<link href="https://github.com/DDvO/GPXConv">
+<text>GPXconv minimization test data</text>
+</link>
+<time>1970-01-01T00:00:00Z</time>
+<bounds minlat="0.00000" minlon="0.00000" maxlat="0.00045" maxlon="0.00003"/>
+</metadata>
+<wpt lat="0.00000" lon="0.00000"><ele>0</ele><time>1970-01-01T00:00:00Z</time><name>[1970-01-01T00:00:00Z start]</name><src>GPXConv</src><sym>▶️</sym></wpt>
+<wpt lat="0.00000" lon="0.00000"><ele>0</ele><time>1970-01-01T00:00:00Z</time><name>[1970-01-01T00:00:00Z min altitude = 0 m]</name><src>GPXConv</src><sym>🔽</sym></wpt>
+<wpt lat="0.00030" lon="0.00003"><ele>4</ele><time>1970-01-01T00:00:03Z</time><name>[1970-01-01T00:00:03Z max speed = 43 km/h]</name><src>GPXConv</src><sym>⏩</sym></wpt>
+<wpt lat="0.00030" lon="0.00003"><ele>4</ele><time>1970-01-01T00:00:03Z</time><name>[1970-01-01T00:00:03Z max altitude = 4 m]</name><src>GPXConv</src><sym>🔼</sym></wpt>
+<wpt lat="0.00030" lon="0.00003"><ele>4</ele><time>1970-01-01T00:00:03Z</time><name>[1970-01-01T00:00:03Z max average ascent (slope) = 7 degrees]</name><src>GPXConv</src><sym>↗️</sym></wpt>
+<wpt lat="0.00030" lon="0.00003"><ele>4</ele><time>1970-01-01T00:00:03Z</time><name>[1970-01-01T00:00:03Z max ascent rate = +14400 m/h at 43 km/h]</name><src>GPXConv</src><sym>⏫</sym></wpt>
+<wpt lat="0.00033" lon="0.00003"><ele>3</ele><time>1970-01-01T00:00:04Z</time><name>[1970-01-01T00:00:04Z max descent rate = -3600 m/h at 13 km/h]</name><src>GPXConv</src><sym>⏬</sym></wpt>
+<wpt lat="0.00045" lon="0.00000"><ele>0</ele><time>1970-01-01T00:00:07Z</time><name>[1970-01-01T00:00:07Z max average descent (slope) = -15 degrees]</name><src>GPXConv</src><sym>↘️</sym></wpt>
+<wpt lat="0.00045" lon="0.00000"><ele>0</ele><time>1970-01-01T00:00:07Z</time><name>[1970-01-01T00:00:07Z end; total length = 0.052 km; gross duration = 0:00:07 h; total moving time = 0:00:07 h; total average moving speed = 27.0 km/h]</name><src>GPXConv</src><sym>⏹️</sym></wpt>
+<trk>
+<cmt>
+GPXConv statistics (not including periods between segments)
+At lat,lon,ele = 0.00000,0.00000,0 time = 1970-01-01T00:00:00Z: start
+At lat,lon,ele = 0.00030,0.00003,4 time = 1970-01-01T00:00:03Z: max speed        =    43 km/h
+At lat,lon,ele = 0.00000,0.00000,0 time = 1970-01-01T00:00:00Z: min altitude     =     0 m
+At lat,lon,ele = 0.00030,0.00003,4 time = 1970-01-01T00:00:03Z: max altitude     =     4 m
+At lat,lon,ele = 0.00030,0.00003,4 time = 1970-01-01T00:00:03Z: max average  ascent (slope) =  7 degrees
+At lat,lon,ele = 0.00045,0.00000,0 time = 1970-01-01T00:00:07Z: max average descent (slope) = -15 degrees
+At lat,lon,ele = 0.00030,0.00003,4 time = 1970-01-01T00:00:03Z: max  ascent rate = +14400 m/h at 43 km/h
+At lat,lon,ele = 0.00033,0.00003,3 time = 1970-01-01T00:00:04Z: max descent rate = -3600 m/h at 13 km/h
+At lat,lon,ele = 0.00045,0.00000,0 time = 1970-01-01T00:00:07Z: end
+total length               = 0.052 km
+gross duration             = 0:00:07 h
+total moving time          = 0:00:07 h
+total average moving speed = 27.0 km/h
+1 point less than 1 sec apart filtered out
+0 points inserted due to time gaps > 1800 seconds
+elevation not corrected
+GPXConv statistics end
+</cmt>
+<trkseg>
+<trkpt lat="0.00000" lon="0.00000"><ele>0</ele><time>1970-01-01T00:00:00Z</time></trkpt>
+<trkpt lat="0.00020" lon="0.00003"><ele>0</ele><time>1970-01-01T00:00:02Z</time><src>computed speed</src><extensions><speed>41</speed></extensions></trkpt>
+<trkpt lat="0.00030" lon="0.00003"><ele>4</ele><time>1970-01-01T00:00:03Z</time><cmt>to keep due to max altitude despite of small angle</cmt><src>computed speed</src><extensions><speed>43</speed></extensions></trkpt>
+<trkpt lat="0.00033" lon="0.00003"><ele>3</ele><time>1970-01-01T00:00:04Z</time><cmt>to keep due to max descent rate despite of small distance and small angle</cmt><src>computed speed</src><extensions><speed>13</speed></extensions></trkpt>
+<trkpt lat="0.00045" lon="0.00000"><ele>0</ele><time>1970-01-01T00:00:07Z</time><cmt>to keep due to part end despite of small distance</cmt><src>computed speed</src><extensions><speed>24</speed></extensions></trkpt>
+</trkseg>
+</trk>
+</gpx>
