@@ -829,12 +829,11 @@ sub comp_angle { # calculate horizontal direction change (i.e., turning angle)
         my      $dis2 = $dis      eq "" ||          $next_dis eq "" ? 0 : $dis      + $next_dis;
         $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed
         if ($spd2 ne "" && MPS2KMPH * $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
-            my $resolution = .00001; # corresponds to at most 1.11 m
-            my $curr_lat_diff = nearest($resolution, $lat - $LAT[$prev_i]);
-            my $curr_lon_diff = nearest($resolution, $lon - $LON[$prev_i]);
-            my $next_lat_diff = nearest($resolution, $LAT[$next_i] - $lat);
-            my $next_lon_diff = nearest($resolution, $LON[$next_i] - $lon);
-            if ($curr_lat_diff && $curr_lon_diff && $next_lat_diff && $next_lon_diff)
+            my $curr_lat_diff = $lat - $LAT[$prev_i];
+            my $curr_lon_diff = $lon - $LON[$prev_i];
+            my $next_lat_diff = $LAT[$next_i] - $lat;
+            my $next_lon_diff = $LON[$next_i] - $lon;
+            if (($curr_lat_diff || $curr_lon_diff) && ($next_lat_diff || $next_lon_diff))
             {
                 my $theta1 = atan2($curr_lon_diff, $curr_lat_diff);
                 my $theta2 = atan2($next_lon_diff, $next_lat_diff);
