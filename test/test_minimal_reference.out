@@ -5,11 +5,15 @@
 <wpt lat="0.00000" lon="0.00000">                                                <name>[WARNING: at segment start no altitude given and no previous value available]</name><src>GPXConv</src></wpt>
 <wpt lat="0.00000" lon="0.00000">                                                <name>[WARNING: at segment start no time given and no previous value available]</name><src>GPXConv</src></wpt>
 <wpt lat="0.00000" lon="0.00000">                                                <name>[INFO: last segment end]</name><src>GPXConv</src></wpt>
+<wpt lat="0.00000" lon="0.00000">                                                <name>[max rolling average ascent (slope) = none]</name><src>GPXConv</src><sym>↗️</sym></wpt>
+<wpt lat="0.00000" lon="0.00000">                                                <name>[max rolling average descent (slope) = none]</name><src>GPXConv</src><sym>↘️</sym></wpt>
 <wpt lat="0.00000" lon="0.00000">                                                <name>[end]</name><src>GPXConv</src><sym>⏹️</sym></wpt>
 <trk>
 <cmt>
 GPXConv statistics (not including periods between segments)
 At lat,lon,ele = 0.00000,0.00000,NONE time = NONE                : start
+At lat,lon,ele = 0.00000,0.00000,NONE time = NONE                : max rolling average  ascent (slope) = none
+At lat,lon,ele = 0.00000,0.00000,NONE time = NONE                : max rolling average descent (slope) = none
 At lat,lon,ele = 0.00000,0.00000,NONE time = NONE                : end
 0 points inserted due to time gaps > 1800 seconds
 elevation not corrected
