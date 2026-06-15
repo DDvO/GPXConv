@@ -35,22 +35,22 @@
    <trkpt lat="0.0007" lon="0.9997"><ele>15</ele><time>1970-01-01T00:45:10Z</time><cmt>max speed = 60 km/h</cmt></trkpt>
  </trkseg>
 <trkseg>
-<trkpt lat="0" lon="1"><ele>90</ele><time>1970-01-01T00:48:00Z</time><cmt>altitude correction after gap; segment moving time 22 sec</cmt></trkpt>
-<trkpt lat="0" lon="1"><ele>30</ele><time>1970-01-01T00:48:20Z</time><cmt>exit of tunnel</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>90</ele><time>1970-01-01T00:48:00Z</time><cmt>segment moving time 22 sec</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>30</ele><time>1970-01-01T00:48:20Z</time><cmt>exit of tunnel; altitude correction after gap from 30 to 10</cmt></trkpt>
 <trkpt lat="0" lon="1"><ele>10</ele><time>1970-01-01T00:48:22Z</time><cmt>descent rate = -36000 m/h before correction</cmt></trkpt>
 <trkpt lat="0" lon="1"><ele>00</ele><time>1970-01-01T00:48:24Z</time><cmt>descent rate = -18000 m/h ok</cmt></trkpt>
 </trkseg>
 <trkseg>
-<trkpt lat="0" lon="1"><ele>00</ele><time>1970-01-01T00:49:00Z</time><cmt>altitude correction after gap; segment moving time 22 sec</cmt></trkpt>
-<trkpt lat="0" lon="1"><ele>50</ele><time>1970-01-01T00:49:20Z</time><cmt>exit of tunnel</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>00</ele><time>1970-01-01T00:49:00Z</time><cmt>segment moving time 22 sec</cmt></trkpt>
+<trkpt lat="0" lon="1"><ele>50</ele><time>1970-01-01T00:49:20Z</time><cmt>exit of tunnel; altitude correction after gap from 50 to 70</cmt></trkpt>
 <trkpt lat="0" lon="1"><ele>70</ele><time>1970-01-01T00:49:22Z</time><cmt> ascent rate = +36000 m/h before correction</cmt></trkpt>
 <trkpt lat="0" lon="1"><ele>81</ele><time>1970-01-01T00:49:24Z</time><cmt> ascent rate = +19800 m/h ok</cmt></trkpt>
 </trkseg>
  <trkseg>
   <trkpt lat="0.0" lon="1.0"><ele>12</ele><time>1970-01-01T01:00:00Z</time><cmt>segment moving time 0 sec</cmt></trkpt>
-  <trkpt lat="0.0" lon="1.0"><ele>00</ele><time>1970-01-01T01:00:02Z</time><cmt>descent rate = -21600 m/h</cmt></trkpt>
-  <trkpt lat="0.0" lon="1.0"><ele>36</ele><time>1970-01-01T01:00:04Z</time><cmt> ascent rate = +21600 m/h; at track end</cmt></trkpt>
-  <trkpt_ lat="0.0" lon="1.0"><ele>12</ele><time>1970-01-01T01:00:06Z</time><cmt>may be inserted to test with point at track end not being ignored</cmt></trkpt_>
+  <trkpt lat="0.0" lon="1.0"><ele>00</ele><time>1970-01-01T01:00:02Z</time><cmt>to be ignored due to high descent rate = -21600 m/h</cmt></trkpt>
+  <trkpt lat="0.0" lon="1.0"><ele>36</ele><time>1970-01-01T01:00:04Z</time><cmt>to be ignored due to high  ascent rate = +21600 m/h; at track end</cmt></trkpt>
+  <trkpt_ lat="0.0" lon="1.0"><ele>12</ele><time>1970-01-01T01:00:06Z</time><cmt>could be inserted to test with point at track end not being ignored</cmt></trkpt_>
  </trkseg>
 </trk>
 
