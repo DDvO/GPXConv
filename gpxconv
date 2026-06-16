@@ -262,6 +262,7 @@ my @SEC; # computed from @TIM, possibly adapted, or undefined if not available
 my @DIS2;# square sum of the LAT and COS(LAT)*LON differences from point before, 0 for first point
 my @DIS; # derived from LAT and LON, and ELE if available, also from point before, 0 for first point
 my @ANG; # horizontal direction change (i.e., turning angle) between last, current, and next point, undef if not available
+my @DIR; # the direction arriving at each point from the previous one, undef if not (yet) computed or invalidated
 my @SPD; # as recorded or computed (average from previous point if FLG contains COMPUTED_SPEED), or "" if not available
 my @CMT; # as given in input but without <cmt> and </cmt> tags, or "" if not available
 my @SRC; # as given in input but without <src> and </src> tags, or "" if not available
@@ -705,6 +706,7 @@ sub recalculate_SPD {
 }
 sub recalculate_all {
     my ($i, $old_i) = @_;
+    $DIR[$i] = undef; # invalidate cached direction
     my $const_2d = defined $old_i &&
         ($old_i == $i || $LAT[$old_i] == $LAT[$i] && $LON[$old_i] == $LON[$i]);
     recalculate_DIS($i, $const_2d);
@@ -815,13 +817,24 @@ sub avg_slope { # between the last N_AVG_SLOPE points, assuming 0 where not avai
     return $n == 0 ? undef : $sum / N_AVG_SLOPE
 }
 
+sub get_direction { # compute and store in @DIR the direction from PREV($i) to $i, and return it
+    my $i = $_[0];
+    return $DIR[$i] if defined $DIR[$i]; # return cached value
+    my $prev_i = PREV($i);
+    return undef unless defined $prev_i;
+    my $curr_lat_diff = $LAT[$i] - $LAT[$prev_i];
+    my $curr_lon_diff = $LON[$i] - $LON[$prev_i];
+    return undef unless $curr_lat_diff || $curr_lon_diff;
+    return $DIR[$i] = atan2($curr_lon_diff, $curr_lat_diff);
+}
+
 sub comp_angle { # calculate horizontal direction change (i.e., turning angle)
     # between last, current, and next point, or undef if not available
     # provides almost no efficiency penalty
-    my ($i, $lat, $lon, $timediff, $dis) = @_;
+    my ($i, $timediff, $dis) = @_;
     my ($theta_diff, $spd2) = (undef, "");
 
-    my ($prev_i, $next_i) = (PREV($i), NEXT($i));
+    my $next_i = NEXT($i);
     if (defined $next_i && !$SEG[$next_i] && !section($i) && !section($next_i)) { # next point exists and is not at segment start and not at merge start/pause
         my $next_dis      =              $DIS[$next_i];
         my $next_timediff = diff_defined($SEC[$next_i], $SEC[$i]);
@@ -829,14 +842,8 @@ sub comp_angle { # calculate horizontal direction change (i.e., turning angle)
         my      $dis2 = $dis      eq "" ||          $next_dis eq "" ? 0 : $dis      + $next_dis;
         $spd2 = $timediff2 <= 0 || $dis2 <= 0 ? "" : $dis2 / $timediff2; # average speed
         if ($spd2 ne "" && MPS2KMPH * $spd2 > MAX_PLAUSIBLE_ANGLE_SPD_THRESHOLD) {
-            my $curr_lat_diff = $lat - $LAT[$prev_i];
-            my $curr_lon_diff = $lon - $LON[$prev_i];
-            my $next_lat_diff = $LAT[$next_i] - $lat;
-            my $next_lon_diff = $LON[$next_i] - $lon;
-            if (($curr_lat_diff || $curr_lon_diff) && ($next_lat_diff || $next_lon_diff))
-            {
-                my $theta1 = atan2($curr_lon_diff, $curr_lat_diff);
-                my $theta2 = atan2($next_lon_diff, $next_lat_diff);
+            my ($theta1, $theta2) = (get_direction($i), get_direction($next_i));
+            if (defined $theta1 && defined $theta2) {
                 # debug (($theta1 * RAD2DEG)." <$i> ".($theta2* RAD2DEG));
                 $theta_diff = ($theta2 - $theta1) * RAD2DEG % 360;
                 $theta_diff -= 360 if $theta_diff >= 180;
@@ -1788,7 +1795,7 @@ sub sanitize
 
             # handle cases that involve point(s) before and may lead to removing current point
             my ($diff_ele, $timediff, $rate, $dis, $comp_spd, $acc) = comp_diffs($i);
-            my ($theta_diff, $spd2) = comp_angle($i, $lat, $lon, $timediff, $dis); # for spike detection
+            my ($theta_diff, $spd2) = comp_angle($i, $timediff, $dis); # for spike detection
             $ANG[$i] = $theta_diff;
 
             if (!section($i) && # not at merge start/pause
