@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo -e "### test_minimal ###################################################"
+echo "### test_minimal ###################################################"
 ../gpxconv -info_wpts -warn_wpts test_minimal.gpx  >test_minimal.out  2>test_minimal.log || (cat test_minimal.log && kill $$);
     diff test_minimal{_reference,}.out;
     diff test_minimal{_reference,}.log
@@ -16,7 +16,8 @@ echo -e "### test_minimal ###################################################"
 #   diff test_minimal{,_merge}_reference.out
 #   diff test_minimal{,_merge}_reference.log
 
-echo -e "\n### test, initial pass #############################################"
+echo
+echo "### test, initial pass #############################################"
 export GPXCONV_TEST_ARGS="-walk -min_ext value 101 -max_ext value 101 -smooth -weight 50 -phases -segs 2..4+100 -cmt_wpts elevation -src_wpts substituted|inserted"
 ../gpxconv $GPXCONV_TEST_ARGS test.gpx  >test.out  2>test.log;
     diff test{_reference,}.out;
@@ -24,28 +25,33 @@ export GPXCONV_TEST_ARGS="-walk -min_ext value 101 -max_ext value 101 -smooth -w
 ../gpxconv $GPXCONV_TEST_ARGS test.out  >test.out2 2>test.log2
 ../gpxconv $GPXCONV_TEST_ARGS test.out2 >test.out3 2>test.log3;
 # 3rd iteration should not lead to changes compared to 2nd one:
-echo -e "\n### test, after three iterations ###################################"
+echo
+echo "### test, after three iterations ###################################"
     diff -w test.out{2,3};
     diff -w test.log{2,3}
 
-echo -e "\n### test_minimization ##############################################"
+echo
+echo "### test_minimization ##############################################"
 ../gpxconv -fly -resolution 1 -min_dist 10 -min_angle 10 test_minimization.gpx >test_minimization.out 2>test_minimization.log;
     diff test_minimization{_reference,}.out;
     diff test_minimization{_reference,}.log
 
-echo -e "\n### test_sanitization ##############################################"
+echo
+echo "### test_sanitization ##############################################"
 ../gpxconv -src_wpts corrected test_sanitization.gpx >test_sanitization.out 2>test_sanitization.log;
     diff test_sanitization{_reference,}.out;
     diff test_sanitization{_reference,}.log
 
-echo -e "\n### test_merge #####################################################"
+echo
+echo "### test_merge #####################################################"
 ../gpxconv -cmt_wpts alternative test_merge1.gpx -merge test_merge2.gpx -days -tz 0 -split test_merge_out -lean_stat_wpts >test_merge.out 2>test_merge.log;
     diff test_merge{_reference,}.out;
     diff test_merge{_reference,}.log;
     diff test_merge{_reference,}_out_1.gpx;
     diff test_merge{_reference,}_out_2.gpx
 
-echo -e "\n### test_merge_with_gaps ###########################################"
+echo
+echo "### test_merge_with_gaps ###########################################"
 ../gpxconv  test_merge_with_gaps1.gpx -merge test_merge_with_gaps2.gpx -o test_merge_with_gaps.out -lean_stat_wpts >test_merge_with_gaps.out 2>test_merge_with_gaps.log;
     diff test_merge_with_gaps{_reference,}.out;
     diff test_merge_with_gaps{_reference,}.log
